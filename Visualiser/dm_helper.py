@@ -9,6 +9,7 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from typing import List, Optional
+
 from location import Location
 from npc import NPC
 from race import Race
@@ -16,6 +17,7 @@ from alignment import Alignment
 from stat_block import StatBlock  # placeholder
 from pc_classes import PcClass
 from stat_block import MonMan
+from additional_traits import AdditionalTrait
 
 # -----------------------
 # Demo data (object-based)
@@ -27,13 +29,23 @@ def seed_data() -> List[Location]:
     from pc_classes import PcClassName, Wizard
     pc_wizard = Wizard(level=5)  # subclass of PcClass
 
+    eldeth_traits = [
+        AdditionalTrait(description="Sea Legs: Advantage on checks to keep balance aboard a ship."),
+        AdditionalTrait(description="Trusted Captain: Known across Port Virellon; friendly dockmasters may waive minor fees."),
+    ]
+
+    nox_traits = [
+        AdditionalTrait(description="Intimidating Presence: Hostile creatures within 10 ft have disadvantage on Persuasion checks."),
+    ]
+
     eldeth = NPC(
         name="Eldeth Merryweather",
         race=Race.Human,
         alignment=Alignment.Lawful_Good,
         stat_block=sb,
         appearance="Weathered captain with a sharp gaze and a sea-green coat.",
-        backstory="Long-time captain of the Silver Gull, famed for fair prices and safe passage."
+        backstory="Long-time captain of the Silver Gull, famed for fair prices and safe passage.",
+        additional_traits=eldeth_traits
     )
     nox = NPC(
         name="Nox",
@@ -41,7 +53,8 @@ def seed_data() -> List[Location]:
         alignment=Alignment.Lawful_Neutral,
         stat_block=mm_goblin_minion,
         appearance="Broad-shouldered bugbear first mate, keeps order with few words.",
-        backstory="Swore loyalty to Eldeth after she saved his crew from pirates."
+        backstory="Swore loyalty to Eldeth after she saved his crew from pirates.",
+        additional_traits=nox_traits
     )
     grimda = NPC(
         name="Grimda Stonecask",
@@ -343,13 +356,14 @@ class NPCDetailDialog(QtWidgets.QDialog):
     def open_statblock(self):
         if not self.npc.stat_block:
             return
-        dlg = StatBlockDialog(self.npc.stat_block, self)
+        dlg = StatBlockDialog(self.npc.stat_block, self.npc.additional_traits, self)
         dlg.exec()
 
 class StatBlockDialog(QtWidgets.QDialog):
-    def __init__(self, sb: StatBlock, parent=None):
+    def __init__(self, sb: StatBlock, traits: list | None = None, parent=None):
         super().__init__(parent)
         self.sb = sb
+        self.traits = traits if traits is not None else []
         self.setWindowTitle("Stat Block")
         self.resize(640, 720)
 
@@ -410,15 +424,19 @@ class StatBlockDialog(QtWidgets.QDialog):
                 img_label.setText("(No image path specified)")
             vbox.addWidget(img_label)
 
-            # Additional info placeholder (if you later add more fields)
-            vbox.addSpacing(8)
-            vbox.addWidget(label("Additional Information", bold=True))
-            vbox.addWidget(label("— (none provided) —"))
-
         else:
             # Unknown StatBlock type
             vbox.addWidget(label("Unknown StatBlock type.", bold=True))
             vbox.addWidget(label(f"Class: {sb.__class__.__name__}"))
+
+        vbox.addSpacing(8)
+        vbox.addWidget(label("Additional Information", bold=True))
+        if not self.traits:
+            vbox.addWidget(label("— (none provided) —"))
+        else:
+            for t in self.traits:
+                # Each AdditionalTrait.description as its own paragraph
+                vbox.addWidget(label(t.description))
 
         scroll.setWidget(content)
         layout.addWidget(scroll)
