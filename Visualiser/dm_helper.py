@@ -86,6 +86,7 @@ def seed_data() -> List[Location]:
 # Tree model utilities
 # -----------------------
 ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
+ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2   # NEW
 
 def build_tree_model(locations: List[Location]) -> QtGui.QStandardItemModel:
     """
@@ -182,6 +183,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.location_tree.setExpandsOnDoubleClick(True)
 
         self.npc_list = QtWidgets.QListWidget()
+        self.npc_list.itemActivated.connect(self.open_npc_detail)   # Enter/double-click
+        self.npc_list.itemDoubleClicked.connect(self.open_npc_detail)
+
 
         # Build model
         self.model = build_tree_model(self.locations)
@@ -257,10 +261,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.npc_list.clear()
         for npc in location.npcs:
             item = QtWidgets.QListWidgetItem(npc.name)
+            item.setData(ROLE_NPC_PTR, npc)
             # Hover tooltip for NPC
             tooltip = self._npc_tooltip(npc)
             item.setToolTip(tooltip)
             self.npc_list.addItem(item)
+
+    def open_npc_detail(self, item: QtWidgets.QListWidgetItem):
+        npc = item.data(ROLE_NPC_PTR)
+        if not npc:
+            return
+        dlg = NPCDetailDialog(npc, self)
+        dlg.exec()
+
 
     def _npc_tooltip(self, npc: NPC) -> str:
         appearance = npc.appearance or ""
@@ -270,6 +283,55 @@ class MainWindow(QtWidgets.QMainWindow):
                 f"Race: {npc.race.value}\n"
                 f"Alignment: {npc.alignment.value}\n\n"
                 f"{appearance}")
+
+class NPCDetailDialog(QtWidgets.QDialog):
+    def __init__(self, npc: NPC, parent=None):
+        super().__init__(parent)
+        self.npc = npc
+        self.setWindowTitle(f"NPC — {npc.name}")
+        self.resize(520, 520)
+
+        # Use a scroll area in case backstory is long
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        content = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(content)
+        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+
+        # Helper to make selectable, wrapped labels
+        def label(text: str) -> QtWidgets.QLabel:
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            return lab
+
+        form.addRow("Name:", label(npc.name))
+        form.addRow("Race:", label(npc.race.value))
+        form.addRow("Alignment:", label(npc.alignment.value))
+
+        # Appearance / Backstory as large wrapped labels
+        form.addRow("Appearance:", label(npc.appearance or ""))
+        form.addRow("Backstory:", label(npc.backstory or ""))
+
+        # StatBlock info (simple for now)
+        sb_type = npc.stat_block.__class__.__name__ if npc.stat_block else "None"
+        form.addRow("Stat Block:", label(sb_type))
+
+        scroll.setWidget(content)
+
+        # Buttons (Close only)
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.reject)
+        btns.accepted.connect(self.accept)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(scroll)
+        layout.addWidget(btns)
+
 
 # -----------------------
 # App entry
