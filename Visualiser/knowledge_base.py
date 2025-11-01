@@ -6,7 +6,11 @@ from typing import Dict, Tuple, Optional, Iterable
 from spell import Spell
 from item import Item
 from class_action import ClassAction
-# from npc import NPC     # This would be nice as well, but not yet
+from npc import NPC
+
+def _npc_summary(n: NPC, max_len=180) -> str:
+    text = n.appearance.strip() or n.backstory.strip()
+    return (text if len(text) <= max_len else text[:max_len].rstrip() + "…")
 
 @dataclass
 class KBEntry:
@@ -71,6 +75,14 @@ class KnowledgeBase:
             self.add_entry(self.create_kb_entry(ac))
             for a in getattr(ac, "aliases", []):
                 self.add_alias(a, ac.name)
+
+    def ingest_npcs(self, npcs: Iterable[NPC], alias_key: str = "aliases"):
+        for n in npcs:
+            self.add_entry(KBEntry(kind="npc", name=n.name, description=_npc_summary(n)))
+            # If you store aliases with the NPC JSON, add them
+            aliases = getattr(n, alias_key, None) or []
+            for a in aliases:
+                self.add_alias(a, n.name)
 
     def _compile_pattern(self):
         # Build a single regex of all keys + aliases, longest-first.

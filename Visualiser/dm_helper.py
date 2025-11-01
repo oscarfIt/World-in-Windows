@@ -570,9 +570,10 @@ def main():
 
     kb = KnowledgeBase()
     kb.ingest(repo.spells, repo.items, repo.class_actions)
+    kb.ingest_npcs(repo.npcs_by_id.values())
 
     app = QtWidgets.QApplication(sys.argv)
-    win = MainWindow(seed_data(), kb)
+    win = MainWindow(repo.locations, kb)
     win.show()
     sys.exit(app.exec())
 

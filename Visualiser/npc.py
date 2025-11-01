@@ -14,8 +14,6 @@ class NPC:
     appearance: str
     backstory: str
     additional_traits: List[str]
-    # item_ids: List[str] = field(default_factory=list)
-    # spell_ids: List[str] = field(default_factory=list)
 
     def __init__(self, name: str, race: Race, alignment: Alignment, stat_block: StatBlock, appearance: str, backstory: str, additional_traits: Optional[List[str]] = None):
         self.name = name
