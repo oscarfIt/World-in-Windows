@@ -10,6 +10,9 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 from typing import List, Optional
 
+from knowledge_base import KBEntry, KnowledgeBase
+from repo import Repo
+
 from location import Location
 from npc import NPC
 from race import Race
@@ -17,6 +20,9 @@ from alignment import Alignment
 from stat_block import StatBlock  # placeholder
 from pc_classes import PcClass
 from stat_block import MonMan
+from spell import Spell
+from item import Item
+from class_action import ClassAction
 
 # -----------------------
 # Demo data (object-based)
@@ -31,10 +37,11 @@ def seed_data() -> List[Location]:
     eldeth_traits = [
         "Sea Legs: Advantage on checks to keep balance aboard a ship.",
         "Trusted Captain: Known across Port Virellon; friendly dockmasters may waive minor fees.",
+        "She can cast Fire Ball whenever she wants cos she's a beast.",
     ]
 
     nox_traits = [
-        "Intimidating Presence: Hostile creatures within 10 ft have disadvantage on Persuasion checks FireBall.",
+        "Intimidating Presence: Hostile creatures within 10 ft have disadvantage on Persuasion checks.",
     ]
 
     eldeth = NPC(
@@ -185,11 +192,12 @@ def filter_tree(model: QtGui.QStandardItemModel, text: str):
 # Main Window
 # -----------------------
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, locations: List[Location]):
+    def __init__(self, locations: List[Location], kb: KnowledgeBase):
         super().__init__()
         self.setWindowTitle("DM Helper — Locations & NPCs")
         self.resize(1000, 640)
         self.locations = locations
+        self.kb = kb
 
         # Widgets
         self.search = QtWidgets.QLineEdit(placeholderText="Search locations…")
@@ -287,7 +295,7 @@ class MainWindow(QtWidgets.QMainWindow):
         npc = item.data(ROLE_NPC_PTR)
         if not npc:
             return
-        dlg = NPCDetailDialog(npc, self)
+        dlg = NPCDetailDialog(npc, self.kb, self)
         dlg.exec()
 
 
@@ -301,9 +309,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 f"{appearance}")
 
 class NPCDetailDialog(QtWidgets.QDialog):
-    def __init__(self, npc: NPC, parent=None):
+    def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
         self.npc = npc
+        self.kb = kb
         self.setWindowTitle(f"NPC — {npc.name}")
         self.resize(520, 520)
 
@@ -355,14 +364,25 @@ class NPCDetailDialog(QtWidgets.QDialog):
     def open_statblock(self):
         if not self.npc.stat_block:
             return
-        dlg = StatBlockDialog(self.npc.stat_block, self.npc.additional_traits, self)
+        dlg = StatBlockDialog(self.npc.stat_block, self.kb, self.npc.additional_traits, self)
         dlg.exec()
 
 class StatBlockDialog(QtWidgets.QDialog):
-    def __init__(self, sb: StatBlock, traits: list | None = None, parent=None):
+    def __init__(self, sb: StatBlock, kb: KnowledgeBase, traits: list | None = None, parent=None):
         super().__init__(parent)
         self.sb = sb
+        self.kb = kb
         self.traits = traits if traits is not None else []
+
+        # self.kb = KnowledgeBase()  
+
+        # self.kb.add("spell", "FireBall",
+        #             "A bright streak flashes to a point you choose then blossoms with a low roar into an explosion of flame (8d6 fire in a 20-ft radius, DEX save for half).")
+        # self.kb.add("ability", "Fuel The Fire",
+        #             "When an ally casts a fire spell within 5 m, you can ignite latent embers to empower the next fire effect you cast.")
+        
+        self._hover = HoverPreview(self)
+
         self.setWindowTitle("Stat Block")
         self.resize(640, 720)
 
@@ -428,14 +448,28 @@ class StatBlockDialog(QtWidgets.QDialog):
             vbox.addWidget(label("Unknown StatBlock type.", bold=True))
             vbox.addWidget(label(f"Class: {sb.__class__.__name__}"))
 
+        # === Additional Information ===
         vbox.addSpacing(8)
-        vbox.addWidget(label("Additional Information", bold=True))
+        vbox.addWidget(self._bold_label("Additional Information"))
         if not self.traits:
-            vbox.addWidget(label("— (none provided) —"))
+            vbox.addWidget(self._plain_label("— (none provided) —"))
         else:
             for t in self.traits:
-                # Each AdditionalTrait.description as its own paragraph
-                vbox.addWidget(label(t.description))
+                tb = QtWidgets.QTextBrowser()
+                tb.setOpenExternalLinks(False)  # we'll handle clicks
+                tb.setOpenLinks(False)
+                tb.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+                tb.setReadOnly(True)
+                tb.setAcceptRichText(True)
+
+                tb.setMouseTracking(True)  # needed for hover events
+                tb.viewport().setMouseTracking(True)
+
+                html = self.kb.linkify(t)
+                tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{html}</div>")
+                tb.anchorClicked.connect(self._on_anchor_clicked)
+                tb.highlighted.connect(self._on_link_hovered)  # hover signal gives URL as text
+                vbox.addWidget(tb)
 
         scroll.setWidget(content)
         layout.addWidget(scroll)
@@ -444,6 +478,42 @@ class StatBlockDialog(QtWidgets.QDialog):
         btns.rejected.connect(self.reject)
         btns.accepted.connect(self.accept)
         layout.addWidget(btns)
+
+    def _plain_label(self, text: str) -> QtWidgets.QLabel:
+        lab = QtWidgets.QLabel(text)
+        lab.setWordWrap(True)
+        lab.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                                    QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        return lab
+
+    def _bold_label(self, text: str) -> QtWidgets.QLabel:
+        lab = self._plain_label(text)
+        f = lab.font(); f.setBold(True); lab.setFont(f)
+        return lab
+    
+    def _on_link_hovered(self, qurl: QtCore.QUrl):
+        # url is the anchor text (we set href to label)
+        if not qurl or qurl.isEmpty():
+            self._hover.hide()
+            return
+        
+        name = QtCore.QUrl.fromPercentEncoding(qurl.toEncoded())
+        entry = self.kb.resolve(name)
+
+        if not entry:
+            self._hover.hide()
+            return
+        # Position near cursor
+        pos = QtGui.QCursor.pos()
+        self._hover.show_text(entry.description, pos)
+
+    def _on_anchor_clicked(self, url: QtCore.QUrl):
+        name = url.toString()
+        entry = self.kb.resolve(name)
+        if not entry:
+            return
+        dlg = EntryDetailDialog(entry, self)
+        dlg.exec()
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         """Keep monster image scaled to width while preserving aspect ratio."""
@@ -454,13 +524,55 @@ class StatBlockDialog(QtWidgets.QDialog):
                 scaled = self._image_pixmap.scaledToWidth(area_w, QtCore.Qt.TransformationMode.SmoothTransformation)
                 self._image_label.setPixmap(scaled)
 
+class HoverPreview(QtWidgets.QDialog):
+    """Small non-modal popup for hover previews."""
+    def __init__(self, parent=None):
+        super().__init__(parent, QtCore.Qt.WindowType.ToolTip)
+        self.label = QtWidgets.QLabel()
+        self.label.setWordWrap(True)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.addWidget(self.label)
+
+    def show_text(self, text: str, global_pos: QtCore.QPoint):
+        self.label.setText(text)
+        self.adjustSize()
+        # Offset a bit so it doesn't sit under the cursor
+        self.move(global_pos + QtCore.QPoint(12, 18))
+        self.show()
+
+class EntryDetailDialog(QtWidgets.QDialog):
+    """Click-through dialog with full description."""
+    def __init__(self, entry: KBEntry, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(entry.name)
+        self.resize(420, 320)
+        title = QtWidgets.QLabel(f"{entry.kind.title()}: {entry.name}")
+        f = title.font(); f.setBold(True); title.setFont(f)
+        body = QtWidgets.QLabel(entry.description)
+        body.setWordWrap(True)
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.reject)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(title)
+        layout.addWidget(body)
+        layout.addWidget(btns)
+
+
 # -----------------------
 # App entry
 # -----------------------
 def main():
     import sys
+
+    repo = Repo()
+    repo.load_all()
+
+    kb = KnowledgeBase()
+    kb.ingest(repo.spells, repo.items, repo.class_actions)
+
     app = QtWidgets.QApplication(sys.argv)
-    win = MainWindow(seed_data())
+    win = MainWindow(seed_data(), kb)
     win.show()
     sys.exit(app.exec())
 

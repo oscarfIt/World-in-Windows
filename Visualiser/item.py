@@ -12,9 +12,9 @@ class Rarity(Enum):
 
 @dataclass
 class Item:
-    id: str
     name: str
     rarity: Rarity
     description: str
     attunement: bool = False
     tags: List[str] = field(default_factory=list)
+    aliases: List[str] = field(default_factory=list)

@@ -1,30 +1,47 @@
-# repo.py (new)
-import json, pathlib
-from typing import Dict, List, Optional
+import json
+from pathlib import Path
+from typing import List, Type, TypeVar
 
 from item import Item
 from spell import Spell
+from class_action import ClassAction
 from npc import NPC
 
-DATA_DIR = pathlib.Path("data")
-DATA_DIR.mkdir(exist_ok=True)
+T = TypeVar("T", Spell, Item, ClassAction, NPC)
 
 class Repo:
-    def __init__(self):
-        self.items: Dict[str, Item] = {}
-        self.spells: Dict[str, Spell] = {}
-        self.npcs: Dict[str, NPC] = {}
+    def __init__(self, data_dir: str = "Data"):
+        self.data_dir = Path(data_dir)
+        self.spells: List[Spell] = []
+        self.items: List[Item] = []
+        self.class_actions: List[ClassAction] = []
+        self.npcs: List[NPC] = []
 
-    # --- load/save ---
     def load_all(self):
-        self.items = {x["id"]: Item(**x) for x in self._load_json("items.json")}
-        self.spells = {x["id"]: Spell(**x) for x in self._load_json("spells.json")}
-        self.npcs   = {x.name: x for x in [NPC(**x) for x in self._load_json("npcs.json")]}
+        self.spells = self._load_list("spells.json", Spell)
+        self.items = self._load_list("items.json", Item)
+        self.class_actions = self._load_list("class_actions.json", ClassAction)
+        self.npcs   = self._load_list("npcs.json", NPC)
+
+    def _load_list(self, filename: str, cls: Type[T]) -> List[T]:
+        p = self.data_dir / filename
+        if not p.exists():
+            return []
+        raw = json.loads(p.read_text(encoding="utf-8"))
+        out: List[T] = []
+        for i, d in enumerate(raw):
+            try:
+                # tolerate missing fields; dataclass defaults handle the rest
+                out.append(cls(**d))
+            except TypeError as e:
+                print(f"[WARN] Skipping {filename}[{i}]: {e}")
+        return out
 
     def save_all(self):
-        self._save_json("items.json", [vars(x) for x in self.items.values()])
-        self._save_json("spells.json",[vars(x) for x in self.spells.values()])
-        self._save_json("npcs.json",  [self._npc_to_dict(x) for x in self.npcs.values()])
+        return
+        # self._save_json("items.json", [vars(x) for x in self.items.values()])
+        # self._save_json("spells.json",[vars(x) for x in self.spells.values()])
+        # self._save_json("npcs.json",  [self._npc_to_dict(x) for x in self.npcs.values()])
 
     # --- resolution helpers (for hover + dialogs) ---
     def get_items_for_npc(self, npc: NPC) -> List[Item]:
