@@ -17,7 +17,6 @@ from alignment import Alignment
 from stat_block import StatBlock  # placeholder
 from pc_classes import PcClass
 from stat_block import MonMan
-from additional_traits import AdditionalTrait
 
 # -----------------------
 # Demo data (object-based)
@@ -30,12 +29,12 @@ def seed_data() -> List[Location]:
     pc_wizard = Wizard(level=5)  # subclass of PcClass
 
     eldeth_traits = [
-        AdditionalTrait(description="Sea Legs: Advantage on checks to keep balance aboard a ship."),
-        AdditionalTrait(description="Trusted Captain: Known across Port Virellon; friendly dockmasters may waive minor fees."),
+        "Sea Legs: Advantage on checks to keep balance aboard a ship.",
+        "Trusted Captain: Known across Port Virellon; friendly dockmasters may waive minor fees.",
     ]
 
     nox_traits = [
-        AdditionalTrait(description="Intimidating Presence: Hostile creatures within 10 ft have disadvantage on Persuasion checks."),
+        "Intimidating Presence: Hostile creatures within 10 ft have disadvantage on Persuasion checks FireBall.",
     ]
 
     eldeth = NPC(
