@@ -14,12 +14,18 @@ from npc import NPC
 from race import Race
 from alignment import Alignment
 from stat_block import StatBlock  # placeholder
+from pc_classes import PcClass
+from stat_block import MonMan
 
 # -----------------------
 # Demo data (object-based)
 # -----------------------
 def seed_data() -> List[Location]:
-    sb = StatBlock()
+    sb = StatBlock("Empty")
+
+    mm_goblin_minion = MonMan("goblin_minion")  # expects Media/MonsterManual/go.png
+    from pc_classes import PcClassName, Wizard
+    pc_wizard = Wizard(level=5)  # subclass of PcClass
 
     eldeth = NPC(
         name="Eldeth Merryweather",
@@ -33,7 +39,7 @@ def seed_data() -> List[Location]:
         name="Nox",
         race=Race.Bugbear,
         alignment=Alignment.Lawful_Neutral,
-        stat_block=sb,
+        stat_block=mm_goblin_minion,
         appearance="Broad-shouldered bugbear first mate, keeps order with few words.",
         backstory="Swore loyalty to Eldeth after she saved his crew from pirates."
     )
@@ -41,7 +47,7 @@ def seed_data() -> List[Location]:
         name="Grimda Stonecask",
         race=Race.Dwarf,
         alignment=Alignment.True_Neutral,
-        stat_block=sb,
+        stat_block=pc_wizard,
         appearance="Stout dwarf with ink-stained fingers and a ledger always in hand.",
         backstory="Quartermaster of Port Virellon’s warehouses; knows every crate by smell."
     )
@@ -183,9 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.location_tree.setExpandsOnDoubleClick(True)
 
         self.npc_list = QtWidgets.QListWidget()
-        self.npc_list.itemActivated.connect(self.open_npc_detail)   # Enter/double-click
         self.npc_list.itemDoubleClicked.connect(self.open_npc_detail)
-
 
         # Build model
         self.model = build_tree_model(self.locations)
@@ -318,8 +322,12 @@ class NPCDetailDialog(QtWidgets.QDialog):
         form.addRow("Backstory:", label(npc.backstory or ""))
 
         # StatBlock info (simple for now)
-        sb_type = npc.stat_block.__class__.__name__ if npc.stat_block else "None"
-        form.addRow("Stat Block:", label(sb_type))
+        sb = npc.stat_block
+        sb_text = sb.display_name if sb else "None"
+        self.stat_btn = QtWidgets.QPushButton(sb_text)
+        self.stat_btn.setEnabled(sb is not None)
+        self.stat_btn.clicked.connect(self.open_statblock)
+        form.addRow("Stat Block:", self.stat_btn)
 
         scroll.setWidget(content)
 
@@ -332,6 +340,102 @@ class NPCDetailDialog(QtWidgets.QDialog):
         layout.addWidget(scroll)
         layout.addWidget(btns)
 
+    def open_statblock(self):
+        if not self.npc.stat_block:
+            return
+        dlg = StatBlockDialog(self.npc.stat_block, self)
+        dlg.exec()
+
+class StatBlockDialog(QtWidgets.QDialog):
+    def __init__(self, sb: StatBlock, parent=None):
+        super().__init__(parent)
+        self.sb = sb
+        self.setWindowTitle("Stat Block")
+        self.resize(640, 720)
+
+        layout = QtWidgets.QVBoxLayout(self)
+
+        # Scrollable content
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        vbox = QtWidgets.QVBoxLayout(content)
+        vbox.setContentsMargins(12, 12, 12, 12)
+        vbox.setSpacing(10)
+
+        # Helper label
+        def label(text: str, bold: bool = False):
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            if bold:
+                f = lab.font()
+                f.setBold(True)
+                lab.setFont(f)
+            return lab
+
+        # Branch on StatBlock type
+        if isinstance(sb, PcClass):
+            # Minimal info from PcClass (name + level)
+            vbox.addWidget(label("Player Class", bold=True))
+            name = getattr(sb, "name", None)
+            level = getattr(sb, "level", None)
+            vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
+            vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
+
+        elif isinstance(sb, MonMan):
+            vbox.addWidget(label("Monster Manual Entry", bold=True))
+
+            # Try to load the PNG page
+            path = getattr(sb, "image_path", None)
+            name = getattr(sb, "monster_name", "Unknown")
+            vbox.addWidget(label(f"Name: {name}"))
+
+            img_label = QtWidgets.QLabel()
+            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            if path:
+                pix = QtGui.QPixmap(str(path))
+                if not pix.isNull():
+                    # scale-to-fit width while keeping aspect
+                    img_label.setPixmap(pix)
+                    # We'll scale after widget shows (see resizeEvent override below)
+                    self._image_label = img_label
+                    self._image_pixmap = pix
+                else:
+                    img_label.setText(f"(Image not found or failed to load)\n{path}")
+            else:
+                img_label.setText("(No image path specified)")
+            vbox.addWidget(img_label)
+
+            # Additional info placeholder (if you later add more fields)
+            vbox.addSpacing(8)
+            vbox.addWidget(label("Additional Information", bold=True))
+            vbox.addWidget(label("— (none provided) —"))
+
+        else:
+            # Unknown StatBlock type
+            vbox.addWidget(label("Unknown StatBlock type.", bold=True))
+            vbox.addWidget(label(f"Class: {sb.__class__.__name__}"))
+
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
+
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.reject)
+        btns.accepted.connect(self.accept)
+        layout.addWidget(btns)
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        """Keep monster image scaled to width while preserving aspect ratio."""
+        super().resizeEvent(event)
+        if hasattr(self, "_image_label") and hasattr(self, "_image_pixmap"):
+            area_w = self.width() - 64  # approximate padding
+            if area_w > 100:
+                scaled = self._image_pixmap.scaledToWidth(area_w, QtCore.Qt.TransformationMode.SmoothTransformation)
+                self._image_label.setPixmap(scaled)
 
 # -----------------------
 # App entry

@@ -24,7 +24,7 @@ class PcClass(StatBlock):
     level : int
 
     def __init__(self, name: PcClassName, level: int):
-        super().__init__()
+        super().__init__(name.value + ", Level " + str(level))
         self.name = name
         self.level = level
 
@@ -32,40 +32,52 @@ class PcClass(StatBlock):
         return {"type": "pc_class", "name": self.name.value, "level": self.level}
 
 class Barbarian(PcClass):
-    pass
+
+    def __init__(self, level: int =1):
+        super().__init__(PcClassName.Barbarian, level)
 
 class Bard(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Bard, level)
 
 class Cleric(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Cleric, level)
 
 class Druid(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Druid, level)
 
 class Fighter(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Fighter, level)
 
 class Monk(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Monk, level)
 
 class Paladin(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Paladin, level)
 
 class Ranger(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Ranger, level)
 
 class Rogue(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Rogue, level)
 
 class Sorcerer(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Sorcerer, level)
 
 class Warlock(PcClass):
-    pass
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Warlock, level)
 
 class Wizard(PcClass):
-    pass
-
+    def __init__(self, level: int = 1):
+        super().__init__(PcClassName.Wizard, level)
 
 
