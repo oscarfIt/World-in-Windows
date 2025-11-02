@@ -757,39 +757,35 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(central_widget)
         
     def populate_npcs(self):
-        """Populate the list with all NPCs from the knowledge base"""
+        """Populate the list with all NPCs from the repository"""
         self.npcs_list.clear()
         
-        # Get all NPCs from the knowledge base
-        all_npcs = []
-        
-        # Collect NPCs from kb.npcs if it exists
-        if hasattr(self.kb, 'npcs') and self.kb.npcs:
-            all_npcs.extend(self.kb.npcs.values())
-        
-        # Also check repo for npcs_by_id if we need to get them from there
+        # Load NPCs directly from the repository (freshly loaded from JSON)
         try:
             from repo import Repo
             repo = Repo()
-            if hasattr(repo, 'npcs_by_id'):
-                repo.load_all()  # Make sure data is loaded
-                all_npcs.extend(repo.npcs_by_id.values())
-        except:
-            pass  # If repo access fails, just use what we have
-        
-        # Remove duplicates based on name
-        seen_names = set()
-        unique_npcs = []
-        for npc in all_npcs:
-            if npc.name not in seen_names:
-                unique_npcs.append(npc)
-                seen_names.add(npc.name)
+            repo.load_all()  # This will reload from JSON files including any new NPCs
+            
+            # Get all NPCs from the repository
+            all_npcs = list(repo.npcs_by_id.values())
+            
+        except Exception as e:
+            # Fallback to knowledge base if repo loading fails
+            print(f"Failed to load from repo: {e}")
+            all_npcs = []
+            if hasattr(self.kb, 'entries'):
+                # Extract NPC entries from knowledge base
+                for entry in self.kb.entries.values():
+                    if entry.kind == "npc":
+                        # This is a fallback - we won't have the full NPC object
+                        # but at least we can show the names
+                        pass
         
         # Sort NPCs by name
-        unique_npcs.sort(key=lambda x: x.name.lower())
+        all_npcs.sort(key=lambda x: x.name.lower())
         
         # Add to list widget
-        for npc in unique_npcs:
+        for npc in all_npcs:
             item = QtWidgets.QListWidgetItem(npc.name)
             item.setData(ROLE_NPC_PTR, npc)
             
@@ -846,6 +842,7 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         dialog = AddNPCDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # Refresh the NPCs list to show the new NPC
+            # populate_npcs() will reload data from JSON files
             self.populate_npcs()
 
 class AddNPCDialog(QtWidgets.QDialog):
@@ -1055,31 +1052,34 @@ class AddNPCDialog(QtWidgets.QDialog):
         else:
             npcs_data = []
         
-        # Convert NPC to dictionary format
+        # Convert NPC to dictionary format matching repo expectations
         # Handle different stat block types for JSON serialization
         from stat_block import MonsterManual
         from pc_classes import PcClass
         
         if isinstance(npc.stat_block, MonsterManual):
             stat_block_data = {
-                "type": "monster_manual",
-                "monster_name": npc.stat_block.monster_name,
-                "image_path": str(npc.stat_block.image_path)  # Convert Path to string
+                "type": "monstermanual",  # No underscore to match repo expectation
+                "monster_name": npc.stat_block.monster_name
             }
         elif isinstance(npc.stat_block, PcClass):
             stat_block_data = {
                 "type": "pc_class",
-                "name": npc.stat_block.name.value if hasattr(npc.stat_block.name, 'value') else str(npc.stat_block.name),
+                "class": npc.stat_block.name.value if hasattr(npc.stat_block.name, 'value') else str(npc.stat_block.name),
                 "level": npc.stat_block.level
             }
         else:
             # Fallback for other stat block types
             stat_block_data = {
                 "type": "basic",
-                "name": npc.stat_block.display_name
+                "name": getattr(npc.stat_block, 'display_name', 'Unknown')
             }
         
+        # Generate a simple ID from the name (lowercase, replace spaces with underscores)
+        npc_id = npc.name.lower().replace(" ", "_").replace("'", "").replace("-", "_")
+        
         npc_dict = {
+            "id": npc_id,
             "name": npc.name,
             "race": npc.race.value,
             "sex": npc.sex,
