@@ -447,8 +447,17 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
 
         scroll.setWidget(content)
 
-        # Buttons (Close only)
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        # Buttons (Edit and Close)
+        btns = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Close
+        )
+        
+        # Add custom Edit button
+        edit_btn = QtWidgets.QPushButton("Edit")
+        edit_btn.setToolTip("Edit this NPC")
+        edit_btn.clicked.connect(self.edit_npc)
+        btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
 
@@ -506,6 +515,13 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                 progress.close()
             QtWidgets.QMessageBox.critical(self, "Error", 
                 f"Failed to generate portrait:\n{str(e)}")
+
+    def edit_npc(self):
+        """Edit this NPC using the edit dialog"""
+        dialog = AddNPCDialog(self, edit_npc=self.npc)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Reload the window to show updated NPC data
+            self.reload_window()
 
     def reload_window(self):
         """Reload the NPC detail window to show updated portrait"""
@@ -847,10 +863,14 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
             self.populate_npcs()
 
 class AddNPCDialog(QtWidgets.QDialog):
-    """Dialog for adding a new NPC"""
-    def __init__(self, parent=None):
+    """Dialog for adding or editing an NPC"""
+    def __init__(self, parent=None, edit_npc=None):
         super().__init__(parent)
-        self.setWindowTitle("Add New NPC")
+        self.edit_npc = edit_npc  # NPC being edited, or None for new NPC
+        self.original_name = edit_npc.name if edit_npc else None  # Store original name for updates
+        
+        title = "Edit NPC" if edit_npc else "Add New NPC"
+        self.setWindowTitle(title)
         self.resize(500, 700)
         
         # Apply theme
@@ -939,8 +959,75 @@ class AddNPCDialog(QtWidgets.QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         
+        # Populate fields if editing an existing NPC
+        if self.edit_npc:
+            self.populate_fields()
+        
         # Focus on name field
         self.name_field.setFocus()
+    
+    def populate_fields(self):
+        """Populate form fields when editing an existing NPC"""
+        npc = self.edit_npc
+        
+        # Name
+        self.name_field.setText(npc.name)
+        
+        # Race
+        for i in range(self.race_combo.count()):
+            if self.race_combo.itemData(i) == npc.race:
+                self.race_combo.setCurrentIndex(i)
+                break
+        
+        # Sex
+        self.sex_combo.setCurrentText(npc.sex)
+        
+        # Age
+        if hasattr(npc, 'age') and npc.age:
+            self.age_field.setText(npc.age)
+        
+        # Alignment
+        for i in range(self.alignment_combo.count()):
+            if self.alignment_combo.itemData(i) == npc.alignment:
+                self.alignment_combo.setCurrentIndex(i)
+                break
+        
+        # Stat Block
+        if npc.stat_block:
+            from stat_block import MonsterManual
+            from pc_classes import PcClass
+            
+            if isinstance(npc.stat_block, MonsterManual):
+                self.stat_block_type_combo.setCurrentText("Monster Manual")
+                self.update_stat_block_options()  # Update options first
+                # Try to find and select the monster
+                monster_name = npc.stat_block.monster_name
+                for i in range(self.stat_block_selection_combo.count()):
+                    if self.stat_block_selection_combo.itemText(i) == monster_name:
+                        self.stat_block_selection_combo.setCurrentIndex(i)
+                        break
+            elif isinstance(npc.stat_block, PcClass):
+                self.stat_block_type_combo.setCurrentText("PC Class")
+                self.update_stat_block_options()  # Update options first
+                # Try to find and select the class
+                class_name = npc.stat_block.name.value if hasattr(npc.stat_block.name, 'value') else str(npc.stat_block.name)
+                for i in range(self.stat_block_selection_combo.count()):
+                    if self.stat_block_selection_combo.itemText(i) == class_name:
+                        self.stat_block_selection_combo.setCurrentIndex(i)
+                        break
+        
+        # Appearance
+        if npc.appearance:
+            self.appearance_field.setPlainText(npc.appearance)
+        
+        # Backstory
+        if npc.backstory:
+            self.backstory_field.setPlainText(npc.backstory)
+        
+        # Additional traits
+        if npc.additional_traits:
+            traits_text = '\n'.join(npc.additional_traits)
+            self.traits_field.setPlainText(traits_text)
     
     def update_stat_block_options(self):
         """Update the stat block selection combo based on the type selected"""
@@ -985,7 +1072,7 @@ class AddNPCDialog(QtWidgets.QDialog):
                 self.stat_block_selection_combo.addItems(common_classes)
     
     def save_npc(self):
-        """Save the new NPC to npcs.json"""
+        """Save the NPC (new or edited) to npcs.json"""
         try:
             # Validate required fields
             if not self.name_field.text().strip():
@@ -1033,7 +1120,22 @@ class AddNPCDialog(QtWidgets.QDialog):
             )
             
             # Save to JSON file
-            self.save_npc_to_json(npc)
+            # Find the original ID by looking it up in the repository
+            original_id = None
+            if self.edit_npc:
+                try:
+                    from repo import Repo
+                    repo = Repo()
+                    repo.load_all()
+                    # Find the ID by looking through npcs_by_id dictionary
+                    for npc_id, npc_obj in repo.npcs_by_id.items():
+                        if npc_obj is self.edit_npc or npc_obj.name == self.original_name:
+                            original_id = npc_id
+                            break
+                except Exception as e:
+                    print(f"Could not find original ID: {e}")
+            
+            self.save_npc_to_json(npc, is_edit=self.edit_npc is not None, original_name=self.original_name, original_id=original_id)
             
             QtWidgets.QMessageBox.information(self, "Success", 
                 f"NPC '{npc.name}' has been saved successfully!")
@@ -1043,7 +1145,7 @@ class AddNPCDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.critical(self, "Error", 
                 f"Failed to save NPC:\n{str(e)}")
     
-    def save_npc_to_json(self, npc: NPC):
+    def save_npc_to_json(self, npc: NPC, is_edit=False, original_name=None, original_id=None):
         """Save the NPC to npcs.json file"""
         import json
         from pathlib import Path
@@ -1081,8 +1183,12 @@ class AddNPCDialog(QtWidgets.QDialog):
                 "name": getattr(npc.stat_block, 'display_name', 'Unknown')
             }
         
-        # Generate a simple ID from the name (lowercase, replace spaces with underscores)
-        npc_id = npc.name.lower().replace(" ", "_").replace("'", "").replace("-", "_")
+        # Use original ID if editing, otherwise generate new ID from name
+        if is_edit and original_id:
+            npc_id = original_id
+        else:
+            # Generate a simple ID from the name (lowercase, replace spaces with underscores)
+            npc_id = npc.name.lower().replace(" ", "_").replace("'", "").replace("-", "_")
         
         npc_dict = {
             "id": npc_id,
@@ -1097,9 +1203,26 @@ class AddNPCDialog(QtWidgets.QDialog):
             "additional_traits": npc.additional_traits
         }
         
-        # Add to list
-        print(f"Appending NPC data to JSON: {npc_dict}")
-        npcs_data.append(npc_dict)
+        # Add or update NPC in the list
+        if is_edit and (original_id or original_name):
+            # Find and update existing NPC using original ID first, then name as fallback
+            updated = False
+            for i, existing_npc in enumerate(npcs_data):
+                if (original_id and existing_npc.get("id") == original_id) or \
+                   (original_name and existing_npc.get("name") == original_name):
+                    print(f"Updating existing NPC ID '{original_id}': {original_name} -> {npc.name}")
+                    npcs_data[i] = npc_dict
+                    updated = True
+                    break
+            
+            if not updated:
+                # Original NPC not found, add as new
+                print(f"Original NPC '{original_name}' (ID: {original_id}) not found, adding as new")
+                npcs_data.append(npc_dict)
+        else:
+            # Add new NPC
+            print(f"Adding new NPC: {npc_dict}")
+            npcs_data.append(npc_dict)
         
         # Save back to file
         with open(npcs_file, 'w', encoding='utf-8') as f:
