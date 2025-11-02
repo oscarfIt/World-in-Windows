@@ -997,7 +997,7 @@ class AddNPCDialog(QtWidgets.QDialog):
             
             if stat_block_type == "Monster Manual":
                 from stat_block import MonsterManual
-                file_name = stat_block_selection.replace(" ", "_").title() + ".png"
+                file_name = stat_block_selection.replace(" ", "_").lower()
                 stat_block = MonsterManual(file_name=str(file_name))
             else:  # PC Class
                 from pc_classes import PcClass, PcClassName
@@ -1060,7 +1060,7 @@ class AddNPCDialog(QtWidgets.QDialog):
         if isinstance(npc.stat_block, MonsterManual):
             stat_block_data = {
                 "type": "monstermanual",  # No underscore to match repo expectation
-                "monster_name": npc.stat_block.monster_name
+                "monster_name": npc.stat_block.monster_name.replace(" ", "_").lower()
             }
         elif isinstance(npc.stat_block, PcClass):
             stat_block_data = {
