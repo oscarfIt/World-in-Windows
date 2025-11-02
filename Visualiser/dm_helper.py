@@ -70,7 +70,7 @@ def build_tree_model(locations: List[Location]) -> QtGui.QStandardItemModel:
 
     return model
 
-def filter_tree(model: QtGui.QStandardItemModel, text: str):
+def filter_tree(tree_view: QtWidgets.QTreeView, model: QtGui.QStandardItemModel, text: str):
     """
     Simple name/description filter that hides non-matching branches.
     Shows a parent if any descendant matches.
@@ -90,20 +90,24 @@ def filter_tree(model: QtGui.QStandardItemModel, text: str):
         any_child_match = False
         for row in range(item.rowCount()):
             child = item.child(row, 0)
-            child_match = apply(child)
-            any_child_match = any_child_match or child_match
+            if child:
+                child_match = apply(child)
+                any_child_match = any_child_match or child_match
+        
         visible = match_self or any_child_match
-        item.setHidden(not visible)
-        # Keep description column visibility aligned
-        sibling_desc = item.siblingAtColumn(1)
-        if sibling_desc.isValid():
-            model.itemFromIndex(sibling_desc).setHidden(not visible)
+        
+        # Hide/show rows using the tree view
+        index = item.index()
+        if index.isValid():
+            tree_view.setRowHidden(index.row(), index.parent(), not visible)
+        
         return visible
 
     # Apply to all top-level nodes
     for r in range(model.rowCount()):
         root_item = model.item(r, 0)
-        apply(root_item)
+        if root_item:
+            apply(root_item)
 
 # -----------------------
 # Main Window
@@ -173,7 +177,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusBar().showMessage("Select a location to see its NPCs. Hover a location for full description.")
 
     def on_search_text_changed(self, text: str):
-        filter_tree(self.model, text)
+        filter_tree(self.location_tree, self.model, text)
         # Keep expanded to show matching descendants
         self.location_tree.expandAll()
 
