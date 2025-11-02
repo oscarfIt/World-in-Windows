@@ -133,16 +133,25 @@ class ImageGenerator:
         else:
             raise ValueError("Unknown MODE")
         
+        # Save the image to the NPCs directory
+        npc_dir = Path("Media") / "NPCs"
+        npc_dir.mkdir(parents=True, exist_ok=True)  # Create directory if it doesn't exist
+        
+        # Create a safe filename from NPC name
+        safe_name = npc.name.replace(' ', '_').lower()
+        safe_name = "".join(c for c in safe_name if c.isalnum() or c in "._-")
+        image_path = npc_dir / f"{safe_name}.png"
+        
+        # Write the image file
+        with open(image_path, "wb") as f:
+            f.write(img_bytes)
+        
         # Check remaining credits after generation
-        # credits_left = get_credits_remaining()
-        # if credits_left is not None:
-        #     print(f"Credits remaining: {credits_left}")
-        # else:
-        #     print("Could not retrieve credits information")
-        new_image_path = Path("Media") / "NPCs"
-        file_name = f"{npc.name.replace(' ', '_')}".lower()
-        open(new_image_path / f"{file_name}.png", "wb").write(img_bytes)
-
-
-
-print("Saved out.png")
+        credits_left = self.get_credits_remaining()
+        if credits_left is not None:
+            print(f"Credits remaining: {credits_left}")
+        else:
+            print("Could not retrieve credits information")
+            
+        print(f"Portrait saved to: {image_path}")
+        return img_bytes

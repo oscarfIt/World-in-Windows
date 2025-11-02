@@ -331,8 +331,58 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         window.show()
 
     def generate_portrait(self):
-        image_generator = ImageGenerator()
-        image_generator.create_character_portrait(self.npc, ImageGenerationMode.STYLE_CONTROL)
+        """Generate an AI portrait for this NPC with loading dialog and auto-refresh"""
+        try:
+            # Show loading dialog
+            progress = QtWidgets.QProgressDialog("Generating portrait...", "Cancel", 0, 0, self)
+            progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
+            progress.setAutoClose(False)  # Don't auto-close so we control it
+            progress.setAutoReset(False)
+            progress.setCancelButton(None)  # Remove cancel button for simplicity
+            progress.show()
+            
+            # Process events to show the dialog immediately
+            QtWidgets.QApplication.processEvents()
+            
+            # Generate the portrait
+            image_generator = ImageGenerator()
+            image_generator.create_character_portrait(self.npc, ImageGenerationMode.CORE)
+            
+            # Close the progress dialog
+            progress.close()
+            
+            # Check if the portrait was actually created
+            portrait_path = _resolve_image_for_npc(self.npc)
+            if portrait_path and Path(portrait_path).exists():
+                # Portrait generated successfully - show success message
+                QtWidgets.QMessageBox.information(self, "Success", 
+                    f"Portrait generated successfully for {self.npc.name}!")
+                
+                # Reload the window to show the new portrait
+                self.reload_window()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Error", 
+                    "Portrait generation completed but image file was not found. Please check the Media/NPCs directory.")
+                    
+        except Exception as e:
+            # Make sure to close progress dialog on error
+            if 'progress' in locals():
+                progress.close()
+            QtWidgets.QMessageBox.critical(self, "Error", 
+                f"Failed to generate portrait:\n{str(e)}")
+
+    def reload_window(self):
+        """Reload the NPC detail window to show updated portrait"""
+        # Store the current window position and size
+        geometry = self.geometry()
+        
+        # Create a new window with the same NPC
+        new_window = NPCDetailWindow(self.npc, self.kb, self.parent())
+        new_window.setGeometry(geometry)  # Keep same position/size
+        new_window.show()
+        
+        # Close the current window
+        self.close()
         
 
 class StatBlockWindow(QtWidgets.QMainWindow):
