@@ -21,7 +21,7 @@ from pc_classes import PcClass
 
 # --- Media paths  ---
 MEDIA_ROOT = Path("Media")
-NPC_PORTRAITS = MEDIA_ROOT / "NPC"
+NPC_PORTRAITS = MEDIA_ROOT / "NPCs"
 SPELL_ICONS = MEDIA_ROOT / "Spells"
 ITEM_ICONS = MEDIA_ROOT / "Items"
 ABILITY_ICONS = MEDIA_ROOT / "Abilities"
@@ -31,6 +31,7 @@ def _resolve_image_for_npc(npc) -> Path | None:
         p = getattr(npc, attr, None)
         if p and Path(p).exists():
             return Path(p)
+    guess_file_name = npc.name.replace(" ", "_").lower()
     guess = NPC_PORTRAITS / f"{npc.name}.png"
     return guess if guess.exists() else None
 
@@ -41,7 +42,8 @@ def _resolve_image_for_entry(entry) -> Path | None:
         "ability": ABILITY_ICONS,
         "npc": NPC_PORTRAITS,
     }.get(entry.kind, MEDIA_ROOT)
-    guess = folder / f"{entry.name}.png"
+    guess_file_name = entry.name.replace(" ", "_").lower()
+    guess = folder / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
 # --- Tree model utilities ---
