@@ -92,7 +92,7 @@ class ImageGenerator:
         resp.raise_for_status()
         return resp.content  # bytes of PNG
 
-    def create_character_portrait(self, npc: NPC, mode: ImageGenerationMode) -> bytes:
+    def create_character_portrait(self, npc: NPC, mode: ImageGenerationMode):
 
         img_bytes = bytes()
         prompt = npc.to_prompt()
@@ -139,8 +139,10 @@ class ImageGenerator:
         #     print(f"Credits remaining: {credits_left}")
         # else:
         #     print("Could not retrieve credits information")
-        return img_bytes
+        new_image_path = Path("Media") / "NPCs"
+        file_name = f"{npc.name.replace(' ', '_')}".lower()
+        open(new_image_path / f"{file_name}.png", "wb").write(img_bytes)
 
 
-open("out.png", "wb").write(img_bytes)
+
 print("Saved out.png")

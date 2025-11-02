@@ -13,6 +13,7 @@ from pathlib import Path
 
 from knowledge_base import KBEntry, KnowledgeBase
 from repo import Repo
+from image_generation import ImageGenerator, ImageGenerationMode
 
 from location import Location
 from npc import NPC
@@ -286,6 +287,11 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                 # scale to a smaller width for this dialog; keeps aspect ratio
                 img_label.setPixmap(pix.scaledToWidth(200, QtCore.Qt.TransformationMode.SmoothTransformation))
                 form.addRow("Portrait:", img_label)
+        else:
+            generate_btn = QtWidgets.QPushButton("Generate Portrait")
+            generate_btn.setToolTip("Generate an AI portrait for this NPC")
+            generate_btn.clicked.connect(self.generate_portrait)
+            form.addRow("Portrait:", generate_btn)
 
         form.addRow("Name:", label(npc.name))
         form.addRow("Race:", label(npc.race.value))
@@ -323,6 +329,11 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             return
         window = StatBlockWindow(self.npc.stat_block, self.kb, self.npc.additional_traits, self)
         window.show()
+
+    def generate_portrait(self):
+        image_generator = ImageGenerator()
+        image_generator.create_character_portrait(self.npc, ImageGenerationMode.STYLE_CONTROL)
+        
 
 class StatBlockWindow(QtWidgets.QMainWindow):
     def __init__(self, sb: StatBlock, kb: KnowledgeBase, traits: list | None = None, parent=None):
