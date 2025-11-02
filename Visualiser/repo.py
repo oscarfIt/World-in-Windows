@@ -114,6 +114,7 @@ class Repo:
                     npc = NPC(
                         name=row["name"],
                         race=_parse_enum(Race, row["race"]),
+                        sex=row.get("sex", ""),
                         alignment=_parse_enum(Alignment, row["alignment"]),
                         stat_block=sb if sb is not None else StatBlock(),
                         appearance=row.get("appearance", ""),
@@ -125,6 +126,7 @@ class Repo:
                     npc = NPC(
                         name=row["name"],
                         race=_parse_enum(Race, row["race"]),
+                        sex=row.get("sex", ""),
                         alignment=_parse_enum(Alignment, row["alignment"]),
                         stat_block=sb if sb is not None else StatBlock(),
                         appearance=row.get("appearance", ""),

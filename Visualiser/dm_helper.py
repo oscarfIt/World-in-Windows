@@ -273,6 +273,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
 
         form.addRow("Name:", label(npc.name))
         form.addRow("Race:", label(npc.race.value))
+        form.addRow("Sex:", label(npc.sex))
         form.addRow("Alignment:", label(npc.alignment.value))
 
         # Appearance / Backstory as large wrapped labels

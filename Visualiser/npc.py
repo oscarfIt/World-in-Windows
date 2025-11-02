@@ -9,15 +9,17 @@ from stat_block import StatBlock
 class NPC:
     name: str
     race: Race
+    sex: str
     alignment: Alignment
     stat_block: StatBlock
     appearance: str
     backstory: str
     additional_traits: List[str]
 
-    def __init__(self, name: str, race: Race, alignment: Alignment, stat_block: StatBlock, appearance: str, backstory: str, additional_traits: Optional[List[str]] = None):
+    def __init__(self, name: str, race: Race, sex: str, alignment: Alignment, stat_block: StatBlock, appearance: str, backstory: str, additional_traits: Optional[List[str]] = None):
         self.name = name
         self.race = race
+        self.sex = sex
         self.alignment = alignment
         self.stat_block = stat_block
         self.appearance = appearance
@@ -28,6 +30,7 @@ class NPC:
         return {
             "name": self.name,
             "race": self.race.value,
+            "sex": self.sex,
             "alignment": self.alignment.value,
             "appearance": self.appearance[:140] + ("..." if len(self.appearance) > 140 else "")
         }
