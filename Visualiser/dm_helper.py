@@ -32,7 +32,7 @@ def _resolve_image_for_npc(npc) -> Path | None:
         if p and Path(p).exists():
             return Path(p)
     guess_file_name = npc.name.replace(" ", "_").lower()
-    guess = NPC_PORTRAITS / f"{npc.name}.png"
+    guess = NPC_PORTRAITS / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
 def _resolve_image_for_entry(entry) -> Path | None:
@@ -277,15 +277,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             )
             return lab
 
-        form.addRow("Name:", label(npc.name))
-        form.addRow("Race:", label(npc.race.value))
-        form.addRow("Sex:", label(npc.sex))
-        form.addRow("Alignment:", label(npc.alignment.value))
-
-        # Appearance / Backstory as large wrapped labels
-        form.addRow("Appearance:", label(npc.appearance or ""))
-        form.addRow("Backstory:", label(npc.backstory or ""))
-
         portrait_path = _resolve_image_for_npc(npc)
         if portrait_path:
             img_label = QtWidgets.QLabel()
@@ -295,6 +286,15 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                 # scale to a sensible width for this dialog; keeps aspect
                 img_label.setPixmap(pix.scaledToWidth(360, QtCore.Qt.TransformationMode.SmoothTransformation))
                 form.addRow("Portrait:", img_label)
+
+        form.addRow("Name:", label(npc.name))
+        form.addRow("Race:", label(npc.race.value))
+        form.addRow("Sex:", label(npc.sex))
+        form.addRow("Alignment:", label(npc.alignment.value))
+
+        # Appearance / Backstory as large wrapped labels
+        form.addRow("Appearance:", label(npc.appearance or ""))
+        form.addRow("Backstory:", label(npc.backstory or ""))
 
         # StatBlock info (simple for now)
         sb = npc.stat_block
