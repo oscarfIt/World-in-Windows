@@ -22,8 +22,30 @@ class Location:
         if npc in self.npcs:
             self.npcs.remove(npc)
 
+    def propagate_npcs_to_parent(self):
+        """Propagate this location's NPCs to its parent location if they're not already there."""
+        if self.parent is not None:
+            for npc in self.npcs:
+                if npc not in self.parent.npcs:
+                    self.parent.npcs.append(npc)
+            # Recursively propagate up the chain
+            self.parent.propagate_npcs_to_parent()
+
     def get_npc_names(self) -> List[str]:
         return [npc.name for npc in self.npcs]
+    
+    def get_all_npcs_with_inheritance(self) -> List[NPC]:
+        """Get all NPCs including those inherited from child locations."""
+        all_npcs = list(self.npcs)  # Start with direct NPCs
+        
+        # Add NPCs from all child locations recursively
+        for child in self.children:
+            child_npcs = child.get_all_npcs_with_inheritance()
+            for npc in child_npcs:
+                if npc not in all_npcs:
+                    all_npcs.append(npc)
+        
+        return all_npcs
 
     def add_child(self, child: "Location"):
         """Nest a child location under this location."""
