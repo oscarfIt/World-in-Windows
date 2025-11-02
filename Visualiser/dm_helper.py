@@ -430,6 +430,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         form.addRow("Name:", label(npc.name))
         form.addRow("Race:", label(npc.race.value))
         form.addRow("Sex:", label(npc.sex))
+        form.addRow("Age:", label(npc.age))
         form.addRow("Alignment:", label(npc.alignment.value))
 
         # Appearance / Backstory as large wrapped labels
@@ -880,6 +881,10 @@ class AddNPCDialog(QtWidgets.QDialog):
         self.sex_combo.addItems(["Male", "Female", "Non-binary", "Other"])
         self.sex_combo.setEditable(True)  # Allow custom input
         form.addRow("Sex:", self.sex_combo)
+
+        self.age_field = QtWidgets.QLineEdit()
+        self.age_field.setPlaceholderText("Describe the NPC's age...")
+        form.addRow("Age:", self.age_field)
         
         # Alignment field
         self.alignment_combo = QtWidgets.QComboBox()
@@ -1019,6 +1024,7 @@ class AddNPCDialog(QtWidgets.QDialog):
                 name=self.name_field.text().strip(),
                 race=race,
                 sex=self.sex_combo.currentText().strip(),
+                age=self.age_field.text().strip(),
                 alignment=alignment,
                 stat_block=stat_block,
                 appearance=self.appearance_field.toPlainText().strip(),
@@ -1083,6 +1089,7 @@ class AddNPCDialog(QtWidgets.QDialog):
             "name": npc.name,
             "race": npc.race.value,
             "sex": npc.sex,
+            "age": npc.age,
             "alignment": npc.alignment.value,
             "stat_block": stat_block_data,
             "appearance": npc.appearance,

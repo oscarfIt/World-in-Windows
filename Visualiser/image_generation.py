@@ -53,6 +53,7 @@ class ImageGenerator:
             "image": ("style_ref.png", open(style_image_path, "rb"), "image/png"),
             # IMPORTANT: keep text fields in `files` as (None, value) to force multipart/form-data
             "prompt": (None, prompt),
+            "negative_prompt": (None, "blurry, watermark, text, photo-realistic, realism"),
             "output_format": (None, "png"),
         }
         if seed is not None:
@@ -109,7 +110,7 @@ class ImageGenerator:
             # Put ALL form fields in `files` as (None, value) tuples to force multipart
             files = {
                 "prompt": (None, prompt),
-                "negative_prompt": (None, "blurry, watermark, text, photo-realistic"),
+                "negative_prompt": (None, "blurry, watermark, text, photo-realistic, realism"),
                 "output_format": (None, "png"),     # png | jpeg | webp
                 "aspect_ratio": (None, "3:2"),      # 1:1, 3:4, 4:3, 9:16, 16:9
                 "seed": (None, "12345"),
