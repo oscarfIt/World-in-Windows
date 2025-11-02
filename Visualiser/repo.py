@@ -68,20 +68,6 @@ class Repo:
             return []
         return json.loads(p.read_text(encoding="utf-8"))
 
-    # def _load_list(self, filename: str, cls: Type[T]) -> List[T]:
-    #     p = self.data_dir / filename
-    #     if not p.exists():
-    #         return []
-    #     raw = json.loads(p.read_text(encoding="utf-8"))
-    #     out: List[T] = []
-    #     for i, d in enumerate(raw):
-    #         try:
-    #             # tolerate missing fields; dataclass defaults handle the rest
-    #             out.append(cls(**d))
-    #         except TypeError as e:
-    #             print(f"[WARN] Skipping {filename}[{i}]: {e}")
-    #     return out
-
     def _load_list(self, filename: str, cls):
         raw = self._read_json(filename)
         out = []
