@@ -842,9 +842,174 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         window.show()
     
     def add_npc(self):
-        """Add a new NPC (placeholder for now)"""
-        QtWidgets.QMessageBox.information(self, "Add NPC", 
-            "Add NPC functionality will be implemented shortly!")
+        """Add a new NPC"""
+        dialog = AddNPCDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Refresh the NPCs list to show the new NPC
+            self.populate_npcs()
+
+class AddNPCDialog(QtWidgets.QDialog):
+    """Dialog for adding a new NPC"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add New NPC")
+        self.resize(500, 700)
+        
+        # Apply theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+        
+        # Create layout
+        layout = QtWidgets.QVBoxLayout(self)
+        
+        # Create form
+        form_widget = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(form_widget)
+        
+        # Name field
+        self.name_field = QtWidgets.QLineEdit()
+        self.name_field.setPlaceholderText("Enter NPC name...")
+        form.addRow("Name*:", self.name_field)
+        
+        # Race field
+        self.race_combo = QtWidgets.QComboBox()
+        from race import Race
+        for race in Race:
+            self.race_combo.addItem(race.value, race)
+        form.addRow("Race*:", self.race_combo)
+        
+        # Sex field
+        self.sex_combo = QtWidgets.QComboBox()
+        self.sex_combo.addItems(["Male", "Female", "Non-binary", "Other"])
+        self.sex_combo.setEditable(True)  # Allow custom input
+        form.addRow("Sex:", self.sex_combo)
+        
+        # Alignment field
+        self.alignment_combo = QtWidgets.QComboBox()
+        from alignment import Alignment
+        for alignment in Alignment:
+            self.alignment_combo.addItem(alignment.value, alignment)
+        form.addRow("Alignment*:", self.alignment_combo)
+        
+        # Stat Block field (simplified for now)
+        self.stat_block_field = QtWidgets.QLineEdit()
+        self.stat_block_field.setPlaceholderText("e.g., Commoner, Guard, Noble...")
+        form.addRow("Stat Block:", self.stat_block_field)
+        
+        # Appearance field
+        self.appearance_field = QtWidgets.QTextEdit()
+        self.appearance_field.setPlaceholderText("Describe the NPC's physical appearance...")
+        self.appearance_field.setMaximumHeight(100)
+        form.addRow("Appearance:", self.appearance_field)
+        
+        # Backstory field
+        self.backstory_field = QtWidgets.QTextEdit()
+        self.backstory_field.setPlaceholderText("Describe the NPC's background and history...")
+        self.backstory_field.setMaximumHeight(120)
+        form.addRow("Backstory:", self.backstory_field)
+        
+        # Additional traits field
+        self.traits_field = QtWidgets.QTextEdit()
+        self.traits_field.setPlaceholderText("Additional traits (one per line)...")
+        self.traits_field.setMaximumHeight(80)
+        form.addRow("Additional Traits:", self.traits_field)
+        
+        layout.addWidget(form_widget)
+        
+        # Add note about required fields
+        note_label = QtWidgets.QLabel("* Required fields")
+        note_label.setStyleSheet("color: #888; font-size: 11px;")
+        layout.addWidget(note_label)
+        
+        # Buttons
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Save |
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.save_npc)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        
+        # Focus on name field
+        self.name_field.setFocus()
+    
+    def save_npc(self):
+        """Save the new NPC to npcs.json"""
+        try:
+            # Validate required fields
+            if not self.name_field.text().strip():
+                QtWidgets.QMessageBox.warning(self, "Validation Error", "Name is required!")
+                return
+            
+            # Get selected race and alignment
+            race = self.race_combo.currentData()
+            alignment = self.alignment_combo.currentData()
+            
+            # Create a basic stat block (we'll improve this later)
+            from stat_block import StatBlock
+            stat_block_name = self.stat_block_field.text().strip() or "Commoner"
+            stat_block = StatBlock(stat_block_name)
+            
+            # Parse additional traits
+            traits_text = self.traits_field.toPlainText().strip()
+            traits = [line.strip() for line in traits_text.split('\n') if line.strip()] if traits_text else []
+            
+            # Create NPC object
+            npc = NPC(
+                name=self.name_field.text().strip(),
+                race=race,
+                sex=self.sex_combo.currentText().strip(),
+                alignment=alignment,
+                stat_block=stat_block,
+                appearance=self.appearance_field.toPlainText().strip(),
+                backstory=self.backstory_field.toPlainText().strip(),
+                additional_traits=traits
+            )
+            
+            # Save to JSON file
+            self.save_npc_to_json(npc)
+            
+            QtWidgets.QMessageBox.information(self, "Success", 
+                f"NPC '{npc.name}' has been saved successfully!")
+            self.accept()
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", 
+                f"Failed to save NPC:\n{str(e)}")
+    
+    def save_npc_to_json(self, npc: NPC):
+        """Save the NPC to npcs.json file"""
+        import json
+        from pathlib import Path
+        
+        # Path to npcs.json (assuming it's in the same directory as the script)
+        npcs_file = Path("npcs.json")
+        
+        # Load existing NPCs
+        if npcs_file.exists():
+            with open(npcs_file, 'r', encoding='utf-8') as f:
+                npcs_data = json.load(f)
+        else:
+            npcs_data = []
+        
+        # Convert NPC to dictionary format
+        npc_dict = {
+            "name": npc.name,
+            "race": npc.race.value,
+            "sex": npc.sex,
+            "alignment": npc.alignment.value,
+            "stat_block": npc.stat_block.display_name,
+            "appearance": npc.appearance,
+            "backstory": npc.backstory,
+            "additional_traits": npc.additional_traits
+        }
+        
+        # Add to list
+        npcs_data.append(npc_dict)
+        
+        # Save back to file
+        with open(npcs_file, 'w', encoding='utf-8') as f:
+            json.dump(npcs_data, f, indent=2, ensure_ascii=False)
 
 class EntryDetailDialog(QtWidgets.QDialog):
     """Click-through dialog with full description."""
