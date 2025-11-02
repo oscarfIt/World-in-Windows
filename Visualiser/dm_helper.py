@@ -373,14 +373,177 @@ class MainWindow(QtWidgets.QMainWindow):
         """Show NPCs browser window"""
         npcs_window = NPCsBrowserWindow(self.kb, self)
         npcs_window.show()
-    
-    def show_spells(self):
-        """Show spells browser (placeholder)"""
-        QtWidgets.QMessageBox.information(self, "Spells", "Spells browser functionality coming soon!")
-    
+
     def show_items(self):
         """Show items browser (placeholder)"""
         QtWidgets.QMessageBox.information(self, "Items", "Items browser functionality coming soon!")
+    
+    def show_spells(self):
+        """Show spells browser window"""
+        spells_window = SpellsBrowserWindow(self.kb, self)
+        spells_window.show()
+# --- Spells Browser and Detail Windows ---
+class SpellsBrowserWindow(QtWidgets.QMainWindow):
+    """Window for browsing all Spells in the campaign"""
+    def __init__(self, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.kb = kb
+        self.setWindowTitle("Spells Browser")
+        self.resize(800, 600)
+
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel("All Spells")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        layout.addLayout(title_layout)
+
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search Spells...")
+        self.search.textChanged.connect(self.filter_spells)
+        layout.addWidget(self.search)
+
+        # Spells list
+        self.spells_list = QtWidgets.QListWidget()
+        self.spells_list.itemDoubleClicked.connect(self.open_spell_detail)
+        self.spells_list.setSpacing(2)
+        self.spells_list.setUniformItemSizes(True)
+        layout.addWidget(self.spells_list)
+
+        # Populate with spells
+        self.populate_spells()
+
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+
+        self.setCentralWidget(central_widget)
+
+    def populate_spells(self):
+        """Populate the list with all Spells from the repository"""
+        self.spells_list.clear()
+        try:
+            from repo import Repo
+            repo = Repo()
+            repo.load_all()
+            all_spells = list(repo.spells)
+        except Exception as e:
+            print(f"Failed to load spells from repo: {e}")
+            all_spells = []
+        all_spells.sort(key=lambda x: x.name.lower())
+        for spell in all_spells:
+            item = QtWidgets.QListWidgetItem(spell.name)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, spell)
+            item.setSizeHint(QtCore.QSize(0, 32))
+            tooltip = self.create_spell_tooltip(spell)
+            item.setToolTip(tooltip)
+            self.spells_list.addItem(item)
+
+    def create_spell_tooltip(self, spell) -> str:
+        desc = spell.description or "No description"
+        if len(desc) > 160:
+            desc = desc[:160].rstrip() + "…"
+        return (f"{spell.name}\nLevel: {spell.level}  School: {spell.school}\n\n{desc}")
+
+    def filter_spells(self, text: str):
+        text = text.lower().strip()
+        for i in range(self.spells_list.count()):
+            item = self.spells_list.item(i)
+            spell = item.data(QtCore.Qt.ItemDataRole.UserRole)
+            searchable_text = " ".join([
+                spell.name,
+                str(spell.level),
+                spell.school,
+                spell.casting_time,
+                spell.range,
+                spell.components,
+                spell.duration,
+                spell.description or "",
+                " ".join(getattr(spell, "tags", [])),
+                " ".join(getattr(spell, "aliases", [])),
+            ]).lower()
+            item.setHidden(text not in searchable_text if text else False)
+
+    def open_spell_detail(self, item: QtWidgets.QListWidgetItem):
+        spell = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if not spell:
+            return
+        window = SpellDetailWindow(spell, self.kb, self)
+        window.show()
+
+
+class SpellDetailWindow(QtWidgets.QMainWindow):
+    def __init__(self, spell, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.spell = spell
+        self.kb = kb
+        self.setWindowTitle(f"Spell — {spell.name}")
+        self.resize(520, 520)
+
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(content)
+        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+
+        def label(text: str) -> QtWidgets.QLabel:
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            return lab
+
+        # Icon if available
+        icon_path = _resolve_image_for_entry(type('Entry', (), {'kind': 'spell', 'name': spell.name})())
+        if icon_path:
+            img_label = QtWidgets.QLabel()
+            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            pix = QtGui.QPixmap(str(icon_path))
+            if not pix.isNull():
+                img_label.setPixmap(pix.scaledToWidth(80, QtCore.Qt.TransformationMode.SmoothTransformation))
+                form.addRow("Icon:", img_label)
+
+        form.addRow("Name:", label(spell.name))
+        form.addRow("Level:", label(str(spell.level)))
+        form.addRow("School:", label(spell.school))
+        form.addRow("Casting Time:", label(spell.casting_time))
+        form.addRow("Range:", label(spell.range))
+        form.addRow("Components:", label(spell.components))
+        form.addRow("Duration:", label(spell.duration))
+        form.addRow("Tags:", label(", ".join(getattr(spell, "tags", []))))
+        form.addRow("Aliases:", label(", ".join(getattr(spell, "aliases", []))))
+        form.addRow("Description:", label(spell.description or ""))
+
+        scroll.setWidget(content)
+
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.close)
+        btns.accepted.connect(self.close)
+
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+        layout.addWidget(scroll)
+        layout.addWidget(btns)
+        self.setCentralWidget(central_widget)
 
 class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
