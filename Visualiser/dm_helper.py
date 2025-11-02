@@ -15,14 +15,8 @@ from repo import Repo
 
 from location import Location
 from npc import NPC
-from race import Race
-from alignment import Alignment
-from stat_block import StatBlock  # placeholder
+from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass
-from stat_block import MonsterManual
-from spell import Spell
-from item import Item
-from class_action import ClassAction
 
 # -----------------------
 # Tree model utilities
@@ -297,13 +291,6 @@ class StatBlockWindow(QtWidgets.QMainWindow):
         self.sb = sb
         self.kb = kb
         self.traits = traits if traits is not None else []
-
-        # self.kb = KnowledgeBase()  
-
-        # self.kb.add("spell", "FireBall",
-        #             "A bright streak flashes to a point you choose then blossoms with a low roar into an explosion of flame (8d6 fire in a 20-ft radius, DEX save for half).")
-        # self.kb.add("ability", "Fuel The Fire",
-        #             "When an ally casts a fire spell within 5 m, you can ignite latent embers to empower the next fire effect you cast.")
         
         self._hover = HoverPreview(self)
 
