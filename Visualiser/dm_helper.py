@@ -519,7 +519,7 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             pix = QtGui.QPixmap(str(icon_path))
             if not pix.isNull():
-                img_label.setPixmap(pix.scaledToWidth(80, QtCore.Qt.TransformationMode.SmoothTransformation))
+                img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
                 form.addRow("Icon:", img_label)
 
         form.addRow("Name:", label(spell.name))
@@ -582,7 +582,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             pix = QtGui.QPixmap(str(portrait_path))
             if not pix.isNull():
                 # scale to a smaller width for this dialog; keeps aspect ratio
-                img_label.setPixmap(pix.scaledToWidth(200, QtCore.Qt.TransformationMode.SmoothTransformation))
+                img_label.setPixmap(pix.scaledToWidth(300, QtCore.Qt.TransformationMode.SmoothTransformation))
                 form.addRow("Portrait:", img_label)
         else:
             generate_btn = QtWidgets.QPushButton("Generate Portrait")
