@@ -59,19 +59,16 @@ class KnowledgeBase:
 
     def ingest(self, spells: Iterable[Spell], items: Iterable[Item], actions: Iterable[ClassAction]):
         for s in spells:
-            print(s)
             self.add_entry(self.create_kb_entry(s))
             for a in getattr(s, "aliases", []):
                 self.add_alias(a, s.name)
 
         for it in items:
-            print(it)
             self.add_entry(self.create_kb_entry(it))
             for a in getattr(it, "aliases", []):
                 self.add_alias(a, it.name)
 
         for ac in actions:
-            print(ac)
             self.add_entry(self.create_kb_entry(ac))
             for a in getattr(ac, "aliases", []):
                 self.add_alias(a, ac.name)
