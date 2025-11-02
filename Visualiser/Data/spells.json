@@ -1,0 +1,24 @@
+[
+  {
+    "name": "FireBall",
+    "level": 3,
+    "school": "Evocation",
+    "casting_time": "1 action",
+    "range": "150 feet",
+    "components": "V,S,M (a tiny ball of bat guano and sulfur)",
+    "duration": "Instantaneous",
+    "description": "A bright streak flashes to a point you choose then blossoms into an explosion of flame (8d6 fire in a 20-ft radius, DEX save for half).",
+    "aliases": ["Fire Ball", "Fireball"]
+  },
+  {
+    "name": "Necrotic Rebuke",
+    "level": 2,
+    "school": "Evocation",
+    "casting_time": "1 action",
+    "range": "200ft",
+    "components": "V, S",
+    "duration": "Instant",
+    "description": "You lash out at your attacker's life force after being struck. The attacker must make a Dexterity saving throw. On a failed save, the attacker takes 2d10 necrotic damage, or half as much on a successful one.",
+    "aliases": []
+  }
+]
