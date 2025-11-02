@@ -27,7 +27,7 @@ class NPC:
         self.additional_traits = additional_traits if additional_traits is not None else []
 
     def to_prompt(self) -> str:
-        base_prompt = f"A character portrait of a {self.race.value} {self.stat_block.display_name} who is {self.alignment.value} aligned."
+        base_prompt = f"A character portrait of a {self.race.value} who is {self.alignment.value} aligned."
         appearance_prompt = f" Appearance details: {self.appearance}."
         return base_prompt + appearance_prompt
 
