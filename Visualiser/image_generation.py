@@ -156,3 +156,4 @@ class ImageGenerator:
             
         print(f"Portrait saved to: {image_path}")
         return img_bytes
+

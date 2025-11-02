@@ -212,6 +212,7 @@ class Repo:
             pc = cls()
             pc.name = PcClassName[cls_name] if cls_name in PcClassName.__members__ else PcClassName.Wizard
             pc.level = level
+            pc.display_name = f"{pc.name.value}, Level {pc.level}"
             return pc
         # Fallback to empty StatBlock
         return StatBlock()

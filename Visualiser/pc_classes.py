@@ -33,7 +33,7 @@ class PcClass(StatBlock):
 
 class Barbarian(PcClass):
 
-    def __init__(self, level: int =1):
+    def __init__(self, level: int = 1):
         super().__init__(PcClassName.Barbarian, level)
 
 class Bard(PcClass):

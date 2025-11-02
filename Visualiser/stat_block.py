@@ -10,7 +10,7 @@ class StatBlock:
     display_name: str
 
     def __init__(self, name: str):
-        self.display_name =name
+        self.display_name = name
 
     def display(self):
         pass
