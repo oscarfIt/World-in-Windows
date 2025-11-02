@@ -151,6 +151,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.npc_list = QtWidgets.QListWidget()
         self.npc_list.itemDoubleClicked.connect(self.open_npc_detail)
 
+        # Create menu bar
+        self.create_menu_bar()
+
         # Build model
         self.model = build_tree_model(self.locations)
         self.proxy = QtCore.QSortFilterProxyModel()  # not filtering via proxy; we keep it for header resize behavior
@@ -247,6 +250,136 @@ class MainWindow(QtWidgets.QMainWindow):
                 f"Race: {npc.race.value}\n"
                 f"Alignment: {npc.alignment.value}\n\n"
                 f"{appearance}")
+
+    def create_menu_bar(self):
+        """Create the menu bar with File, Edit, NPCs, Spells, Items, and Help menus"""
+        menubar = self.menuBar()
+        
+        # File Menu
+        file_menu = menubar.addMenu("&File")
+        
+        refresh_action = QtGui.QAction("&Refresh Data", self)
+        refresh_action.setShortcut("F5")
+        refresh_action.setStatusTip("Reload all location and NPC data")
+        refresh_action.triggered.connect(self.refresh_data)
+        file_menu.addAction(refresh_action)
+        
+        file_menu.addSeparator()
+        
+        export_action = QtGui.QAction("&Export...", self)
+        export_action.setShortcut("Ctrl+E")
+        export_action.setStatusTip("Export data to file")
+        export_action.triggered.connect(self.export_data)
+        file_menu.addAction(export_action)
+        
+        file_menu.addSeparator()
+        
+        exit_action = QtGui.QAction("E&xit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.setStatusTip("Exit the application")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+        
+        # Edit Menu
+        edit_menu = menubar.addMenu("&Edit")
+        
+        find_action = QtGui.QAction("&Find...", self)
+        find_action.setShortcut("Ctrl+F")
+        find_action.setStatusTip("Focus on search bar")
+        find_action.triggered.connect(self.focus_search)
+        edit_menu.addAction(find_action)
+        
+        clear_search_action = QtGui.QAction("&Clear Search", self)
+        clear_search_action.setShortcut("Escape")
+        clear_search_action.setStatusTip("Clear the search filter")
+        clear_search_action.triggered.connect(self.clear_search)
+        edit_menu.addAction(clear_search_action)
+        
+        # NPCs Menu
+        npcs_menu = menubar.addMenu("&NPCs")
+        
+        browse_npcs_action = QtGui.QAction("&Browse All NPCs", self)
+        browse_npcs_action.setShortcut("Ctrl+N")
+        browse_npcs_action.setStatusTip("Browse all NPCs in the campaign")
+        browse_npcs_action.triggered.connect(self.show_npcs)
+        npcs_menu.addAction(browse_npcs_action)
+        
+        # Spells Menu
+        spells_menu = menubar.addMenu("&Spells")
+        
+        browse_spells_action = QtGui.QAction("&Browse Spells", self)
+        browse_spells_action.setShortcut("Ctrl+S")
+        browse_spells_action.setStatusTip("Browse spells and magic")
+        browse_spells_action.triggered.connect(self.show_spells)
+        spells_menu.addAction(browse_spells_action)
+        
+        # Items Menu
+        items_menu = menubar.addMenu("&Items")
+        
+        browse_items_action = QtGui.QAction("&Browse Items", self)
+        browse_items_action.setShortcut("Ctrl+I")
+        browse_items_action.setStatusTip("Browse items and equipment")
+        browse_items_action.triggered.connect(self.show_items)
+        items_menu.addAction(browse_items_action)
+        
+        # Tools Menu
+        tools_menu = menubar.addMenu("&Tools")
+        
+        expand_all_action = QtGui.QAction("&Expand All", self)
+        expand_all_action.setShortcut("Ctrl+Plus")
+        expand_all_action.setStatusTip("Expand all location nodes")
+        expand_all_action.triggered.connect(self.location_tree.expandAll)
+        tools_menu.addAction(expand_all_action)
+        
+        collapse_all_action = QtGui.QAction("&Collapse All", self)
+        collapse_all_action.setShortcut("Ctrl+Minus")
+        collapse_all_action.setStatusTip("Collapse all location nodes")
+        collapse_all_action.triggered.connect(self.location_tree.collapseAll)
+        tools_menu.addAction(collapse_all_action)
+        
+        # Help Menu
+        help_menu = menubar.addMenu("&Help")
+        
+        about_action = QtGui.QAction("&About", self)
+        about_action.setStatusTip("About DM Helper")
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+
+    def refresh_data(self):
+        """Refresh all data from files"""
+        QtWidgets.QMessageBox.information(self, "Refresh", "Data refresh functionality coming soon!")
+    
+    def export_data(self):
+        """Export data to a file"""
+        QtWidgets.QMessageBox.information(self, "Export", "Export functionality coming soon!")
+    
+    def focus_search(self):
+        """Focus on the search bar"""
+        self.search.setFocus()
+        self.search.selectAll()
+    
+    def clear_search(self):
+        """Clear the search filter"""
+        self.search.clear()
+    
+    def show_about(self):
+        """Show about dialog"""
+        QtWidgets.QMessageBox.about(self, "About DM Helper", 
+            "DM Helper v1.0\n\n"
+            "A tool for managing D&D campaign locations and NPCs.\n\n"
+            "Built with PyQt6")
+        
+    def show_npcs(self):
+        """Show NPCs browser (placeholder)"""
+        QtWidgets.QMessageBox.information(self, "NPCs", "NPCs browser functionality coming soon!")
+    
+    def show_spells(self):
+        """Show spells browser (placeholder)"""
+        QtWidgets.QMessageBox.information(self, "Spells", "Spells browser functionality coming soon!")
+    
+    def show_items(self):
+        """Show items browser (placeholder)"""
+        QtWidgets.QMessageBox.information(self, "Items", "Items browser functionality coming soon!")
 
 class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
