@@ -19,7 +19,7 @@ from race import Race
 from alignment import Alignment
 from stat_block import StatBlock  # placeholder
 from pc_classes import PcClass
-from stat_block import MonMan
+from stat_block import MonsterManual
 from spell import Spell
 from item import Item
 from class_action import ClassAction
@@ -341,7 +341,7 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
 
-        elif isinstance(sb, MonMan):
+        elif isinstance(sb, MonsterManual):
             vbox.addWidget(label("Monster Manual Entry", bold=True))
 
             # Try to load the PNG page

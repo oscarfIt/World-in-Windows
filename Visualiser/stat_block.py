@@ -16,7 +16,7 @@ class StatBlock:
         pass
 
 
-class MonMan(StatBlock):
+class MonsterManual(StatBlock):
     monster_name: str
     image_path: str
 

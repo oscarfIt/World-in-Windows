@@ -8,7 +8,7 @@ from class_action import ClassAction
 from npc import NPC
 from location import Location
 
-from stat_block import StatBlock, MonMan
+from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass, PcClassName, Wizard, Sorcerer, Fighter, Bard, Cleric, Druid, Ranger, Rogue, Monk, Paladin, Warlock, Barbarian
 
 CLASS_MAP = {
@@ -190,6 +190,13 @@ class Repo:
                         if child not in parent.children:
                             parent.children.append(child)
 
+        # Fourth pass: propagate NPCs from child to parent locations
+        # Only propagate from leaf nodes (locations with no children) to avoid redundancy
+        leaf_locations = [loc for loc in loc_objs.values() if not getattr(loc, 'children', [])]
+        for loc in leaf_locations:
+            if hasattr(loc, 'propagate_npcs_to_parent'):
+                loc.propagate_npcs_to_parent()
+
         # Top-level locations (no parent)
         self.locations = [l for l in loc_objs.values() if getattr(l, "parent", None) is None]
 
@@ -199,9 +206,9 @@ class Repo:
         if not spec:
             return None
         t = spec.get("type", "").lower()
-        if t == "monman":
-            # The MonMan class will compose the image path from this name
-            return MonMan(spec["monster_name"])
+        if t == "monstermanual":
+            # The MonsterManual class will compose the image path from this name
+            return MonsterManual(spec["monster_name"])
         if t == "pc_class":
             cls_name = spec.get("class", "Wizard")
             level = int(spec.get("level", 1))
