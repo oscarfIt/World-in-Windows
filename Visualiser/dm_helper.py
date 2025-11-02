@@ -9,6 +9,7 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from typing import List, Optional
+from pathlib import Path
 
 from knowledge_base import KBEntry, KnowledgeBase
 from repo import Repo
@@ -18,9 +19,32 @@ from npc import NPC
 from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass
 
-# -----------------------
-# Tree model utilities
-# -----------------------
+# --- Media paths  ---
+MEDIA_ROOT = Path("Media")
+NPC_PORTRAITS = MEDIA_ROOT / "NPC"
+SPELL_ICONS = MEDIA_ROOT / "Spells"
+ITEM_ICONS = MEDIA_ROOT / "Items"
+ABILITY_ICONS = MEDIA_ROOT / "Abilities"
+
+def _resolve_image_for_npc(npc) -> Path | None:
+    for attr in ("portrait_path", "image_path"):
+        p = getattr(npc, attr, None)
+        if p and Path(p).exists():
+            return Path(p)
+    guess = NPC_PORTRAITS / f"{npc.name}.png"
+    return guess if guess.exists() else None
+
+def _resolve_image_for_entry(entry) -> Path | None:
+    folder = {
+        "spell": SPELL_ICONS,
+        "item": ITEM_ICONS,
+        "ability": ABILITY_ICONS,
+        "npc": NPC_PORTRAITS,
+    }.get(entry.kind, MEDIA_ROOT)
+    guess = folder / f"{entry.name}.png"
+    return guess if guess.exists() else None
+
+# --- Tree model utilities ---
 ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
 ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2   # NEW
 
@@ -103,9 +127,7 @@ def filter_tree(tree_view: QtWidgets.QTreeView, model: QtGui.QStandardItemModel,
         if root_item:
             apply(root_item)
 
-# -----------------------
-# Main Window
-# -----------------------
+# --- Main Window ---
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, locations: List[Location], kb: KnowledgeBase):
         super().__init__()
@@ -256,6 +278,16 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         # Appearance / Backstory as large wrapped labels
         form.addRow("Appearance:", label(npc.appearance or ""))
         form.addRow("Backstory:", label(npc.backstory or ""))
+
+        portrait_path = _resolve_image_for_npc(npc)
+        if portrait_path:
+            img_label = QtWidgets.QLabel()
+            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            pix = QtGui.QPixmap(str(portrait_path))
+            if not pix.isNull():
+                # scale to a sensible width for this dialog; keeps aspect
+                img_label.setPixmap(pix.scaledToWidth(360, QtCore.Qt.TransformationMode.SmoothTransformation))
+                form.addRow("Portrait:", img_label)
 
         # StatBlock info (simple for now)
         sb = npc.stat_block
@@ -465,19 +497,29 @@ class EntryDetailDialog(QtWidgets.QDialog):
         self.resize(420, 320)
         title = QtWidgets.QLabel(f"{entry.kind.title()}: {entry.name}")
         f = title.font(); f.setBold(True); title.setFont(f)
+
+        img_path = _resolve_image_for_entry(entry)
+        img_label = None
+        if img_path:
+            pm = QtGui.QPixmap(str(img_path))
+            if not pm.isNull():
+                img_label = QtWidgets.QLabel()
+                img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+                img_label.setPixmap(pm.scaledToWidth(360, QtCore.Qt.TransformationMode.SmoothTransformation))
+
         body = QtWidgets.QLabel(entry.description)
         body.setWordWrap(True)
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
         btns.rejected.connect(self.reject)
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(title)
+        if img_label:
+            layout.addWidget(img_label)
         layout.addWidget(body)
         layout.addWidget(btns)
 
 
-# -----------------------
-# App entry
-# -----------------------
+# --- App entry ---
 def main():
     import sys
 
