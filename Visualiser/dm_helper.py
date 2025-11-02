@@ -891,10 +891,17 @@ class AddNPCDialog(QtWidgets.QDialog):
             self.alignment_combo.addItem(alignment.value, alignment)
         form.addRow("Alignment*:", self.alignment_combo)
         
-        # Stat Block field (simplified for now)
-        self.stat_block_field = QtWidgets.QLineEdit()
-        self.stat_block_field.setPlaceholderText("e.g., Commoner, Guard, Noble...")
-        form.addRow("Stat Block:", self.stat_block_field)
+        # Stat Block fields - Type and Selection
+        self.stat_block_type_combo = QtWidgets.QComboBox()
+        self.stat_block_type_combo.addItems(["Monster Manual", "PC Class"])
+        self.stat_block_type_combo.currentTextChanged.connect(self.update_stat_block_options)
+        form.addRow("Stat Block Type:", self.stat_block_type_combo)
+        
+        self.stat_block_selection_combo = QtWidgets.QComboBox()
+        form.addRow("Stat Block:", self.stat_block_selection_combo)
+        
+        # Initialize with Monster Manual options
+        self.update_stat_block_options()
         
         # Appearance field
         self.appearance_field = QtWidgets.QTextEdit()
@@ -933,6 +940,48 @@ class AddNPCDialog(QtWidgets.QDialog):
         # Focus on name field
         self.name_field.setFocus()
     
+    def update_stat_block_options(self):
+        """Update the stat block selection combo based on the type selected"""
+        self.stat_block_selection_combo.clear()
+        
+        stat_block_type = self.stat_block_type_combo.currentText()
+        
+        if stat_block_type == "Monster Manual":
+            # Load Monster Manual files from Media/MonsterManual
+            try:
+                from pathlib import Path
+                monster_manual_dir = Path("Media") / "MonsterManual"
+                if monster_manual_dir.exists():
+                    # Get all image files (assuming they're the monster manual pages)
+                    image_files = []
+                    for ext in ['*.png', '*.jpg', '*.jpeg', '*.gif', '*.bmp']:
+                        image_files.extend(monster_manual_dir.glob(ext))
+                    
+                    # Sort and add to combo
+                    monster_names = sorted([f.stem for f in image_files])
+                    nice_monster_names = []
+                    for name in monster_names:
+                        nice_name = name.replace("_", " ").title()
+                        nice_monster_names.append(nice_name)
+                    self.stat_block_selection_combo.addItems(nice_monster_names)
+                else:
+                    self.stat_block_selection_combo.addItem("No Monster Manual files found")
+            except Exception as e:
+                self.stat_block_selection_combo.addItem(f"Error loading Monster Manual: {e}")
+                
+        elif stat_block_type == "PC Class":
+            # Load PC Classes
+            try:
+                from pc_classes import PcClassName
+                pc_classes = [pc_class.value for pc_class in PcClassName]
+                self.stat_block_selection_combo.addItems(sorted(pc_classes))
+            except Exception as e:
+                # Fallback to common D&D classes if enum not available
+                common_classes = ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", 
+                                "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", 
+                                "Warlock", "Wizard"]
+                self.stat_block_selection_combo.addItems(common_classes)
+    
     def save_npc(self):
         """Save the new NPC to npcs.json"""
         try:
@@ -945,10 +994,24 @@ class AddNPCDialog(QtWidgets.QDialog):
             race = self.race_combo.currentData()
             alignment = self.alignment_combo.currentData()
             
-            # Create a basic stat block (we'll improve this later)
-            from stat_block import StatBlock
-            stat_block_name = self.stat_block_field.text().strip() or "Commoner"
-            stat_block = StatBlock(stat_block_name)
+            # Create stat block based on selection
+            stat_block_type = self.stat_block_type_combo.currentText()
+            stat_block_selection = self.stat_block_selection_combo.currentText()
+            
+            if stat_block_type == "Monster Manual":
+                from stat_block import MonsterManual
+                file_name = stat_block_selection.replace(" ", "_").title() + ".png"
+                stat_block = MonsterManual(file_name=str(file_name))
+            else:  # PC Class
+                from pc_classes import PcClass, PcClassName
+                # Try to get the enum value, fallback to creating from string
+                try:
+                    pc_class_name = PcClassName(stat_block_selection)
+                except ValueError:
+                    # If the selection isn't in the enum, create a custom one
+                    pc_class_name = type('PcClassName', (), {'value': stat_block_selection})()
+                
+                stat_block = PcClass(name=pc_class_name, level=1)  # Default to level 1
             
             # Parse additional traits
             traits_text = self.traits_field.toPlainText().strip()
@@ -982,8 +1045,8 @@ class AddNPCDialog(QtWidgets.QDialog):
         import json
         from pathlib import Path
         
-        # Path to npcs.json (assuming it's in the same directory as the script)
-        npcs_file = Path("npcs.json")
+        # Path to npcs.json in the Data directory
+        npcs_file = Path("Data") / "npcs.json"
         
         # Load existing NPCs
         if npcs_file.exists():
@@ -993,18 +1056,42 @@ class AddNPCDialog(QtWidgets.QDialog):
             npcs_data = []
         
         # Convert NPC to dictionary format
+        # Handle different stat block types for JSON serialization
+        from stat_block import MonsterManual
+        from pc_classes import PcClass
+        
+        if isinstance(npc.stat_block, MonsterManual):
+            stat_block_data = {
+                "type": "monster_manual",
+                "monster_name": npc.stat_block.monster_name,
+                "image_path": str(npc.stat_block.image_path)  # Convert Path to string
+            }
+        elif isinstance(npc.stat_block, PcClass):
+            stat_block_data = {
+                "type": "pc_class",
+                "name": npc.stat_block.name.value if hasattr(npc.stat_block.name, 'value') else str(npc.stat_block.name),
+                "level": npc.stat_block.level
+            }
+        else:
+            # Fallback for other stat block types
+            stat_block_data = {
+                "type": "basic",
+                "name": npc.stat_block.display_name
+            }
+        
         npc_dict = {
             "name": npc.name,
             "race": npc.race.value,
             "sex": npc.sex,
             "alignment": npc.alignment.value,
-            "stat_block": npc.stat_block.display_name,
+            "stat_block": stat_block_data,
             "appearance": npc.appearance,
             "backstory": npc.backstory,
             "additional_traits": npc.additional_traits
         }
         
         # Add to list
+        print(f"Appending NPC data to JSON: {npc_dict}")
         npcs_data.append(npc_dict)
         
         # Save back to file
