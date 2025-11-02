@@ -370,8 +370,9 @@ class MainWindow(QtWidgets.QMainWindow):
             "Built with PyQt6")
         
     def show_npcs(self):
-        """Show NPCs browser (placeholder)"""
-        QtWidgets.QMessageBox.information(self, "NPCs", "NPCs browser functionality coming soon!")
+        """Show NPCs browser window"""
+        npcs_window = NPCsBrowserWindow(self.kb, self)
+        npcs_window.show()
     
     def show_spells(self):
         """Show spells browser (placeholder)"""
@@ -694,6 +695,156 @@ class HoverPreview(QtWidgets.QDialog):
         # Offset a bit so it doesn't sit under the cursor
         self.move(global_pos + QtCore.QPoint(12, 18))
         self.show()
+
+class NPCsBrowserWindow(QtWidgets.QMainWindow):
+    """Window for browsing all NPCs in the campaign"""
+    def __init__(self, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.kb = kb
+        self.setWindowTitle("NPCs Browser")
+        self.resize(800, 600)
+        
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+        
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+        
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel("All NPCs")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        
+        # Add NPC button
+        add_npc_btn = QtWidgets.QPushButton("Add NPC")
+        add_npc_btn.setToolTip("Create a new NPC")
+        add_npc_btn.clicked.connect(self.add_npc)
+        title_layout.addWidget(add_npc_btn)
+        
+        layout.addLayout(title_layout)
+        
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search NPCs...")
+        self.search.textChanged.connect(self.filter_npcs)
+        layout.addWidget(self.search)
+        
+        # NPCs list
+        self.npcs_list = QtWidgets.QListWidget()
+        self.npcs_list.itemDoubleClicked.connect(self.open_npc_detail)
+        
+        # Set proper spacing and sizing for list items
+        self.npcs_list.setSpacing(2)
+        self.npcs_list.setUniformItemSizes(True)
+        
+        layout.addWidget(self.npcs_list)
+        
+        # Populate with NPCs
+        self.populate_npcs()
+        
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+        
+        self.setCentralWidget(central_widget)
+        
+    def populate_npcs(self):
+        """Populate the list with all NPCs from the knowledge base"""
+        self.npcs_list.clear()
+        
+        # Get all NPCs from the knowledge base
+        all_npcs = []
+        
+        # Collect NPCs from kb.npcs if it exists
+        if hasattr(self.kb, 'npcs') and self.kb.npcs:
+            all_npcs.extend(self.kb.npcs.values())
+        
+        # Also check repo for npcs_by_id if we need to get them from there
+        try:
+            from repo import Repo
+            repo = Repo()
+            if hasattr(repo, 'npcs_by_id'):
+                repo.load_all()  # Make sure data is loaded
+                all_npcs.extend(repo.npcs_by_id.values())
+        except:
+            pass  # If repo access fails, just use what we have
+        
+        # Remove duplicates based on name
+        seen_names = set()
+        unique_npcs = []
+        for npc in all_npcs:
+            if npc.name not in seen_names:
+                unique_npcs.append(npc)
+                seen_names.add(npc.name)
+        
+        # Sort NPCs by name
+        unique_npcs.sort(key=lambda x: x.name.lower())
+        
+        # Add to list widget
+        for npc in unique_npcs:
+            item = QtWidgets.QListWidgetItem(npc.name)
+            item.setData(ROLE_NPC_PTR, npc)
+            
+            # Set proper item size for better spacing
+            item.setSizeHint(QtCore.QSize(0, 32))  # Height of 32 pixels for each item
+            
+            # Create tooltip with NPC info
+            tooltip = self.create_npc_tooltip(npc)
+            item.setToolTip(tooltip)
+            
+            self.npcs_list.addItem(item)
+    
+    def create_npc_tooltip(self, npc: NPC) -> str:
+        """Create a tooltip for an NPC"""
+        appearance = npc.appearance or "No appearance description"
+        if len(appearance) > 160:
+            appearance = appearance[:160].rstrip() + "…"
+        
+        return (f"{npc.name}\n"
+                f"Race: {npc.race.value}\n" 
+                f"Alignment: {npc.alignment.value}\n\n"
+                f"{appearance}")
+    
+    def filter_npcs(self, text: str):
+        """Filter the NPCs list based on search text"""
+        text = text.lower().strip()
+        
+        for i in range(self.npcs_list.count()):
+            item = self.npcs_list.item(i)
+            npc = item.data(ROLE_NPC_PTR)
+            
+            # Search in name, race, alignment, and appearance
+            searchable_text = " ".join([
+                npc.name,
+                npc.race.value,
+                npc.alignment.value,
+                npc.appearance or "",
+                npc.backstory or ""
+            ]).lower()
+            
+            # Show/hide based on search match
+            item.setHidden(text not in searchable_text if text else False)
+    
+    def open_npc_detail(self, item: QtWidgets.QListWidgetItem):
+        """Open the NPC detail window"""
+        npc = item.data(ROLE_NPC_PTR)
+        if not npc:
+            return
+        window = NPCDetailWindow(npc, self.kb, self)
+        window.show()
+    
+    def add_npc(self):
+        """Add a new NPC (placeholder for now)"""
+        QtWidgets.QMessageBox.information(self, "Add NPC", 
+            "Add NPC functionality will be implemented shortly!")
 
 class EntryDetailDialog(QtWidgets.QDialog):
     """Click-through dialog with full description."""
