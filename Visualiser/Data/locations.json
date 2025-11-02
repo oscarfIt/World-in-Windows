@@ -1,0 +1,57 @@
+[
+  {
+    "id": "port_virellon",
+    "name": "Port Virellon",
+    "description": "A rough but busy port ferrying commoners to the great city of Thalendir.",
+    "region": "Vaelen",
+    "tags": ["port", "urban", "seedy"],
+    "npc_ids": ["eldeth", "nox", "grovis"],
+    "children": ["virellon_boardwalk", "virellon_main_road"]
+  },
+  {
+    "id": "virellon_boardwalk",
+    "name": "Virellon Boardwalk",
+    "description": "A wooden walkway along the docks, bustling with vendors and fishermen.",
+    "region": "Vaelen",
+    "tags": ["boardwalk", "urban"],
+    "npc_ids": [],
+    "children": ["salty_hound", "gilded_mortar"]
+  },
+  {
+    "id": "salty_hound",
+    "name": "The Salty Hound",
+    "description": "A dockside tavern with creaky floors, strong ale, and stronger rumors.",
+    "region": "Port Virellon Docks",
+    "tags": ["tavern", "urban"],
+    "npc_ids": ["eldeth"],
+    "children": []
+  },
+  {
+    "id": "rusttooth",
+    "name": "Rusttooth Raider Camp",
+    "description": "A cluster of tables, bones, and fire filled to the absolute brim with goblins and hobgoblins. To the South-West of Port Virellon.",
+    "region": "Vaelen",
+    "tags": [],
+    "npc_ids": ["dull"],
+    "children": []
+  },
+  {
+    "id": "virellon_main_road",
+    "name": "Virellon Main Road",
+    "description": "The central lane through Port Virellon, from the residental district to the docks.",
+    "region": "Vaelen",
+    "tags": [],
+    "npc_ids": ["velra"],
+    "children": []
+  },
+  {
+    "id": "gilded_mortar",
+    "name": "The Gilded Mortar",
+    "description": "A prestigious apothecary known for its rare ingredients and skilled alchemists.",
+    "region": "Vaelen",
+    "tags": ["shop", "apothecary"],
+    "npc_ids": ["paul"],
+    "children": []
+  }
+
+]
