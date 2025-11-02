@@ -19,6 +19,8 @@ from location import Location
 from npc import NPC
 from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass
+from item import Item
+from spell import Spell
 
 # --- Media paths  ---
 MEDIA_ROOT = Path("Media")
@@ -375,8 +377,9 @@ class MainWindow(QtWidgets.QMainWindow):
         npcs_window.show()
 
     def show_items(self):
-        """Show items browser (placeholder)"""
-        QtWidgets.QMessageBox.information(self, "Items", "Items browser functionality coming soon!")
+        """Show items browser window"""
+        items_window = ItemsBrowserWindow(self.kb, self)
+        items_window.show()
     
     def show_spells(self):
         """Show spells browser window"""
@@ -453,7 +456,7 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
             item.setToolTip(tooltip)
             self.spells_list.addItem(item)
 
-    def create_spell_tooltip(self, spell) -> str:
+    def create_spell_tooltip(self, spell: Spell) -> str:
         desc = spell.description or "No description"
         if len(desc) > 160:
             desc = desc[:160].rstrip() + "…"
@@ -487,7 +490,7 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
 
 
 class SpellDetailWindow(QtWidgets.QMainWindow):
-    def __init__(self, spell, kb: KnowledgeBase, parent=None):
+    def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
         self.spell = spell
         self.kb = kb
@@ -544,6 +547,165 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         layout.addWidget(scroll)
         layout.addWidget(btns)
         self.setCentralWidget(central_widget)
+
+
+# --- Items Browser and Detail Windows ---
+class ItemsBrowserWindow(QtWidgets.QMainWindow):
+    """Window for browsing all Items in the campaign"""
+    def __init__(self, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.kb = kb
+        self.setWindowTitle("Items Browser")
+        self.resize(800, 600)
+
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel("All Items")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        layout.addLayout(title_layout)
+
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search Items...")
+        self.search.textChanged.connect(self.filter_items)
+        layout.addWidget(self.search)
+
+        # Items list
+        self.items_list = QtWidgets.QListWidget()
+        self.items_list.itemDoubleClicked.connect(self.open_item_detail)
+        self.items_list.setSpacing(2)
+        self.items_list.setUniformItemSizes(True)
+        layout.addWidget(self.items_list)
+
+        # Populate with items
+        self.populate_items()
+
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+
+        self.setCentralWidget(central_widget)
+
+    def populate_items(self):
+        """Populate the list with all Items from the repository"""
+        self.items_list.clear()
+        try:
+            from repo import Repo
+            repo = Repo()
+            repo.load_all()
+            all_items = list(repo.items)
+        except Exception as e:
+            print(f"Failed to load items from repo: {e}")
+            all_items = []
+        
+        all_items.sort(key=lambda x: x.name.lower())
+        for item in all_items:
+            item_widget = QtWidgets.QListWidgetItem(item.name)
+            item_widget.setData(QtCore.Qt.ItemDataRole.UserRole, item)
+            item_widget.setSizeHint(QtCore.QSize(0, 32))
+            tooltip = self.create_item_tooltip(item)
+            item_widget.setToolTip(tooltip)
+            self.items_list.addItem(item_widget)
+
+    def create_item_tooltip(self, item: Item) -> str:
+        desc = item.description or "No description"
+        if len(desc) > 160:
+            desc = desc[:160].rstrip() + "…"
+        attunement_text = " (Requires Attunement)" if item.attunement else ""
+        return (f"{item.name}\nRarity: {item.rarity}{attunement_text}\n\n{desc}")
+
+    def filter_items(self, text: str):
+        text = text.lower().strip()
+        for i in range(self.items_list.count()):
+            item_widget = self.items_list.item(i)
+            item = item_widget.data(QtCore.Qt.ItemDataRole.UserRole)
+            searchable_text = " ".join([
+                item.name,
+                item.rarity,
+                item.description or "",
+                " ".join(getattr(item, "tags", [])),
+                " ".join(getattr(item, "aliases", [])),
+                "attunement" if item.attunement else "",
+            ]).lower()
+            item_widget.setHidden(text not in searchable_text if text else False)
+
+    def open_item_detail(self, item_widget: QtWidgets.QListWidgetItem):
+        item = item_widget.data(QtCore.Qt.ItemDataRole.UserRole)
+        if not item:
+            return
+        window = ItemDetailWindow(item, self.kb, self)
+        window.show()
+
+
+class ItemDetailWindow(QtWidgets.QMainWindow):
+    def __init__(self, item, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.item = item
+        self.kb = kb
+        self.setWindowTitle(f"Item — {item.name}")
+        self.resize(520, 520)
+
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(content)
+        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+
+        def label(text: str) -> QtWidgets.QLabel:
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            return lab
+
+        # Icon if available
+        icon_path = _resolve_image_for_entry(type('Entry', (), {'kind': 'item', 'name': item.name})())
+        if icon_path:
+            img_label = QtWidgets.QLabel()
+            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            pix = QtGui.QPixmap(str(icon_path))
+            if not pix.isNull():
+                img_label.setPixmap(pix.scaledToWidth(80, QtCore.Qt.TransformationMode.SmoothTransformation))
+                form.addRow("Icon:", img_label)
+
+        form.addRow("Name:", label(item.name))
+        form.addRow("Rarity:", label(item.rarity))
+        form.addRow("Attunement:", label("Yes" if item.attunement else "No"))
+        form.addRow("Tags:", label(", ".join(getattr(item, "tags", []))))
+        form.addRow("Aliases:", label(", ".join(getattr(item, "aliases", []))))
+        form.addRow("Description:", label(item.description or ""))
+
+        scroll.setWidget(content)
+
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.close)
+        btns.accepted.connect(self.close)
+
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+        layout.addWidget(scroll)
+        layout.addWidget(btns)
+        self.setCentralWidget(central_widget)
+
 
 class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
