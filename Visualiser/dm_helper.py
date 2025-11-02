@@ -283,8 +283,8 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             pix = QtGui.QPixmap(str(portrait_path))
             if not pix.isNull():
-                # scale to a sensible width for this dialog; keeps aspect
-                img_label.setPixmap(pix.scaledToWidth(360, QtCore.Qt.TransformationMode.SmoothTransformation))
+                # scale to a smaller width for this dialog; keeps aspect ratio
+                img_label.setPixmap(pix.scaledToWidth(200, QtCore.Qt.TransformationMode.SmoothTransformation))
                 form.addRow("Portrait:", img_label)
 
         form.addRow("Name:", label(npc.name))
