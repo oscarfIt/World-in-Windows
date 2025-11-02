@@ -254,6 +254,10 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         self.kb = kb
         self.setWindowTitle(f"NPC — {npc.name}")
         self.resize(520, 520)
+        
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
 
         # Use a scroll area in case backstory is long
         scroll = QtWidgets.QScrollArea()
@@ -326,6 +330,10 @@ class StatBlockWindow(QtWidgets.QMainWindow):
         self.sb = sb
         self.kb = kb
         self.traits = traits if traits is not None else []
+        
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
         
         self._hover = HoverPreview(self)
 
@@ -525,6 +533,7 @@ class EntryDetailDialog(QtWidgets.QDialog):
 # --- App entry ---
 def main():
     import sys
+    from theme import DMHelperTheme  # Import our theme
 
     repo = Repo()
     repo.load_all()
@@ -534,6 +543,10 @@ def main():
     kb.ingest_npcs(repo.npcs_by_id.values())
 
     app = QtWidgets.QApplication(sys.argv)
+    
+    # Apply the D&D themed styling
+    DMHelperTheme.apply_to_application(app)
+    
     win = MainWindow(repo.locations, kb)
     win.show()
     sys.exit(app.exec())
