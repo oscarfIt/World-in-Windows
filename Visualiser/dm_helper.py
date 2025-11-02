@@ -295,8 +295,8 @@ class MainWindow(QtWidgets.QMainWindow):
         npc = item.data(ROLE_NPC_PTR)
         if not npc:
             return
-        dlg = NPCDetailDialog(npc, self.kb, self)
-        dlg.exec()
+        window = NPCDetailWindow(npc, self.kb, self)
+        window.show()
 
 
     def _npc_tooltip(self, npc: NPC) -> str:
@@ -308,7 +308,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 f"Alignment: {npc.alignment.value}\n\n"
                 f"{appearance}")
 
-class NPCDetailDialog(QtWidgets.QDialog):
+class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
         self.npc = npc
@@ -354,20 +354,23 @@ class NPCDetailDialog(QtWidgets.QDialog):
 
         # Buttons (Close only)
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.reject)
-        btns.accepted.connect(self.accept)
+        btns.rejected.connect(self.close)
+        btns.accepted.connect(self.close)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        # Central widget setup for QMainWindow
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
         layout.addWidget(scroll)
         layout.addWidget(btns)
+        self.setCentralWidget(central_widget)
 
     def open_statblock(self):
         if not self.npc.stat_block:
             return
-        dlg = StatBlockDialog(self.npc.stat_block, self.kb, self.npc.additional_traits, self)
-        dlg.exec()
+        window = StatBlockWindow(self.npc.stat_block, self.kb, self.npc.additional_traits, self)
+        window.show()
 
-class StatBlockDialog(QtWidgets.QDialog):
+class StatBlockWindow(QtWidgets.QMainWindow):
     def __init__(self, sb: StatBlock, kb: KnowledgeBase, traits: list | None = None, parent=None):
         super().__init__(parent)
         self.sb = sb
@@ -386,7 +389,9 @@ class StatBlockDialog(QtWidgets.QDialog):
         self.setWindowTitle("Stat Block")
         self.resize(640, 720)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        # Central widget setup for QMainWindow
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
 
         # Scrollable content
         scroll = QtWidgets.QScrollArea()
@@ -475,9 +480,12 @@ class StatBlockDialog(QtWidgets.QDialog):
         layout.addWidget(scroll)
 
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.reject)
-        btns.accepted.connect(self.accept)
+        btns.rejected.connect(self.close)
+        btns.accepted.connect(self.close)
         layout.addWidget(btns)
+        
+        # Set the central widget
+        self.setCentralWidget(central_widget)
 
     def _plain_label(self, text: str) -> QtWidgets.QLabel:
         lab = QtWidgets.QLabel(text)
