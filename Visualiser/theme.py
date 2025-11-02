@@ -119,7 +119,7 @@ class DMHelperTheme:
         QPushButton {{
             background-color: {c['accent_primary']};
             color: {c['text_primary']};
-            border: none;
+            border: 2px solid {c['accent_secondary']};
             padding: 10px 20px;
             border-radius: 6px;
             font-weight: bold;
@@ -129,15 +129,20 @@ class DMHelperTheme:
         QPushButton:hover {{
             background-color: {c['accent_secondary']};
             color: {c['background_primary']};
+            border-color: {c['text_primary']};
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
         }}
         
         QPushButton:pressed {{
             background-color: {c['selection']};
+            border-color: {c['accent_primary']};
+            padding: 11px 19px 9px 21px;  /* Slight offset for pressed effect */
         }}
         
         QPushButton:disabled {{
             background-color: {c['border']};
             color: {c['text_secondary']};
+            border-color: {c['text_secondary']};
         }}
         
         /* Splitter */
@@ -232,6 +237,20 @@ class DMHelperTheme:
         QDialogButtonBox QPushButton {{
             min-width: 100px;
             padding: 8px 16px;
+            border: 2px solid {c['border']};
+            border-radius: 6px;
+            background: {c['background_secondary']};
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }}
+        
+        QDialogButtonBox QPushButton:hover {{
+            background: {c['accent_secondary']};
+            border-color: {c['text_primary']};
+        }}
+        
+        QDialogButtonBox QPushButton:pressed {{
+            background: {c['selection']};
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }}
         """
     
