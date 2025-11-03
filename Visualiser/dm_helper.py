@@ -495,7 +495,7 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         self.spell = spell
         self.kb = kb
         self.setWindowTitle(f"Spell — {spell.name}")
-        self.resize(520, 520)
+        self.resize(600, 520)
 
         from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
@@ -505,6 +505,10 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         content = QtWidgets.QWidget()
         form = QtWidgets.QFormLayout(content)
         form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        
+        # Set field growth policy for better macOS compatibility
+        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
         def label(text: str) -> QtWidgets.QLabel:
             lab = QtWidgets.QLabel(text)
@@ -513,6 +517,9 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
                 QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
                 QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
             )
+            # Set minimum width to ensure proper text display on macOS
+            lab.setMinimumWidth(300)
+            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
             return lab
 
         # Icon if available
@@ -657,7 +664,7 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
         self.item = item
         self.kb = kb
         self.setWindowTitle(f"Item — {item.name}")
-        self.resize(520, 520)
+        self.resize(600, 520)
 
         from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
@@ -667,6 +674,10 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
         content = QtWidgets.QWidget()
         form = QtWidgets.QFormLayout(content)
         form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        
+        # Set field growth policy for better macOS compatibility
+        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
         def label(text: str) -> QtWidgets.QLabel:
             lab = QtWidgets.QLabel(text)
@@ -675,6 +686,9 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
                 QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
                 QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
             )
+            # Set minimum width to ensure proper text display on macOS
+            lab.setMinimumWidth(300)
+            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
             return lab
 
         # Icon if available
@@ -713,7 +727,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         self.npc = npc
         self.kb = kb
         self.setWindowTitle(f"NPC — {npc.name}")
-        self.resize(520, 520)
+        self.resize(600, 520)
         
         # Apply dialog theme
         from theme import DMHelperTheme
@@ -726,8 +740,12 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         content = QtWidgets.QWidget()
         form = QtWidgets.QFormLayout(content)
         form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        
+        # Set field growth policy for better macOS compatibility
+        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
-        # Helper to make selectable, wrapped labels
+        # Helper to make selectable, wrapped labels with minimum width
         def label(text: str) -> QtWidgets.QLabel:
             lab = QtWidgets.QLabel(text)
             lab.setWordWrap(True)
@@ -735,6 +753,9 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                 QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
                 QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
             )
+            # Set minimum width to ensure proper text display on macOS
+            lab.setMinimumWidth(300)
+            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
             return lab
 
         portrait_path = _resolve_image_for_npc(npc)
