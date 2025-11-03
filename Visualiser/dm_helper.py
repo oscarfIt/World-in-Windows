@@ -1310,7 +1310,24 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             spells = getattr(sb, "spells", [])
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
-            vbox.addWidget(label(f"Spells: {', '.join(spells) if spells else 'None'}"))
+            
+            # Add Spells heading and linkified spells display
+            vbox.addWidget(label("Spells", bold=True))
+            spells_text = ', '.join(spells) if spells else 'None'
+            spells_tb = QtWidgets.QTextBrowser()
+            spells_tb.setOpenExternalLinks(False)
+            spells_tb.setOpenLinks(False)
+            spells_tb.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+            spells_tb.setReadOnly(True)
+            spells_tb.setAcceptRichText(True)
+            spells_tb.setMouseTracking(True)
+            spells_tb.viewport().setMouseTracking(True)
+            
+            html = self.kb.linkify(spells_text)
+            spells_tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{html}</div>")
+            spells_tb.anchorClicked.connect(self._on_anchor_clicked)
+            spells_tb.highlighted.connect(self._on_link_hovered)
+            vbox.addWidget(spells_tb)
 
         elif isinstance(sb, MonsterManual):
             vbox.addWidget(label("Monster Manual Entry", bold=True))
