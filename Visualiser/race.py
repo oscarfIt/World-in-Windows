@@ -14,4 +14,4 @@ class Race(Enum):
     Goblin = "Goblin"
     Hobgoblin = "Hobgoblin"
     Bugbear = "Bugbear"
-    
+    Elemental = "Elemental"

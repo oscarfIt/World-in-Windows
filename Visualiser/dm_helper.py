@@ -805,7 +805,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             # Show loading dialog
             progress = QtWidgets.QProgressDialog("Generating portrait...", "Cancel", 0, 0, self)
             progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
-            progress.setWindowTitle("Generating with Stability AI")
+            progress.setWindowTitle("Stability AI Image Generation")
             progress.setAutoClose(False)  # Don't auto-close so we control it
             progress.setAutoReset(False)
             progress.setCancelButton(None)  # Remove cancel button for simplicity
