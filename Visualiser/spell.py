@@ -11,6 +11,8 @@ class Spell:
     components: str
     duration: str
     description: str
+    damage: str | None = None
+    upcast_info: str = "Casting this spell at higher levels provides no additional benefit."
     tags: list[str] = field(default_factory=list)
     aliases: list[str] = field(default_factory=list)
 

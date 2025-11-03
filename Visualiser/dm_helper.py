@@ -554,10 +554,12 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         form.addRow("School:", label(spell.school))
         form.addRow("Casting Time:", label(spell.casting_time))
         form.addRow("Range:", label(spell.range))
+        form.addRow("Damage:", label(spell.damage if spell.damage else "N/A"))
         form.addRow("Components:", label(spell.components))
         form.addRow("Duration:", label(spell.duration))
+        form.addRow("Upcasting:", label(spell.upcast_info))
         form.addRow("Tags:", label(", ".join(getattr(spell, "tags", []))))
-        form.addRow("Aliases:", label(", ".join(getattr(spell, "aliases", []))))
+        # form.addRow("Aliases:", label(", ".join(getattr(spell, "aliases", []))))
         form.addRow("Description:", label(spell.description or ""))
 
         scroll.setWidget(content)
