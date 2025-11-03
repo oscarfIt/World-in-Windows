@@ -9,13 +9,8 @@ from npc import NPC
 from location import Location
 
 from stat_block import StatBlock, MonsterManual
-from pc_classes import PcClass, PcClassName, Wizard, Sorcerer, Fighter, Bard, Cleric, Druid, Ranger, Rogue, Monk, Paladin, Warlock, Barbarian
+from pc_classes import PcClass, PcClassName
 
-CLASS_MAP = {
-    "Wizard": Wizard, "Sorcerer": Sorcerer, "Fighter": Fighter, "Bard": Bard,
-    "Cleric": Cleric, "Druid": Druid, "Ranger": Ranger, "Rogue": Rogue,
-    "Monk": Monk, "Paladin": Paladin, "Warlock": Warlock, "Barbarian": Barbarian,
-}
 
 T = TypeVar("T", Spell, Item, ClassAction, NPC)
 
@@ -200,19 +195,11 @@ class Repo:
             # The MonsterManual class will compose the image path from this name
             return MonsterManual(spec["monster_name"])
         if t == "pc_class":
-            cls_name = spec.get("class", "Wizard")
+            print("Building PcClass from spec:", spec, "with type:", t)
+            cls_name = PcClassName(spec.get("class", "Wizard"))
             level = int(spec.get("level", 1))
-            cls = CLASS_MAP.get(cls_name)
-            if cls is None:
-                # generic PcClass fallback (if available)
-                pc = PcClass()
-                pc.name = PcClassName[cls_name] if cls_name in PcClassName.__members__ else PcClassName.Wizard
-                pc.level = level
-                return pc
-            pc = cls()
-            pc.name = PcClassName[cls_name] if cls_name in PcClassName.__members__ else PcClassName.Wizard
-            pc.level = level
-            pc.display_name = f"{pc.name.value}, Level {pc.level}"
+            spells = spec.get("spells", [])
+            pc = PcClass(cls_name, level, spells)
             return pc
         # Fallback to empty StatBlock
         return StatBlock()

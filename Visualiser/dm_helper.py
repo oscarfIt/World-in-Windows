@@ -1307,8 +1307,10 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             vbox.addWidget(label("Player Class", bold=True))
             name = getattr(sb, "name", None)
             level = getattr(sb, "level", None)
+            spells = getattr(sb, "spells", [])
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
+            vbox.addWidget(label(f"Spells: {', '.join(spells) if spells else 'None'}"))
 
         elif isinstance(sb, MonsterManual):
             vbox.addWidget(label("Monster Manual Entry", bold=True))
