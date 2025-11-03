@@ -10,6 +10,7 @@ from location import Location
 
 from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass, PcClassName
+from abilities import AbilityScores
 
 
 T = TypeVar("T", Spell, Item, ClassAction, NPC)
@@ -198,8 +199,10 @@ class Repo:
             print("Building PcClass from spec:", spec, "with type:", t)
             cls_name = PcClassName(spec.get("class", "Wizard"))
             level = int(spec.get("level", 1))
+            ability_scores = AbilityScores(spec.get("ability_scores", {}))
+            print("Parsed ability scores:", ability_scores)
             spells = spec.get("spells", [])
-            pc = PcClass(cls_name, level, spells)
+            pc = PcClass(cls_name, level, ability_scores, spells)
             return pc
         # Fallback to empty StatBlock
         return StatBlock()

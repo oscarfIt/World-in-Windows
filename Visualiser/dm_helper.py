@@ -1311,6 +1311,32 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
             
+            # Add Ability Scores
+            ability_scores = getattr(sb, "ability_scores", None)
+            if ability_scores:
+                vbox.addWidget(label("Ability Scores", bold=True))
+                
+                # Create two-column layout for ability scores
+                abilities_widget = QtWidgets.QWidget()
+                abilities_layout = QtWidgets.QHBoxLayout(abilities_widget)
+                abilities_layout.setContentsMargins(0, 0, 0, 0)
+                
+                # Left column: STR, DEX, CON
+                left_column = QtWidgets.QVBoxLayout()
+                left_column.addWidget(label(f"Strength: {ability_scores.Strength}"))
+                left_column.addWidget(label(f"Dexterity: {ability_scores.Dexterity}"))
+                left_column.addWidget(label(f"Constitution: {ability_scores.Constitution}"))
+                
+                # Right column: INT, WIS, CHA
+                right_column = QtWidgets.QVBoxLayout()
+                right_column.addWidget(label(f"Intelligence: {ability_scores.Intelligence}"))
+                right_column.addWidget(label(f"Wisdom: {ability_scores.Wisdom}"))
+                right_column.addWidget(label(f"Charisma: {ability_scores.Charisma}"))
+                
+                abilities_layout.addLayout(left_column)
+                abilities_layout.addLayout(right_column)
+                vbox.addWidget(abilities_widget)
+            
             # Add Spells heading and linkified spells display
             vbox.addWidget(label("Spells", bold=True))
             spells_text = ', '.join(spells) if spells else 'None'
