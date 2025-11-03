@@ -21,6 +21,7 @@ from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass
 from item import Item
 from spell import Spell
+from class_action import ClassAction
 
 # --- Media paths  ---
 MEDIA_ROOT = Path("Media")
@@ -38,14 +39,16 @@ def _resolve_image_for_npc(npc) -> Path | None:
     guess = NPC_PORTRAITS / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
-def _resolve_image_for_entry(entry) -> Path | None:
-    folder = {
-        "spell": SPELL_ICONS,
-        "item": ITEM_ICONS,
-        "ability": ABILITY_ICONS,
-        "npc": NPC_PORTRAITS,
-    }.get(entry.kind, MEDIA_ROOT)
-    guess_file_name = entry.name.replace(" ", "_").lower()
+def _resolve_image_for_entry(content_type: Spell | Item | ClassAction) -> Path | None:
+    if isinstance(content_type, Spell):
+        folder = SPELL_ICONS
+    elif isinstance(content_type, Item):
+        folder = ITEM_ICONS
+    elif isinstance(content_type, ClassAction):
+        folder = ABILITY_ICONS
+    elif isinstance(content_type, NPC):
+        return _resolve_image_for_npc(content_type)
+    guess_file_name = content_type.name.replace(" ", "_").lower()
     guess = folder / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
@@ -537,7 +540,7 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
             return lab
 
         # Icon if available
-        icon_path = _resolve_image_for_entry(type('Entry', (), {'kind': 'spell', 'name': spell.name})())
+        icon_path = _resolve_image_for_entry(spell)
         if icon_path:
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
@@ -706,7 +709,7 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
             return lab
 
         # Icon if available
-        icon_path = _resolve_image_for_entry(type('Entry', (), {'kind': 'item', 'name': item.name})())
+        icon_path = _resolve_image_for_entry(item)
         if icon_path:
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
@@ -1489,15 +1492,27 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             return
         # Position near cursor
         pos = QtGui.QCursor.pos()
-        self._hover.show_text(entry.description, pos)
+        self._hover.show_text(entry.hover_description, pos)
 
     def _on_anchor_clicked(self, url: QtCore.QUrl):
         name = url.toString()
         entry = self.kb.resolve(name)
         if not entry:
             return
-        dlg = EntryDetailDialog(entry, self)
-        dlg.exec()
+        if isinstance(entry.content, Spell):
+            window = SpellDetailWindow(entry.content, self.kb, self)
+        elif isinstance(entry.content, Item):
+            window = ItemDetailWindow(entry.content, self.kb, self)
+        elif isinstance(entry.content, ClassAction):
+            # Not implemented yet
+            QtWidgets.QMessageBox.information(self, "Not Implemented",
+                "Class Action detail view is not implemented yet.")
+        elif isinstance(entry.content, NPC):
+            window = NPCDetailWindow(entry.content, self.kb, self)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Unknown Entry",
+                "The selected entry type is not recognized.")
+        window.show()
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         """Keep monster image scaled to width while preserving aspect ratio."""
@@ -2039,36 +2054,6 @@ class AddNPCDialog(QtWidgets.QDialog):
         # Save back to file
         with open(npcs_file, 'w', encoding='utf-8') as f:
             json.dump(npcs_data, f, indent=2, ensure_ascii=False)
-
-class EntryDetailDialog(QtWidgets.QDialog):
-    """Click-through dialog with full description."""
-    def __init__(self, entry: KBEntry, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(entry.name)
-        self.resize(420, 320)
-        title = QtWidgets.QLabel(f"{entry.kind.title()}: {entry.name}")
-        f = title.font(); f.setBold(True); title.setFont(f)
-
-        img_path = _resolve_image_for_entry(entry)
-        img_label = None
-        if img_path:
-            pm = QtGui.QPixmap(str(img_path))
-            if not pm.isNull():
-                img_label = QtWidgets.QLabel()
-                img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-                img_label.setPixmap(pm.scaledToWidth(360, QtCore.Qt.TransformationMode.SmoothTransformation))
-
-        body = QtWidgets.QLabel(entry.description)
-        body.setWordWrap(True)
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.reject)
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(title)
-        if img_label:
-            layout.addWidget(img_label)
-        layout.addWidget(body)
-        layout.addWidget(btns)
-
 
 # --- App entry ---
 def main():

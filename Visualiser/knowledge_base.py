@@ -14,9 +14,9 @@ def _npc_summary(n: NPC, max_len=180) -> str:
 
 @dataclass
 class KBEntry:
-    kind: str          # "spell" | "item" | "ability"
+    content: Spell | Item | ClassAction | NPC
     name: str
-    description: str
+    hover_description: str
 
 class KnowledgeBase:
     def __init__(self):
@@ -34,16 +34,13 @@ class KnowledgeBase:
         self._aliases[alias.lower()] = canonical_name
         self._pattern = None
 
-    def create_kb_entry(self, ability: Spell | Item | ClassAction) -> KBEntry:
-        if isinstance(ability, Spell):
-            kind = "spell"
-        elif isinstance(ability, Item):
-            kind = "item"
-        elif isinstance(ability, ClassAction):
-            kind = "ability"
-        else:
-            kind = "unknown"
-        return KBEntry(kind=kind, name=ability.name, description=ability.description)
+    def create_kb_entry(self, content: Spell | Item | ClassAction | NPC) -> KBEntry:
+        if isinstance(content, Spell) or isinstance(content, Item) or isinstance(content, ClassAction):
+            desc = content.description.strip()
+        elif isinstance(content, NPC):
+            desc = _npc_summary(content)
+        # return KBEntry(kind=kind, name=ability.name, description=ability.description)
+        return KBEntry(content=content, name=content.name, hover_description=desc)
 
     # def add(self, kind: str, name: str, description: str):
     #     self.entries[name] = KBEntry(kind=kind, name=name, description=description)
@@ -75,7 +72,7 @@ class KnowledgeBase:
 
     def ingest_npcs(self, npcs: Iterable[NPC], alias_key: str = "aliases"):
         for n in npcs:
-            self.add_entry(KBEntry(kind="npc", name=n.name, description=_npc_summary(n)))
+            self.add_entry(KBEntry(content=n, name=n.name, hover_description=_npc_summary(n)))
             # If you store aliases with the NPC JSON, add them
             aliases = getattr(n, alias_key, None) or []
             for a in aliases:
