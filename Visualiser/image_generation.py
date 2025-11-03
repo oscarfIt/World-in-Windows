@@ -12,7 +12,9 @@ class ImageGenerationMode(Enum):
 class ImageGenerator:
     def __init__(self):
         self.api_key = os.environ["STABILITY_API_KEY"]
-
+        if not self.api_key:
+            raise ValueError("No API key found. Set STABILITY_API_KEY environment variable.")
+        
     def get_credits_remaining(self):
         """Check how many credits remain on the Stability AI account"""
         balance_url = "https://api.stability.ai/v1/user/balance"
@@ -56,8 +58,8 @@ class ImageGenerator:
             "negative_prompt": (None, "blurry, watermark, text, photo-realistic, realism"),
             "output_format": (None, "png"),
         }
-        if seed is not None:
-            files["seed"] = (None, str(seed))
+        # if seed is not None:
+        #     files["seed"] = (None, str(seed))
 
         resp = requests.post(url, headers=headers, files=files, timeout=180)
         if not resp.ok:
@@ -78,13 +80,14 @@ class ImageGenerator:
             "image": ("reference.png", open(ref_image_path, "rb"), "image/png"),
             "prompt": (None, prompt),
             # API expects multipart; field name for strength is 'strength' on this route
+            "negative_prompt": (None, "blurry, watermark, text, photo-realistic, realism"),
             "strength": (None, str(strength)),
             "output_format": (None, "png"),
             # Optional: if you pass aspect_ratio with img2img, some routes ignore it (composition comes from image)
             # "aspect_ratio": (None, "3:4"),
         }
-        if seed is not None:
-            files["seed"] = (None, str(seed))
+        # if seed is not None:
+        #     files["seed"] = (None, str(seed))
         # Some routes want an explicit mode:
         files["mode"] = (None, "image-to-image")
         resp = requests.post(url, headers=headers, files=files, timeout=180)
@@ -112,8 +115,7 @@ class ImageGenerator:
                 "prompt": (None, prompt),
                 "negative_prompt": (None, "blurry, watermark, text, photo-realistic, realism"),
                 "output_format": (None, "png"),     # png | jpeg | webp
-                "aspect_ratio": (None, "3:2"),      # 1:1, 3:4, 4:3, 9:16, 16:9
-                "seed": (None, "12345"),
+                "aspect_ratio": (None, "3:2")
             }
 
             resp = requests.post(url, headers=headers, files=files, timeout=120)
@@ -129,7 +131,7 @@ class ImageGenerator:
 
         elif mode == ImageGenerationMode.SD3_IMG2IMG:
             ref_image_path = Path("Media") / "Image References" / "character_portrait.png"
-            img_bytes = self.generate_img2img_sd3(ref_image_path, prompt, strength=0.4, seed=12345)
+            img_bytes = self.generate_img2img_sd3(ref_image_path, prompt, strength=0.3, seed=12345)
 
         else:
             raise ValueError("Unknown MODE")
