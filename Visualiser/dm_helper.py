@@ -1311,6 +1311,7 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             name = getattr(sb, "name", None)
             level = getattr(sb, "level", None)
             spells = getattr(sb, "spells", [])
+            weapons = getattr(sb, "weapons", [])
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
             
@@ -1384,7 +1385,25 @@ class StatBlockWindow(QtWidgets.QMainWindow):
                     # Add stretch to push everything to the left
                     slot_layout.addStretch()
                     vbox.addWidget(slot_widget)
+
+            # Add Weapons (Items) heading and linkified spells display
+            vbox.addWidget(label("Weapons", bold=True))
+            weapons_text = ', '.join(weapons) if weapons else 'None'
+            weapons_tb = QtWidgets.QTextBrowser()
+            weapons_tb.setOpenExternalLinks(False)
+            weapons_tb.setOpenLinks(False)
+            weapons_tb.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+            weapons_tb.setReadOnly(True)
+            weapons_tb.setAcceptRichText(True)
+            weapons_tb.setMouseTracking(True)
+            weapons_tb.viewport().setMouseTracking(True)
             
+            html = self.kb.linkify(weapons_text)
+            weapons_tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{html}</div>")
+            weapons_tb.anchorClicked.connect(self._on_anchor_clicked)
+            weapons_tb.highlighted.connect(self._on_link_hovered)
+            vbox.addWidget(weapons_tb)
+
             # Add Spells heading and linkified spells display
             vbox.addWidget(label("Spells", bold=True))
             spells_text = ', '.join(spells) if spells else 'None'

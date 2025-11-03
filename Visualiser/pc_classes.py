@@ -5,6 +5,7 @@ from enum import Enum
 from stat_block import StatBlock
 from abilities import AbilityScores
 from spell import Spell, SpellSlot
+from item import Item
 
 class PcClassName(Enum):
     Barbarian = "Barbarian"
@@ -34,10 +35,11 @@ class PcClass(StatBlock):
     level : int
     ability_scores: AbilityScores
     caster_type: CasterType
+    weapons: list[Item] = field(default_factory=list)
     spells: list[Spell] = field(default_factory=list)
     spell_slots: list[SpellSlot] = field(default_factory=list)
 
-    def __init__(self, name: PcClassName, level: int, ability_scores: AbilityScores, spells: Optional[list[Spell]] = None):
+    def __init__(self, name: PcClassName, level: int, ability_scores: AbilityScores, spells: Optional[list[Spell]] = None, weapons: Optional[list[Item]] = None):
         super().__init__(name.value + ", Level " + str(level))
         self.name = name
         self.level = level
@@ -45,6 +47,7 @@ class PcClass(StatBlock):
         self.caster_type = self.determine_caster_type(name)
         self.spells = spells if spells is not None else []
         self.spell_slots = self.determine_spell_slots(level, self.caster_type)
+        self.weapons = weapons if weapons is not None else []
 
     def determine_caster_type(self, name: PcClassName) -> CasterType:
         match name:
