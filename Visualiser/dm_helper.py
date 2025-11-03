@@ -1337,6 +1337,51 @@ class StatBlockWindow(QtWidgets.QMainWindow):
                 abilities_layout.addLayout(right_column)
                 vbox.addWidget(abilities_widget)
             
+            # Add Spell Slots
+            spell_slots = getattr(sb, "spell_slots", [])
+            if spell_slots:
+                vbox.addWidget(label("Spell Slots", bold=True))
+                for slot in spell_slots:
+                    # Create horizontal layout for each spell level
+                    slot_widget = QtWidgets.QWidget()
+                    slot_layout = QtWidgets.QHBoxLayout(slot_widget)
+                    slot_layout.setContentsMargins(0, 0, 0, 0)
+                    
+                    # Add level label
+                    level_label = label(f"Level {slot.level}:")
+                    slot_layout.addWidget(level_label)
+                    
+                    # Add checkboxes for each slot
+                    for i in range(slot.count):
+                        checkbox = QtWidgets.QCheckBox()
+                        checkbox.setToolTip(f"Spell slot {i+1}")
+                        checkbox.setChecked(True)  # Start all slots as available (checked/blue)
+                        
+                        # Custom styling for solid blue fill when checked
+                        checkbox.setStyleSheet("""
+                            QCheckBox::indicator {
+                                width: 16px;
+                                height: 16px;
+                                border: 2px solid #555;
+                                border-radius: 3px;
+                                background-color: transparent;
+                            }
+                            QCheckBox::indicator:checked {
+                                background-color: #4A90E2;
+                                border: 2px solid #357ABD;
+                            }
+                            QCheckBox::indicator:unchecked {
+                                background-color: transparent;
+                                border: 2px solid #555;
+                            }
+                        """)
+                        
+                        slot_layout.addWidget(checkbox)
+                    
+                    # Add stretch to push everything to the left
+                    slot_layout.addStretch()
+                    vbox.addWidget(slot_widget)
+            
             # Add Spells heading and linkified spells display
             vbox.addWidget(label("Spells", bold=True))
             spells_text = ', '.join(spells) if spells else 'None'

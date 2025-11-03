@@ -17,4 +17,4 @@ class Spell:
 @dataclass
 class SpellSlot:
     level: int
-    number: int
+    count: int
