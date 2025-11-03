@@ -196,11 +196,9 @@ class Repo:
             # The MonsterManual class will compose the image path from this name
             return MonsterManual(spec["monster_name"])
         if t == "pc_class":
-            print("Building PcClass from spec:", spec, "with type:", t)
             cls_name = PcClassName(spec.get("class", "Wizard"))
             level = int(spec.get("level", 1))
             ability_scores = AbilityScores(spec.get("ability_scores", {}))
-            print("Parsed ability scores:", ability_scores)
             spells = spec.get("spells", [])
             pc = PcClass(cls_name, level, ability_scores, spells)
             return pc
