@@ -13,3 +13,8 @@ class Spell:
     description: str
     tags: list[str] = field(default_factory=list)
     aliases: list[str] = field(default_factory=list)
+
+@dataclass
+class SpellSlot:
+    level: int
+    number: int
