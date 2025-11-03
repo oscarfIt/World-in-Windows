@@ -12,9 +12,9 @@ class AudioGenerationMode(Enum):
 
 class SoundGenerator:
     def __init__(self):
-        self.api_key = os.environ["SOUND_API_KEY"]
+        self.api_key = os.environ["STABILITY_API_KEY"]
         if not self.api_key:
-            raise ValueError("No API key found. Set SOUND_API_KEY or STABILITY_API_KEY environment variable.")
+            raise ValueError("No API key found. Set STABILITY_API_KEY environment variable.")
 
     def get_credits_remaining(self):
         """Check how many credits remain on the Stability AI account"""
@@ -58,7 +58,7 @@ class SoundGenerator:
             bytes: Raw audio data (typically MP3 or WAV format)
         """
         # Note: Stability AI's audio API endpoint - this may need to be updated based on their actual API
-        url = "https://api.stability.ai/v2beta/stable-audio/generate"
+        url = "https://api.stability.ai/v2beta/audio/stable-audio-2/text-to-audio"
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",

@@ -324,6 +324,15 @@ class MainWindow(QtWidgets.QMainWindow):
         browse_items_action.triggered.connect(self.show_items)
         items_menu.addAction(browse_items_action)
         
+        # Sounds Menu
+        sounds_menu = menubar.addMenu("&Sounds")
+        
+        browse_sounds_action = QtGui.QAction("&Browse Sounds", self)
+        browse_sounds_action.setShortcut("Ctrl+U")
+        browse_sounds_action.setStatusTip("Browse and generate audio clips")
+        browse_sounds_action.triggered.connect(self.show_sounds)
+        sounds_menu.addAction(browse_sounds_action)
+        
         # Tools Menu
         tools_menu = menubar.addMenu("&Tools")
         
@@ -380,6 +389,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """Show items browser window"""
         items_window = ItemsBrowserWindow(self.kb, self)
         items_window.show()
+    
+    def show_sounds(self):
+        """Show sounds browser window"""
+        sounds_window = SoundsBrowserWindow(self.kb, self)
+        sounds_window.show()
     
     def show_spells(self):
         """Show spells browser window"""
@@ -719,6 +733,301 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
         layout.addWidget(scroll)
         layout.addWidget(btns)
         self.setCentralWidget(central_widget)
+
+
+# --- Sounds Browser Window ---
+class SoundsBrowserWindow(QtWidgets.QMainWindow):
+    """Window for browsing and generating audio clips"""
+    def __init__(self, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.kb = kb
+        self.setWindowTitle("Sounds Browser")
+        self.resize(800, 600)
+
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel("Audio Clips")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        
+        # Add Sound button
+        add_sound_btn = QtWidgets.QPushButton("Add Sound")
+        add_sound_btn.setToolTip("Generate a new audio clip")
+        add_sound_btn.clicked.connect(self.add_sound)
+        title_layout.addWidget(add_sound_btn)
+        
+        layout.addLayout(title_layout)
+
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search audio clips...")
+        self.search.textChanged.connect(self.filter_sounds)
+        layout.addWidget(self.search)
+
+        # Sounds list
+        self.sounds_list = QtWidgets.QListWidget()
+        self.sounds_list.setSpacing(2)
+        self.sounds_list.setUniformItemSizes(True)
+        layout.addWidget(self.sounds_list)
+
+        # Populate with existing sounds
+        self.populate_sounds()
+
+        # Control buttons
+        control_layout = QtWidgets.QHBoxLayout()
+        
+        # Play button
+        play_btn = QtWidgets.QPushButton("Play")
+        play_btn.setToolTip("Play selected audio clip")
+        play_btn.clicked.connect(self.play_selected_sound)
+        control_layout.addWidget(play_btn)
+        
+        # Stop button  
+        stop_btn = QtWidgets.QPushButton("Stop")
+        stop_btn.setToolTip("Stop audio playback")
+        stop_btn.clicked.connect(self.stop_sound)
+        control_layout.addWidget(stop_btn)
+        
+        # Delete button
+        delete_btn = QtWidgets.QPushButton("Delete")
+        delete_btn.setToolTip("Delete selected audio clip")
+        delete_btn.clicked.connect(self.delete_selected_sound)
+        control_layout.addWidget(delete_btn)
+        
+        control_layout.addStretch()
+        
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        control_layout.addWidget(close_btn)
+        
+        layout.addLayout(control_layout)
+        self.setCentralWidget(central_widget)
+
+    def populate_sounds(self):
+        """Populate the list with existing audio files"""
+        self.sounds_list.clear()
+        
+        # Look for audio files in Media/Audio directory
+        audio_dir = Path("Media") / "Audio"
+        if not audio_dir.exists():
+            return
+        
+        # Find all audio files
+        audio_extensions = {'.mp3', '.wav', '.m4a', '.ogg', '.flac'}
+        audio_files = []
+        
+        for ext in audio_extensions:
+            audio_files.extend(audio_dir.glob(f'*{ext}'))
+        
+        # Sort by name
+        audio_files.sort(key=lambda x: x.name.lower())
+        
+        # Add to list widget
+        for audio_file in audio_files:
+            item = QtWidgets.QListWidgetItem(audio_file.stem)  # Name without extension
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, str(audio_file))  # Store full path
+            item.setSizeHint(QtCore.QSize(0, 32))
+            
+            # Create tooltip with file info
+            tooltip = f"File: {audio_file.name}\nPath: {audio_file}"
+            try:
+                file_size = audio_file.stat().st_size
+                tooltip += f"\nSize: {file_size:,} bytes"
+            except:
+                pass
+            item.setToolTip(tooltip)
+            
+            self.sounds_list.addItem(item)
+
+    def filter_sounds(self, text: str):
+        """Filter the sounds list based on search text"""
+        text = text.lower().strip()
+        
+        for i in range(self.sounds_list.count()):
+            item = self.sounds_list.item(i)
+            # Search in filename
+            item.setHidden(text not in item.text().lower() if text else False)
+
+    def add_sound(self):
+        """Add/generate a new sound"""
+        dialog = AddSoundDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Refresh the sounds list to show the new sound
+            self.populate_sounds()
+
+    def play_selected_sound(self):
+        """Play the selected audio clip"""
+        current_item = self.sounds_list.currentItem()
+        if not current_item:
+            QtWidgets.QMessageBox.information(self, "No Selection", "Please select an audio clip to play.")
+            return
+        
+        audio_path = current_item.data(QtCore.Qt.ItemDataRole.UserRole)
+        try:
+            # Try to play using system default audio player
+            import subprocess
+            import sys
+            
+            if sys.platform == "win32":
+                # Windows
+                subprocess.run(['start', '', audio_path], shell=True, check=False)
+            elif sys.platform == "darwin":
+                # macOS
+                subprocess.run(['open', audio_path], check=False)
+            else:
+                # Linux
+                subprocess.run(['xdg-open', audio_path], check=False)
+                
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Playback Error", 
+                f"Could not play audio file:\n{str(e)}")
+
+    def stop_sound(self):
+        """Stop audio playback (placeholder - system dependent)"""
+        QtWidgets.QMessageBox.information(self, "Stop", 
+            "Audio playback stop is handled by your system's audio player.")
+
+    def delete_selected_sound(self):
+        """Delete the selected audio clip"""
+        current_item = self.sounds_list.currentItem()
+        if not current_item:
+            QtWidgets.QMessageBox.information(self, "No Selection", "Please select an audio clip to delete.")
+            return
+        
+        audio_path = Path(current_item.data(QtCore.Qt.ItemDataRole.UserRole))
+        
+        # Confirm deletion
+        reply = QtWidgets.QMessageBox.question(self, "Confirm Delete",
+            f"Are you sure you want to delete '{current_item.text()}'?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            try:
+                audio_path.unlink()  # Delete the file
+                self.populate_sounds()  # Refresh the list
+                QtWidgets.QMessageBox.information(self, "Deleted", 
+                    f"Audio clip '{current_item.text()}' has been deleted.")
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Delete Error", 
+                    f"Could not delete file:\n{str(e)}")
+
+
+class AddSoundDialog(QtWidgets.QDialog):
+    """Dialog for generating new audio clips"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Sound Clip")
+        self.resize(500, 400)
+        
+        # Apply theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+        
+        # Create layout
+        layout = QtWidgets.QVBoxLayout(self)
+        
+        # Create form
+        form_widget = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(form_widget)
+        
+        # Prompt field
+        self.prompt_field = QtWidgets.QTextEdit()
+        self.prompt_field.setPlaceholderText("Describe the sound you want to generate (e.g., 'a cow mooing in a field', 'sword hitting shield', 'tavern ambience')...")
+        self.prompt_field.setMaximumHeight(100)
+        form.addRow("Sound Description*:", self.prompt_field)
+        
+        # Filename field
+        self.filename_field = QtWidgets.QLineEdit()
+        self.filename_field.setPlaceholderText("Optional custom filename (leave blank for auto-generation)...")
+        form.addRow("Filename:", self.filename_field)
+        
+        # Duration field
+        self.duration_field = QtWidgets.QSpinBox()
+        self.duration_field.setRange(1, 60)
+        self.duration_field.setValue(5)
+        self.duration_field.setSuffix(" seconds")
+        form.addRow("Duration:", self.duration_field)
+        
+        # Mode field
+        self.mode_combo = QtWidgets.QComboBox()
+        from sound_generation import AudioGenerationMode
+        for mode in AudioGenerationMode:
+            self.mode_combo.addItem(mode.value.replace('_', ' ').title(), mode)
+        form.addRow("Audio Type:", self.mode_combo)
+        
+        layout.addWidget(form_widget)
+        
+        # Add note about required fields
+        note_label = QtWidgets.QLabel("* Required fields")
+        note_label.setStyleSheet("color: #888; font-size: 11px;")
+        layout.addWidget(note_label)
+        
+        # Buttons
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok |
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.generate_sound)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        
+        # Focus on prompt field
+        self.prompt_field.setFocus()
+    
+    def generate_sound(self):
+        """Generate the sound clip"""
+        try:
+            # Validate required fields
+            prompt = self.prompt_field.toPlainText().strip()
+            if not prompt:
+                QtWidgets.QMessageBox.warning(self, "Validation Error", "Sound description is required!")
+                return
+            
+            # Get form values
+            filename = self.filename_field.text().strip() or None
+            duration = float(self.duration_field.value())
+            mode = self.mode_combo.currentData()
+            
+            # Show loading dialog
+            progress = QtWidgets.QProgressDialog("Generating sound clip...", "Cancel", 0, 0, self)
+            progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
+            progress.setWindowTitle("Generating with Stability AI")
+            progress.setAutoClose(False)
+            progress.setAutoReset(False)
+            progress.setCancelButton(None)
+            progress.show()
+            
+            # Process events to show the dialog immediately
+            QtWidgets.QApplication.processEvents()
+            
+            # Generate the sound
+            from sound_generation import SoundGenerator
+            sound_generator = SoundGenerator()
+            audio_path = sound_generator.generate_and_save_sound(prompt, filename, duration, mode)
+            
+            # Close the progress dialog
+            progress.close()
+            
+            QtWidgets.QMessageBox.information(self, "Success", 
+                f"Sound clip generated successfully!\nSaved to: {audio_path}")
+            self.accept()
+            
+        except Exception as e:
+            # Make sure to close progress dialog on error
+            if 'progress' in locals():
+                progress.close()
+            QtWidgets.QMessageBox.critical(self, "Error", 
+                f"Failed to generate sound:\n{str(e)}")
 
 
 class NPCDetailWindow(QtWidgets.QMainWindow):
