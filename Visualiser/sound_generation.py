@@ -2,6 +2,8 @@ import os, base64, requests
 from pathlib import Path
 from enum import Enum
 
+from config import Config
+
 
 class AudioGenerationMode(Enum):
     """Audio generation modes for different types of sound creation"""
@@ -114,7 +116,7 @@ class SoundGenerator:
         audio_bytes = self.generate_sound_clip(prompt, duration, mode)
         
         # Create audio directory if it doesn't exist
-        audio_dir = Path("Media") / "Audio"
+        audio_dir = Config().get_audio_files()
         audio_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename if not provided

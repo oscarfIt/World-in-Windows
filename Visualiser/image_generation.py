@@ -2,6 +2,7 @@ import os, base64, requests
 from pathlib import Path
 from enum import Enum
 
+from config import Config
 from npc import NPC
 
 class ImageGenerationMode(Enum):
@@ -126,18 +127,18 @@ class ImageGenerator:
             b64 = resp.json()["image"]                # field name per API
             img_bytes = base64.b64decode(b64)
         elif mode == ImageGenerationMode.STYLE_CONTROL:
-            style_image_path = Path("Media") / "Image References" / "character_portrait.png"
+            style_image_path = Config().get_image_references() / "character_portrait.png"
             img_bytes = self.generate_with_style_control(style_image_path, prompt, seed=12345)
 
         elif mode == ImageGenerationMode.SD3_IMG2IMG:
-            ref_image_path = Path("Media") / "Image References" / "character_portrait.png"
+            ref_image_path = Config().get_image_references() / "character_portrait.png"
             img_bytes = self.generate_img2img_sd3(ref_image_path, prompt, strength=0.3, seed=12345)
 
         else:
             raise ValueError("Unknown MODE")
         
         # Save the image to the NPCs directory
-        npc_dir = Path("Media") / "NPCs"
+        npc_dir = Config().get_npc_portraits()
         npc_dir.mkdir(parents=True, exist_ok=True)  # Create directory if it doesn't exist
         
         # Create a safe filename from NPC name

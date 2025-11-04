@@ -18,19 +18,15 @@ class StatBlock:
 
 class MonsterManual(StatBlock):
     monster_name: str
-    image_path: str
+    stat_block_image: str
 
     def __init__(self, file_name: str):
         self.monster_name = self.nice_name(file_name)
         super().__init__(self.monster_name)
-        self.image_path = (MONSTER_MANUAL_PAGES / f"{file_name}.png")
+        self.stat_block_image = f"{file_name}.png"
 
     def nice_name(self, file_name: str) -> str:
         return file_name.replace("_", " ").title()
-    
-    def load_image(self):
-        p = Path(self.image_path)
-        return Image.open(p) if p.exists() else None
 
     def display(self):
-        return {"type": "monster_manual_image", "name": self.monster_name, "path": str(self.image_path)}
+        return {"type": "monster_manual_image", "name": self.monster_name, "image": str(self.stat_block_image)}

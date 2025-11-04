@@ -10,25 +10,25 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 from typing import List, Optional
 from pathlib import Path
+import json
 
 from knowledge_base import KBEntry, KnowledgeBase
 from repo import Repo
 from image_generation import ImageGenerator, ImageGenerationMode
+from config import Config
 
 from location import Location
 from npc import NPC
 from stat_block import StatBlock, MonsterManual
-from pc_classes import PcClass
+from pc_classes import PcClass, PcClassName
 from item import Item
 from spell import Spell
 from class_action import ClassAction
 
-# --- Media paths  ---
-MEDIA_ROOT = Path("Media")
-NPC_PORTRAITS = MEDIA_ROOT / "NPCs"
-SPELL_ICONS = MEDIA_ROOT / "Spells"
-ITEM_ICONS = MEDIA_ROOT / "Items"
-ABILITY_ICONS = MEDIA_ROOT / "Abilities"
+
+
+# Global config instance
+config = Config()
 
 def _resolve_image_for_npc(npc) -> Path | None:
     for attr in ("portrait_path", "image_path"):
@@ -36,16 +36,16 @@ def _resolve_image_for_npc(npc) -> Path | None:
         if p and Path(p).exists():
             return Path(p)
     guess_file_name = npc.name.replace(" ", "_").lower()
-    guess = NPC_PORTRAITS / f"{guess_file_name}.png"
+    guess = config.get_npc_portraits() / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
 def _resolve_image_for_entry(content_type: Spell | Item | ClassAction) -> Path | None:
     if isinstance(content_type, Spell):
-        folder = SPELL_ICONS
+        folder = config.get_spell_icons()
     elif isinstance(content_type, Item):
-        folder = ITEM_ICONS
+        folder = config.get_item_icons()
     elif isinstance(content_type, ClassAction):
-        folder = ABILITY_ICONS
+        folder = config.get_ability_icons()
     elif isinstance(content_type, NPC):
         return _resolve_image_for_npc(content_type)
     guess_file_name = content_type.name.replace(" ", "_").lower()
@@ -136,6 +136,102 @@ def filter_tree(tree_view: QtWidgets.QTreeView, model: QtGui.QStandardItemModel,
             apply(root_item)
 
 # --- Main Window ---
+class PathConfigDialog(QtWidgets.QDialog):
+    """Dialog for configuring Data and Media directory paths"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Configure Paths")
+        self.setModal(True)
+        self.resize(500, 200)
+        
+        layout = QtWidgets.QVBoxLayout(self)
+        
+        # Data directory section
+        data_group = QtWidgets.QGroupBox("Data Directory")
+        data_layout = QtWidgets.QHBoxLayout(data_group)
+        
+        self.data_path_edit = QtWidgets.QLineEdit(config.data_dir)
+        data_browse_btn = QtWidgets.QPushButton("Browse...")
+        data_browse_btn.clicked.connect(self.browse_data_dir)
+        
+        data_layout.addWidget(self.data_path_edit)
+        data_layout.addWidget(data_browse_btn)
+        
+        # Media directory section
+        media_group = QtWidgets.QGroupBox("Media Directory")
+        media_layout = QtWidgets.QHBoxLayout(media_group)
+        
+        self.media_path_edit = QtWidgets.QLineEdit(config.media_dir)
+        media_browse_btn = QtWidgets.QPushButton("Browse...")
+        media_browse_btn.clicked.connect(self.browse_media_dir)
+        
+        media_layout.addWidget(self.media_path_edit)
+        media_layout.addWidget(media_browse_btn)
+        
+        # Info labels
+        info_label = QtWidgets.QLabel(
+            "Data Directory: Contains JSON files (npcs.json, spells.json, etc.)\n"
+            "Media Directory: Contains images and audio files"
+        )
+        info_label.setStyleSheet("color: #888; font-size: 10pt;")
+        
+        # Buttons
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        
+        ok_btn = QtWidgets.QPushButton("OK")
+        ok_btn.clicked.connect(self.accept_changes)
+        cancel_btn = QtWidgets.QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        
+        button_layout.addWidget(ok_btn)
+        button_layout.addWidget(cancel_btn)
+        
+        # Add to main layout
+        layout.addWidget(data_group)
+        layout.addWidget(media_group)
+        layout.addWidget(info_label)
+        layout.addStretch()
+        layout.addLayout(button_layout)
+    
+    def browse_data_dir(self):
+        """Browse for data directory"""
+        dir_path = QtWidgets.QFileDialog.getExistingDirectory(
+            self, "Select Data Directory", self.data_path_edit.text()
+        )
+        if dir_path:
+            self.data_path_edit.setText(dir_path)
+    
+    def browse_media_dir(self):
+        """Browse for media directory"""
+        dir_path = QtWidgets.QFileDialog.getExistingDirectory(
+            self, "Select Media Directory", self.media_path_edit.text()
+        )
+        if dir_path:
+            self.media_path_edit.setText(dir_path)
+    
+    def accept_changes(self):
+        """Accept and save the new paths"""
+        new_data_dir = self.data_path_edit.text().strip()
+        new_media_dir = self.media_path_edit.text().strip()
+        
+        if not new_data_dir or not new_media_dir:
+            QtWidgets.QMessageBox.warning(self, "Invalid Paths", 
+                                        "Both Data and Media directories must be specified.")
+            return
+        
+        # Update config
+        config.data_dir = new_data_dir
+        config.media_dir = new_media_dir
+        config.save()
+        
+        QtWidgets.QMessageBox.information(self, "Paths Updated", 
+            "Directory paths have been updated. Please restart the application for changes to take effect.")
+        
+        self.accept()
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, locations: List[Location], kb: KnowledgeBase):
         super().__init__()
@@ -285,6 +381,14 @@ class MainWindow(QtWidgets.QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
         
+        # Settings Menu
+        settings_menu = menubar.addMenu("&Settings")
+        
+        configure_paths_action = QtGui.QAction("Configure &Paths...", self)
+        configure_paths_action.setStatusTip("Configure Data and Media directory paths")
+        configure_paths_action.triggered.connect(self.configure_paths)
+        settings_menu.addAction(configure_paths_action)
+        
         # Edit Menu
         edit_menu = menubar.addMenu("&Edit")
         
@@ -366,6 +470,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def export_data(self):
         """Export data to a file"""
         QtWidgets.QMessageBox.information(self, "Export", "Export functionality coming soon!")
+    
+    def configure_paths(self):
+        """Configure Data and Media directory paths"""
+        dialog = PathConfigDialog(self)
+        dialog.exec()
     
     def focus_search(self):
         """Focus on the search bar"""
@@ -458,7 +567,7 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
         self.spells_list.clear()
         try:
             from repo import Repo
-            repo = Repo()
+            repo = Repo(config.data_dir)
             repo.load_all()
             all_spells = list(repo.spells)
         except Exception as e:
@@ -629,7 +738,7 @@ class ItemsBrowserWindow(QtWidgets.QMainWindow):
         self.items_list.clear()
         try:
             from repo import Repo
-            repo = Repo()
+            repo = Repo(config.data_dir)
             repo.load_all()
             all_items = list(repo.items)
         except Exception as e:
@@ -821,7 +930,7 @@ class SoundsBrowserWindow(QtWidgets.QMainWindow):
         self.sounds_list.clear()
         
         # Look for audio files in Media/Audio directory
-        audio_dir = Path("Media") / "Audio"
+        audio_dir = config.get_audio_files()
         if not audio_dir.exists():
             return
         
@@ -1028,7 +1137,7 @@ class AddSoundDialog(QtWidgets.QDialog):
             mode = self.mode_combo.currentData()
             
             # Create audio directory if it doesn't exist
-            audio_dir = Path("Media") / "Audio"
+            audio_dir = config.get_audio_files()
             audio_dir.mkdir(parents=True, exist_ok=True)
             
             # Create safe filename from sound name
@@ -1426,14 +1535,17 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             vbox.addWidget(label("Monster Manual Entry", bold=True))
 
             # Try to load the PNG page
-            path = getattr(sb, "image_path", None)
+            sb_image = getattr(sb, "stat_block_image", None)
+            print(f"Loading monster image from: {sb_image}")
             name = getattr(sb, "monster_name", "Unknown")
             vbox.addWidget(label(f"Name: {name}"))
 
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            if path:
-                pix = QtGui.QPixmap(str(path))
+            if sb_image:
+                sb_image_path = config.get_monster_manual_pages() / sb_image
+                print(sb_image_path)
+                pix = QtGui.QPixmap(str(sb_image_path))
                 if not pix.isNull():
                     # scale-to-fit width while keeping aspect
                     img_label.setPixmap(pix)
@@ -1441,7 +1553,7 @@ class StatBlockWindow(QtWidgets.QMainWindow):
                     self._image_label = img_label
                     self._image_pixmap = pix
                 else:
-                    img_label.setText(f"(Image not found or failed to load)\n{path}")
+                    img_label.setText(f"(Image not found or failed to load)\n{sb_image_path}")
             else:
                 img_label.setText("(No image path specified)")
             vbox.addWidget(img_label)
@@ -1626,7 +1738,7 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         # Load NPCs directly from the repository (freshly loaded from JSON)
         try:
             from repo import Repo
-            repo = Repo()
+            repo = Repo(config.data_dir)
             repo.load_all()  # This will reload from JSON files including any new NPCs
             
             # Get all NPCs from the repository
@@ -1840,8 +1952,6 @@ class AddNPCDialog(QtWidgets.QDialog):
         
         # Stat Block
         if npc.stat_block:
-            from stat_block import MonsterManual
-            from pc_classes import PcClass
             
             if isinstance(npc.stat_block, MonsterManual):
                 self.stat_block_type_combo.setCurrentText("Monster Manual")
@@ -1884,8 +1994,7 @@ class AddNPCDialog(QtWidgets.QDialog):
         if stat_block_type == "Monster Manual":
             # Load Monster Manual files from Media/MonsterManual
             try:
-                from pathlib import Path
-                monster_manual_dir = Path("Media") / "MonsterManual"
+                monster_manual_dir = config.get_monster_manual_pages()
                 if monster_manual_dir.exists():
                     # Get all image files (assuming they're the monster manual pages)
                     image_files = []
@@ -1934,11 +2043,9 @@ class AddNPCDialog(QtWidgets.QDialog):
             stat_block_selection = self.stat_block_selection_combo.currentText()
             
             if stat_block_type == "Monster Manual":
-                from stat_block import MonsterManual
                 file_name = stat_block_selection.replace(" ", "_").lower()
                 stat_block = MonsterManual(file_name=str(file_name))
             else:  # PC Class
-                from pc_classes import PcClass, PcClassName
                 # Try to get the enum value, fallback to creating from string
                 try:
                     pc_class_name = PcClassName(stat_block_selection)
@@ -1971,7 +2078,7 @@ class AddNPCDialog(QtWidgets.QDialog):
             if self.edit_npc:
                 try:
                     from repo import Repo
-                    repo = Repo()
+                    repo = Repo(config.data_dir)
                     repo.load_all()
                     # Find the ID by looking through npcs_by_id dictionary
                     for npc_id, npc_obj in repo.npcs_by_id.items():
@@ -1993,8 +2100,6 @@ class AddNPCDialog(QtWidgets.QDialog):
     
     def save_npc_to_json(self, npc: NPC, is_edit=False, original_name=None, original_id=None):
         """Save the NPC to npcs.json file"""
-        import json
-        from pathlib import Path
         
         # Path to npcs.json in the Data directory
         npcs_file = Path("Data") / "npcs.json"
@@ -2008,8 +2113,6 @@ class AddNPCDialog(QtWidgets.QDialog):
         
         # Convert NPC to dictionary format matching repo expectations
         # Handle different stat block types for JSON serialization
-        from stat_block import MonsterManual
-        from pc_classes import PcClass
         
         if isinstance(npc.stat_block, MonsterManual):
             stat_block_data = {
@@ -2079,7 +2182,7 @@ def main():
     import sys
     from theme import DMHelperTheme  # Import our theme
 
-    repo = Repo()
+    repo = Repo(config.data_dir)
     repo.load_all()
 
     kb = KnowledgeBase()
