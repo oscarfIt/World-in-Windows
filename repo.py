@@ -7,6 +7,7 @@ from spell import Spell
 from class_action import ClassAction
 from npc import NPC
 from location import Location
+from condition import Condition
 
 from stat_block import StatBlock, MonsterManual
 from pc_classes import PcClass, PcClassName
@@ -27,6 +28,7 @@ class Repo:
         self.spells: List[Spell] = []
         self.items: List[Item] = []
         self.class_actions: List[ClassAction] = []
+        self.conditions: List[Condition] = []
 
         # NPCs & fast lookup maps
         self.npcs: List[NPC] = []
@@ -37,6 +39,7 @@ class Repo:
         self.items_by_name: Dict[str, Item] = {}
         self.spells_by_name: Dict[str, Spell] = {}
         self.class_actions_by_name: Dict[str, ClassAction] = {}
+        self.conditions_by_name: Dict[str, Condition] = {}
 
         # Locations (top-level only; child locations reachable via .children)
         self.locations: List[Location] = []
@@ -45,10 +48,12 @@ class Repo:
         self.spells = self._load_list("spells.json", Spell)
         self.items = self._load_list("items.json", Item)
         self.class_actions = self._load_list("class_actions.json", ClassAction)
+        self.conditions = self._load_list("conditions.json", Condition)
 
         self.spells_by_name = {s.name: s for s in self.spells}
         self.items_by_name = {i.name: i for i in self.items}
         self.class_actions_by_name = {a.name: a for a in self.class_actions}
+        self.conditions_by_name = {c.name: c for c in self.conditions}
 
         # 2) NPCs (build stat blocks from spec)
         npcs_raw = self._read_json("npcs.json")

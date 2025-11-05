@@ -7,6 +7,7 @@ from spell import Spell
 from item import Item
 from class_action import ClassAction
 from npc import NPC
+from condition import Condition
 
 def _npc_summary(n: NPC, max_len=180) -> str:
     text = n.appearance.strip() or n.backstory.strip()
@@ -14,7 +15,7 @@ def _npc_summary(n: NPC, max_len=180) -> str:
 
 @dataclass
 class KBEntry:
-    content: Spell | Item | ClassAction | NPC
+    content: Spell | Item | ClassAction | NPC | Condition
     name: str
     hover_description: str
 
@@ -34,8 +35,8 @@ class KnowledgeBase:
         self._aliases[alias.lower()] = canonical_name
         self._pattern = None
 
-    def create_kb_entry(self, content: Spell | Item | ClassAction | NPC) -> KBEntry:
-        if isinstance(content, Spell) or isinstance(content, Item) or isinstance(content, ClassAction):
+    def create_kb_entry(self, content: Spell | Item | ClassAction | NPC | Condition) -> KBEntry:
+        if isinstance(content, Spell) or isinstance(content, Item) or isinstance(content, ClassAction) or isinstance(content, Condition):
             desc = content.description.strip()
         elif isinstance(content, NPC):
             desc = _npc_summary(content)
@@ -77,6 +78,13 @@ class KnowledgeBase:
             aliases = getattr(n, alias_key, None) or []
             for a in aliases:
                 self.add_alias(a, n.name)
+
+    def ingest_conditions(self, conditions: Iterable[Condition]):
+        for c in conditions:
+            self.add_entry(self.create_kb_entry(c))
+            # Add common aliases for conditions if needed
+            for a in getattr(c, "aliases", []):
+                self.add_alias(a, c.name)
 
     def _compile_pattern(self):
         # Build a single regex of all keys + aliases, longest-first.

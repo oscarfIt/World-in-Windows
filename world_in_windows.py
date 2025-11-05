@@ -24,6 +24,7 @@ from pc_classes import PcClass, PcClassName
 from item import Item
 from spell import Spell
 from class_action import ClassAction
+from condition import Condition
 
 
 
@@ -439,6 +440,15 @@ class MainWindow(QtWidgets.QMainWindow):
         browse_items_action.setStatusTip("Browse items and equipment")
         browse_items_action.triggered.connect(self.show_items)
         items_menu.addAction(browse_items_action)
+
+        # Conditions Menu
+        conditions_menu = menubar.addMenu("&Conditions")
+        
+        browse_conditions_action = QtGui.QAction("&Browse Conditions", self)
+        browse_conditions_action.setShortcut("Ctrl+C")
+        browse_conditions_action.setStatusTip("Browse D&D conditions and status effects")
+        browse_conditions_action.triggered.connect(self.show_conditions)
+        conditions_menu.addAction(browse_conditions_action)
         
         # Sounds Menu
         sounds_menu = menubar.addMenu("&Sounds")
@@ -525,6 +535,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """Show locations browser window"""
         locations_window = LocationsBrowserWindow(self.kb, self.locations, self)
         locations_window.show()
+
+    def show_conditions(self):
+        """Show conditions browser window"""
+        conditions_window = ConditionsBrowserWindow(self.kb, self)
+        conditions_window.show()
 # --- Spells Browser and Detail Windows ---
 class SpellsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
@@ -1780,6 +1795,8 @@ class StatBlockWindow(QtWidgets.QMainWindow):
                 "Class Action detail view is not implemented yet.")
         elif isinstance(entry.content, NPC):
             window = NPCDetailWindow(entry.content, self.kb, self)
+        elif isinstance(entry.content, Condition):
+            window = ConditionDetailWindow(entry.content, self.kb, self)
         else:
             QtWidgets.QMessageBox.warning(self, "Unknown Entry",
                 "The selected entry type is not recognized.")
@@ -2705,6 +2722,151 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         window.show()
 
 
+# --- Conditions Browser and Detail Windows ---
+class ConditionsBrowserWindow(QtWidgets.QMainWindow):
+    """Window for browsing all Conditions in the campaign"""
+    def __init__(self, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.kb = kb
+        self.setWindowTitle("Conditions Browser")
+        self.resize(800, 600)
+
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        # Create central widget and layout
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel("All Conditions")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        layout.addLayout(title_layout)
+
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search Conditions...")
+        self.search.textChanged.connect(self.filter_conditions)
+        layout.addWidget(self.search)
+
+        # Conditions list
+        self.conditions_list = QtWidgets.QListWidget()
+        self.conditions_list.itemDoubleClicked.connect(self.open_condition_detail)
+        self.conditions_list.setSpacing(2)
+        self.conditions_list.setUniformItemSizes(True)
+        layout.addWidget(self.conditions_list)
+
+        # Populate with conditions
+        self.populate_conditions()
+
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+
+        self.setCentralWidget(central_widget)
+
+    def populate_conditions(self):
+        """Populate the list with all Conditions from the repository"""
+        self.conditions_list.clear()
+        try:
+            from repo import Repo
+            repo = Repo(config.data_dir)
+            repo.load_all()
+            all_conditions = list(repo.conditions)
+        except Exception as e:
+            print(f"Failed to load conditions from repo: {e}")
+            all_conditions = []
+        all_conditions.sort(key=lambda x: x.name.lower())
+        for condition in all_conditions:
+            item = QtWidgets.QListWidgetItem(condition.name)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, condition)
+            item.setSizeHint(QtCore.QSize(0, 32))
+            tooltip = self.create_condition_tooltip(condition)
+            item.setToolTip(tooltip)
+            self.conditions_list.addItem(item)
+
+    def create_condition_tooltip(self, condition) -> str:
+        desc = condition.description or "No description"
+        if len(desc) > 160:
+            desc = desc[:160].rstrip() + "…"
+        return f"{condition.name}\n\n{desc}"
+
+    def filter_conditions(self, text: str):
+        text = text.lower().strip()
+        for i in range(self.conditions_list.count()):
+            item = self.conditions_list.item(i)
+            condition = item.data(QtCore.Qt.ItemDataRole.UserRole)
+            searchable_text = " ".join([
+                condition.name,
+                condition.description or "",
+            ]).lower()
+            item.setHidden(text not in searchable_text if text else False)
+
+    def open_condition_detail(self, item: QtWidgets.QListWidgetItem):
+        condition = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if not condition:
+            return
+        window = ConditionDetailWindow(condition, self.kb, self)
+        window.show()
+
+
+class ConditionDetailWindow(QtWidgets.QMainWindow):
+    def __init__(self, condition, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.condition = condition
+        self.kb = kb
+        self.setWindowTitle(f"Condition — {condition.name}")
+        self.resize(600, 400)
+
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(content)
+        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        
+        # Set field growth policy for better macOS compatibility
+        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
+
+        def label(text: str) -> QtWidgets.QLabel:
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            # Set minimum width to ensure proper text display on macOS
+            lab.setMinimumWidth(300)
+            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+            return lab
+
+        form.addRow("Name:", label(condition.name))
+        form.addRow("Description:", label(condition.description or ""))
+
+        scroll.setWidget(content)
+
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.close)
+        btns.accepted.connect(self.close)
+
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+        layout.addWidget(scroll)
+        layout.addWidget(btns)
+        self.setCentralWidget(central_widget)
+
+
 # --- App entry ---
 def main():
     import sys
@@ -2716,6 +2878,7 @@ def main():
     kb = KnowledgeBase()
     kb.ingest(repo.spells, repo.items, repo.class_actions)
     kb.ingest_npcs(repo.npcs_by_id.values())
+    kb.ingest_conditions(repo.conditions)
 
     app = QtWidgets.QApplication(sys.argv)
     
