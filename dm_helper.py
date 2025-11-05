@@ -2102,7 +2102,7 @@ class AddNPCDialog(QtWidgets.QDialog):
         """Save the NPC to npcs.json file"""
         
         # Path to npcs.json in the Data directory
-        npcs_file = Path("Data") / "npcs.json"
+        npcs_file = Path(config.data_dir) / "npcs.json"
         
         # Load existing NPCs
         if npcs_file.exists():
