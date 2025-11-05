@@ -235,7 +235,7 @@ class PathConfigDialog(QtWidgets.QDialog):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, locations: List[Location], kb: KnowledgeBase):
         super().__init__()
-        self.setWindowTitle("DM Helper — Locations & NPCs")
+        self.setWindowTitle("World in Windows")
         self.resize(1000, 640)
         self.locations = locations
         self.kb = kb
@@ -468,7 +468,7 @@ class MainWindow(QtWidgets.QMainWindow):
         help_menu = menubar.addMenu("&Help")
         
         about_action = QtGui.QAction("&About", self)
-        about_action.setStatusTip("About DM Helper")
+        about_action.setStatusTip("About World in Windows")
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
 
@@ -496,9 +496,9 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def show_about(self):
         """Show about dialog"""
-        QtWidgets.QMessageBox.about(self, "About DM Helper", 
-            "DM Helper v1.0\n\n"
-            "A tool for managing D&D campaign locations and NPCs.\n\n"
+        QtWidgets.QMessageBox.about(self, "About World in Windows", 
+            "World in Windows v1.0\n\n"
+            "A tool for managing D&D campaigns.\n\n"
             "Built with PyQt6")
         
     def show_npcs(self):
@@ -1301,7 +1301,7 @@ class AddSoundDialog(QtWidgets.QDialog):
                 # Show loading dialog
                 progress = QtWidgets.QProgressDialog("Generating sound clip...", "Cancel", 0, 0, self)
                 progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
-                progress.setWindowTitle("Generating with Stability AI")
+                progress.setWindowTitle("Stability AI Sound Generation")
                 progress.setAutoClose(False)
                 progress.setAutoReset(False)
                 progress.setCancelButton(None)
