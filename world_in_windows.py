@@ -412,6 +412,15 @@ class MainWindow(QtWidgets.QMainWindow):
         browse_npcs_action.setStatusTip("Browse all NPCs in the campaign")
         browse_npcs_action.triggered.connect(self.show_npcs)
         npcs_menu.addAction(browse_npcs_action)
+
+        # Locations Menu  
+        locations_menu = menubar.addMenu("&Locations")
+        
+        browse_locations_action = QtGui.QAction("&Browse Locations", self)
+        browse_locations_action.setShortcut("Ctrl+L")
+        browse_locations_action.setStatusTip("Browse all Locations in the campaign")
+        browse_locations_action.triggered.connect(self.show_locations)
+        locations_menu.addAction(browse_locations_action)
         
         # Spells Menu
         spells_menu = menubar.addMenu("&Spells")
@@ -511,6 +520,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """Show spells browser window"""
         spells_window = SpellsBrowserWindow(self.kb, self)
         spells_window.show()
+
+    def show_locations(self):
+        """Show locations browser window"""
+        locations_window = LocationsBrowserWindow(self.kb, self.locations, self)
+        locations_window.show()
 # --- Spells Browser and Detail Windows ---
 class SpellsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
@@ -2303,6 +2317,393 @@ class AddNPCDialog(QtWidgets.QDialog):
         # Save back to file
         with open(npcs_file, 'w', encoding='utf-8') as f:
             json.dump(npcs_data, f, indent=2, ensure_ascii=False)
+
+# --- Locations Browser and Detail Windows ---
+class LocationsBrowserWindow(QtWidgets.QMainWindow):
+    """Window for browsing all Locations in the campaign"""
+    def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
+        super().__init__(parent)
+        self.kb = kb
+        self.locations = locations
+        self.setWindowTitle("Locations Browser")
+        self.resize(900, 600)
+
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        # Central widget and layout
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel("All Locations")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        layout.addLayout(title_layout)
+
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search Locations...")
+        self.search.textChanged.connect(self.filter_locations)
+        layout.addWidget(self.search)
+
+        # Locations list
+        self.locations_list = QtWidgets.QListWidget()
+        self.locations_list.itemDoubleClicked.connect(self.open_location_detail)
+        self.locations_list.setSpacing(2)
+        self.locations_list.setUniformItemSizes(True)
+        layout.addWidget(self.locations_list)
+
+        # Populate with locations
+        self.populate_locations()
+
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+
+        self.setCentralWidget(central_widget)
+
+    def populate_locations(self):
+        """Populate the list with all Locations from the repository"""
+        self.locations_list.clear()
+        
+        # Get all locations (including nested ones)
+        all_locations = []
+        def collect_locations(locs):
+            for loc in locs:
+                all_locations.append(loc)
+                if hasattr(loc, 'children') and loc.children:
+                    collect_locations(loc.children)
+        
+        collect_locations(self.locations)
+        all_locations.sort(key=lambda x: x.name.lower())
+        
+        for loc in all_locations:
+            item = QtWidgets.QListWidgetItem(loc.name)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, loc)
+            item.setSizeHint(QtCore.QSize(0, 32))
+            tooltip = self.create_location_tooltip(loc)
+            item.setToolTip(tooltip)
+            self.locations_list.addItem(item)
+
+    def create_location_tooltip(self, loc: Location) -> str:
+        desc = loc.description or "No description"
+        if len(desc) > 160:
+            desc = desc[:160].rstrip() + "…"
+        return f"{loc.name}\nRegion: {loc.region or '-'}\nNPCs: {len(loc.npcs)}\n\n{desc}"
+
+    def filter_locations(self, text: str):
+        text = text.lower().strip()
+        for i in range(self.locations_list.count()):
+            item = self.locations_list.item(i)
+            loc = item.data(QtCore.Qt.ItemDataRole.UserRole)
+            searchable_text = " ".join([
+                loc.name,
+                loc.region or "",
+                loc.description or "",
+                " ".join(getattr(loc, "tags", [])),
+            ]).lower()
+            item.setHidden(text not in searchable_text if text else False)
+
+    def open_location_detail(self, item: QtWidgets.QListWidgetItem):
+        loc = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if not loc:
+            return
+        window = LocationDetailWindow(loc, self.kb, self)
+        window.show()
+
+
+class LocationDetailWindow(QtWidgets.QMainWindow):
+    def __init__(self, location: Location, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.location = location
+        self.kb = kb
+        self.setWindowTitle(f"Location — {location.name}")
+        self.resize(700, 600)
+
+        # Apply dialog theme
+        from theme import DMHelperTheme
+        DMHelperTheme.apply_to_dialog(self)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        vbox = QtWidgets.QVBoxLayout(content)
+        vbox.setContentsMargins(12, 12, 12, 12)
+        vbox.setSpacing(10)
+
+        def label(text: str, bold: bool = False):
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            if bold:
+                f = lab.font()
+                f.setBold(True)
+                lab.setFont(f)
+            return lab
+
+        # Location details
+        vbox.addWidget(label(location.name, bold=True))
+        vbox.addWidget(label(f"Region: {location.region or 'Unknown'}"))
+        vbox.addWidget(label(f"Description: {location.description or 'No description'}"))
+        
+        # Tags
+        tags = ", ".join(location.tags) if location.tags else "None"
+        vbox.addWidget(label(f"Tags: {tags}"))
+
+        vbox.addSpacing(10)
+
+        # NPCs in this location
+        vbox.addWidget(label("NPCs in this Location:", bold=True))
+        
+        if location.npcs:
+            for npc in location.npcs:
+                # Create a horizontal layout for NPC name and remove button
+                npc_layout = QtWidgets.QHBoxLayout()
+                
+                # NPC name button (clickable to open details)
+                npc_item = QtWidgets.QPushButton(npc.name)
+                npc_item.setToolTip(npc.appearance or "")
+                npc_item.clicked.connect(lambda checked, n=npc: self.open_npc_detail(n))
+                npc_item.setStyleSheet("""
+                    QPushButton {
+                        text-align: left;
+                        padding: 8px;
+                        margin: 2px 0;
+                        border: 1px solid #666;
+                        border-radius: 4px;
+                        background-color: #ffffff;
+                        color: #2c3e50;
+                        font-weight: bold;
+                        font-size: 12px;
+                    }
+                    QPushButton:hover {
+                        background-color: #e8f4f8;
+                        border-color: #3498db;
+                        color: #1e3a5f;
+                    }
+                    QPushButton:pressed {
+                        background-color: #d6eaf8;
+                    }
+                """)
+                npc_layout.addWidget(npc_item)
+                
+                # Remove button
+                remove_btn = QtWidgets.QPushButton("Remove")
+                remove_btn.setToolTip(f"Remove {npc.name} from this location")
+                remove_btn.clicked.connect(lambda checked, n=npc: self.remove_npc_from_location(n))
+                remove_btn.setMaximumWidth(70)
+                remove_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #ff6b6b;
+                        color: white;
+                        border: none;
+                        border-radius: 3px;
+                        padding: 5px;
+                        margin: 2px 0;
+                    }
+                    QPushButton:hover {
+                        background-color: #ff5252;
+                    }
+                """)
+                npc_layout.addWidget(remove_btn)
+                
+                # Create widget to hold the layout
+                npc_widget = QtWidgets.QWidget()
+                npc_widget.setLayout(npc_layout)
+                vbox.addWidget(npc_widget)
+        else:
+            vbox.addWidget(label("No NPCs in this location"))
+
+        vbox.addSpacing(10)
+
+        # Add NPC to location section
+        vbox.addWidget(label("Add NPC to Location:", bold=True))
+        
+        # NPC dropdown
+        self.npc_dropdown = QtWidgets.QComboBox()
+        self.populate_npc_dropdown()
+        vbox.addWidget(self.npc_dropdown)
+        
+        # Add NPC button
+        add_npc_layout = QtWidgets.QHBoxLayout()
+        add_btn = QtWidgets.QPushButton("Add NPC to Location")
+        add_btn.clicked.connect(self.add_npc_to_location)
+        add_npc_layout.addWidget(add_btn)
+        add_npc_layout.addStretch()
+        vbox.addLayout(add_npc_layout)
+
+        scroll.setWidget(content)
+
+        # Close button at bottom
+        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        btns.rejected.connect(self.close)
+        btns.accepted.connect(self.close)
+
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+        layout.addWidget(scroll)
+        layout.addWidget(btns)
+        self.setCentralWidget(central_widget)
+
+    def populate_npc_dropdown(self):
+        """Populate dropdown with NPCs not already in this location"""
+        self.npc_dropdown.clear()
+        
+        try:
+            from repo import Repo
+            repo = Repo(config.data_dir)
+            repo.load_all()
+            all_npcs = list(repo.npcs)
+            
+            # Get names of NPCs already in this location for comparison
+            existing_npc_names = {npc.name for npc in self.location.npcs}
+            
+            # Only show NPCs not already in this location (compare by name)
+            available_npcs = [npc for npc in all_npcs if npc.name not in existing_npc_names]
+            
+            if not available_npcs:
+                self.npc_dropdown.addItem("No NPCs available to add", None)
+                return
+                
+            # Sort by name
+            available_npcs.sort(key=lambda x: x.name.lower())
+            
+            for npc in available_npcs:
+                self.npc_dropdown.addItem(npc.name, npc)
+                
+        except Exception as e:
+            print(f"Error loading NPCs: {e}")
+            self.npc_dropdown.addItem("Error loading NPCs", None)
+
+    def add_npc_to_location(self):
+        """Add selected NPC to this location"""
+        npc = self.npc_dropdown.currentData()
+        if not npc:
+            QtWidgets.QMessageBox.information(self, "No NPC Selected", 
+                "Please select an NPC to add to this location.")
+            return
+        
+        # Check if NPC is already in this location (double-check to prevent duplicates)
+        existing_npc_names = {existing_npc.name for existing_npc in self.location.npcs}
+        if npc.name in existing_npc_names:
+            QtWidgets.QMessageBox.information(self, "NPC Already Present", 
+                f"'{npc.name}' is already in '{self.location.name}'.")
+            return
+        
+        try:
+            # Add NPC to location
+            self.location.add_npc(npc)
+            
+            # Save changes to locations.json
+            self.save_locations_to_json()
+            
+            # Show success message
+            QtWidgets.QMessageBox.information(self, "NPC Added", 
+                f"'{npc.name}' has been added to '{self.location.name}'.")
+            
+            # Refresh the window to show the updated list
+            self.refresh_window()
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", 
+                f"Failed to add NPC to location:\n{str(e)}")
+
+    def remove_npc_from_location(self, npc):
+        """Remove an NPC from this location"""
+        # Confirm removal
+        reply = QtWidgets.QMessageBox.question(self, "Remove NPC",
+            f"Are you sure you want to remove '{npc.name}' from '{self.location.name}'?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            try:
+                # Remove NPC from location
+                self.location.remove_npc(npc)
+                
+                # Save changes to locations.json
+                self.save_locations_to_json()
+                
+                # Show success message
+                QtWidgets.QMessageBox.information(self, "NPC Removed", 
+                    f"'{npc.name}' has been removed from '{self.location.name}'.")
+                
+                # Refresh the window to show the updated list
+                self.refresh_window()
+                
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Error", 
+                    f"Failed to remove NPC from location:\n{str(e)}")
+
+    def open_npc_detail(self, npc):
+        """Open the NPC detail window"""
+        window = NPCDetailWindow(npc, self.kb, self)
+        window.show()
+
+    def refresh_window(self):
+        """Refresh the location detail window to show updated data"""
+        # Store the current window position and size
+        geometry = self.geometry()
+        
+        # Create a new window with the same location
+        new_window = LocationDetailWindow(self.location, self.kb, self.parent())
+        new_window.setGeometry(geometry)  # Keep same position/size
+        new_window.show()
+        
+        # Close the current window
+        self.close()
+
+    def save_locations_to_json(self):
+        """Update the locations.json file with current location data"""
+        try:
+            # Path to locations.json
+            locations_file = Path(config.data_dir) / "locations.json"
+            
+            if not locations_file.exists():
+                raise Exception("Locations file not found")
+            
+            # Load existing locations data
+            with open(locations_file, 'r', encoding='utf-8') as f:
+                locations_data = json.load(f)
+            
+            # Find and update the location entry
+            location_updated = False
+            for loc_entry in locations_data:
+                # Match by name (locations should have unique names)
+                if loc_entry.get("name") == self.location.name:
+                    # Update the npc_ids field with current NPCs
+                    loc_entry["npc_ids"] = [npc.name for npc in self.location.npcs]
+                    location_updated = True
+                    break
+            
+            if not location_updated:
+                raise Exception(f"Could not find location '{self.location.name}' in the data file")
+            
+            # Save back to file
+            with open(locations_file, 'w', encoding='utf-8') as f:
+                json.dump(locations_data, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            print(f"Error saving locations: {e}")
+            # Don't show error to user for now, just log it
+            # QtWidgets.QMessageBox.warning(self, "Save Error", 
+            #     f"Could not save changes to locations file:\n{str(e)}")
+
+    def open_npc_detail(self, npc: NPC):
+        """Open the NPC detail window"""
+        window = NPCDetailWindow(npc, self.kb, self)
+        window.show()
+
 
 # --- App entry ---
 def main():
