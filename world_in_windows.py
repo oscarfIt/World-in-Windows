@@ -1307,6 +1307,7 @@ class AddSoundDialog(QtWidgets.QDialog):
                     
                     QtWidgets.QMessageBox.information(self, "Success", 
                         f"Sound '{sound_name}' generated successfully!\nSaved to: {audio_path}")
+                    print("spaldifgap")
                         
                 except Exception as gen_error:
                     progress.close()
