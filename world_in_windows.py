@@ -1,4 +1,4 @@
-# dming_tool_qt.py
+# world_in_windows.py
 # Minimal PyQt6 app to browse (nested) Locations and see their NPCs.
 # Changes from previous version:
 # - Left pane is now a QTreeView with two columns: Name | Short Description
@@ -1536,7 +1536,6 @@ class StatBlockWindow(QtWidgets.QMainWindow):
 
             # Try to load the PNG page
             sb_image = getattr(sb, "stat_block_image", None)
-            print(f"Loading monster image from: {sb_image}")
             name = getattr(sb, "monster_name", "Unknown")
             vbox.addWidget(label(f"Name: {name}"))
 
@@ -1544,7 +1543,6 @@ class StatBlockWindow(QtWidgets.QMainWindow):
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             if sb_image:
                 sb_image_path = config.get_monster_manual_pages() / sb_image
-                print(sb_image_path)
                 pix = QtGui.QPixmap(str(sb_image_path))
                 if not pix.isNull():
                     # scale-to-fit width while keeping aspect
