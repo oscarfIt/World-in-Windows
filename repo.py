@@ -103,6 +103,7 @@ class Repo:
                         appearance=row.get("appearance", ""),
                         backstory=row.get("backstory", ""),
                         additional_traits=norm_traits,  # works if your NPC supports it
+                        campaign_notes=row.get("campaign_notes", ""),  # Include campaign notes
                     )
                 except TypeError:
                     # Fallback to legacy signature (no additional_traits)
@@ -118,6 +119,7 @@ class Repo:
                     )
                     # attach as attribute for UI if needed
                     setattr(npc, "additional_traits", norm_traits)
+                    setattr(npc, "campaign_notes", row.get("campaign_notes", ""))
 
                 nid = row.get("id", row["name"])
                 self.npcs.append(npc)
