@@ -9,7 +9,7 @@ class AbilityScores:
     Wisdom: int
     Charisma: int
 
-    def __init__(self, scores: dict):
+    def __init__(self, scores: dict = {}):
         self.Strength = scores.get("Strength", 10)
         self.Dexterity = scores.get("Dexterity", 10)
         self.Constitution = scores.get("Constitution", 10)

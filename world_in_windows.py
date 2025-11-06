@@ -2197,20 +2197,20 @@ class AddNPCDialog(QtWidgets.QDialog):
             
             # Create stat block based on selection
             stat_block_type = self.stat_block_type_combo.currentText()
-            stat_block_selection = self.stat_block_selection_combo.currentText()
+            stat_block_name = self.stat_block_selection_combo.currentText()
             
             if stat_block_type == "Monster Manual":
-                file_name = stat_block_selection.replace(" ", "_").lower()
+                file_name = stat_block_name.replace(" ", "_").lower()
                 stat_block = MonsterManual(file_name=str(file_name))
             else:  # PC Class
                 # Try to get the enum value, fallback to creating from string
                 try:
-                    pc_class_name = PcClassName(stat_block_selection)
+                    pc_class_name = PcClassName(stat_block_name)
                 except ValueError:
                     # If the selection isn't in the enum, create a custom one
-                    pc_class_name = type('PcClassName', (), {'value': stat_block_selection})()
+                    pc_class_name = type('PcClassName', (), {'value': stat_block_name})()
                 
-                stat_block = PcClass(name=pc_class_name, level=1)  # Default to level 1
+                stat_block = PcClass(name=pc_class_name)
             
             # Parse additional traits
             traits_text = self.traits_field.toPlainText().strip()
