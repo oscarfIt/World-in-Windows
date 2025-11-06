@@ -15,7 +15,6 @@ class Race(Enum):
     Hobgoblin = "Hobgoblin"
     Bugbear = "Bugbear"
     Elemental = "Elemental"
-    Goblin = "Goblin"
     Kobold = "Kobold"
     Lizardfolk = "Lizardfolk"
     Magmin = "Magmin"
