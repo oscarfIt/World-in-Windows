@@ -2007,7 +2007,9 @@ class AddNPCDialog(QtWidgets.QDialog):
         # Race field
         self.race_combo = QtWidgets.QComboBox()
         from race import Race
-        for race in Race:
+        # Sort races alphabetically by their display value
+        sorted_races = sorted(Race, key=lambda r: r.value)
+        for race in sorted_races:
             self.race_combo.addItem(race.value, race)
         form.addRow("Race*:", self.race_combo)
         
