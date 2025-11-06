@@ -39,11 +39,11 @@ class PcClass(StatBlock):
     spells: list[Spell] = field(default_factory=list)
     spell_slots: list[SpellSlot] = field(default_factory=list)
 
-    def __init__(self, name: PcClassName, level: int, ability_scores: AbilityScores, spells: Optional[list[Spell]] = None, weapons: Optional[list[Item]] = None):
+    def __init__(self, name: PcClassName, level: int = 1, ability_scores: AbilityScores = None, spells: Optional[list[Spell]] = None, weapons: Optional[list[Item]] = None):
         super().__init__(name.value + ", Level " + str(level))
         self.name = name
         self.level = level
-        self.ability_scores = ability_scores
+        self.ability_scores = ability_scores if ability_scores is not None else AbilityScores()
         self.caster_type = self.determine_caster_type(name)
         self.spells = spells if spells is not None else []
         self.spell_slots = self.determine_spell_slots(level, self.caster_type)
