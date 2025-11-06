@@ -2,14 +2,16 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from npc import NPC
+from item import Item
 
 @dataclass
 class Location:
     name: str
     description: str
     region: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
     npcs: List[NPC] = field(default_factory=list)
+    loot: List[Item] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
 
     parent: Optional['Location'] = None
     children: List['Location'] = field(default_factory=list)

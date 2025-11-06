@@ -2599,6 +2599,42 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         add_npc_layout.addStretch()
         vbox.addLayout(add_npc_layout)
 
+        vbox.addSpacing(10)
+
+        # Loot in this location
+        vbox.addWidget(label("Loot in this Location:", bold=True))
+        
+        if location.loot:
+            for item in location.loot:
+                # Create a button for each item (clickable to open details)
+                item_btn = QtWidgets.QPushButton(item.name)
+                item_btn.setToolTip(item.description or "")
+                item_btn.clicked.connect(lambda checked, i=item: self.open_item_detail(i))
+                item_btn.setStyleSheet("""
+                    QPushButton {
+                        text-align: left;
+                        padding: 8px;
+                        margin: 2px 0;
+                        border: 1px solid #666;
+                        border-radius: 4px;
+                        background-color: #fff8dc;
+                        color: #8b4513;
+                        font-weight: bold;
+                        font-size: 12px;
+                    }
+                    QPushButton:hover {
+                        background-color: #ffebcd;
+                        border-color: #daa520;
+                        color: #654321;
+                    }
+                    QPushButton:pressed {
+                        background-color: #ffe4b5;
+                    }
+                """)
+                vbox.addWidget(item_btn)
+        else:
+            vbox.addWidget(label("No loot in this location"))
+
         scroll.setWidget(content)
 
         # Close button at bottom
@@ -2704,6 +2740,11 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
     def open_npc_detail(self, npc):
         """Open the NPC detail window"""
         window = NPCDetailWindow(npc, self.kb, self)
+        window.show()
+
+    def open_item_detail(self, item):
+        """Open the Item detail window"""
+        window = ItemDetailWindow(item, self.kb, self)
         window.show()
 
     def refresh_window(self):
