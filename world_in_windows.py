@@ -2199,18 +2199,46 @@ class AddNPCDialog(QtWidgets.QDialog):
             stat_block_type = self.stat_block_type_combo.currentText()
             stat_block_name = self.stat_block_selection_combo.currentText()
             
-            if stat_block_type == "Monster Manual":
-                file_name = stat_block_name.replace(" ", "_").lower()
-                stat_block = MonsterManual(file_name=str(file_name))
-            else:  # PC Class
-                # Try to get the enum value, fallback to creating from string
-                try:
-                    pc_class_name = PcClassName(stat_block_name)
-                except ValueError:
-                    # If the selection isn't in the enum, create a custom one
-                    pc_class_name = type('PcClassName', (), {'value': stat_block_name})()
+            # If editing and the stat block type/name hasn't changed, preserve the existing stat block
+            if self.edit_npc and self.edit_npc.stat_block:
+                preserve_stat_block = False
                 
-                stat_block = PcClass(name=pc_class_name)
+                if isinstance(self.edit_npc.stat_block, MonsterManual) and stat_block_type == "Monster Manual":
+                    # Check if monster name is the same
+                    current_monster = self.edit_npc.stat_block.monster_name
+                    if current_monster == stat_block_name or current_monster.replace("_", " ").title() == stat_block_name:
+                        preserve_stat_block = True
+                        stat_block = self.edit_npc.stat_block
+                
+                elif isinstance(self.edit_npc.stat_block, PcClass) and stat_block_type == "PC Class":
+                    # Check if class name is the same
+                    current_class = self.edit_npc.stat_block.name.value if hasattr(self.edit_npc.stat_block.name, 'value') else str(self.edit_npc.stat_block.name)
+                    if current_class == stat_block_name:
+                        preserve_stat_block = True
+                        stat_block = self.edit_npc.stat_block
+                
+                if not preserve_stat_block:
+                    # Stat block type or name changed, create a new one
+                    if stat_block_type == "Monster Manual":
+                        file_name = stat_block_name.replace(" ", "_").lower()
+                        stat_block = MonsterManual(file_name=str(file_name))
+                    else:  # PC Class
+                        try:
+                            pc_class_name = PcClassName(stat_block_name)
+                        except ValueError:
+                            pc_class_name = type('PcClassName', (), {'value': stat_block_name})()
+                        stat_block = PcClass(name=pc_class_name)
+            else:
+                # Creating a new NPC or no existing stat block
+                if stat_block_type == "Monster Manual":
+                    file_name = stat_block_name.replace(" ", "_").lower()
+                    stat_block = MonsterManual(file_name=str(file_name))
+                else:  # PC Class
+                    try:
+                        pc_class_name = PcClassName(stat_block_name)
+                    except ValueError:
+                        pc_class_name = type('PcClassName', (), {'value': stat_block_name})()
+                    stat_block = PcClass(name=pc_class_name)
             
             # Parse additional traits
             traits_text = self.traits_field.toPlainText().strip()
@@ -2280,7 +2308,16 @@ class AddNPCDialog(QtWidgets.QDialog):
             stat_block_data = {
                 "type": "pc_class",
                 "class": npc.stat_block.name.value if hasattr(npc.stat_block.name, 'value') else str(npc.stat_block.name),
-                "level": npc.stat_block.level
+                "level": npc.stat_block.level,
+                "ability_scores": {
+                    "Strength": npc.stat_block.ability_scores.Strength,
+                    "Dexterity": npc.stat_block.ability_scores.Dexterity,
+                    "Constitution": npc.stat_block.ability_scores.Constitution,
+                    "Intelligence": npc.stat_block.ability_scores.Intelligence,
+                    "Wisdom": npc.stat_block.ability_scores.Wisdom,
+                    "Charisma": npc.stat_block.ability_scores.Charisma
+                },
+                "spells": npc.stat_block.spells if hasattr(npc.stat_block, 'spells') else []
             }
         else:
             # Fallback for other stat block types
