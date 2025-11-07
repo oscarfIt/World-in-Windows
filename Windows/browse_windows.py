@@ -1,4 +1,18 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
+import subprocess
+import sys
+from pathlib import Path
+from typing import List
+
+from theme import DMHelperTheme
+from repo import Repo
+
+from ..knowledge_base import KnowledgeBase      # HMMMMMM
+
+from ..Dataclasses import Spell, Item, NPC, Location
+from ..Dialogs import AddSoundDialog, AddNPCDialog
+
+from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow, LocationDetailWindow, ConditionDetailWindow
 
 class SpellsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
@@ -9,7 +23,6 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
         self.resize(800, 600)
 
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         # Create central widget and layout
@@ -54,7 +67,6 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
         """Populate the list with all Spells from the repository"""
         self.spells_list.clear()
         try:
-            from repo import Repo
             repo = Repo(config.data_dir)
             repo.load_all()
             all_spells = list(repo.spells)
@@ -111,7 +123,6 @@ class ItemsBrowserWindow(QtWidgets.QMainWindow):
         self.resize(800, 600)
 
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         # Create central widget and layout
@@ -156,7 +167,6 @@ class ItemsBrowserWindow(QtWidgets.QMainWindow):
         """Populate the list with all Items from the repository"""
         self.items_list.clear()
         try:
-            from repo import Repo
             repo = Repo(config.data_dir)
             repo.load_all()
             all_items = list(repo.items)
@@ -211,7 +221,6 @@ class SoundsBrowserWindow(QtWidgets.QMainWindow):
         self.resize(800, 600)
 
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         # Create central widget and layout
@@ -341,8 +350,6 @@ class SoundsBrowserWindow(QtWidgets.QMainWindow):
         audio_path = current_item.data(QtCore.Qt.ItemDataRole.UserRole)
         try:
             # Try to play using system default audio player
-            import subprocess
-            import sys
             
             if sys.platform == "win32":
                 # Windows
@@ -396,7 +403,6 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         self.resize(800, 600)
         
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
         
         # Create central widget and layout
@@ -453,7 +459,6 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         
         # Load NPCs directly from the repository (freshly loaded from JSON)
         try:
-            from repo import Repo
             repo = Repo(config.data_dir)
             repo.load_all()  # This will reload from JSON files including any new NPCs
             
@@ -558,7 +563,6 @@ class LocationsBrowserWindow(QtWidgets.QMainWindow):
         self.resize(900, 600)
 
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         # Central widget and layout
@@ -657,7 +661,6 @@ class ConditionsBrowserWindow(QtWidgets.QMainWindow):
         self.resize(800, 600)
 
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         # Create central widget and layout
@@ -702,7 +705,6 @@ class ConditionsBrowserWindow(QtWidgets.QMainWindow):
         """Populate the list with all Conditions from the repository"""
         self.conditions_list.clear()
         try:
-            from repo import Repo
             repo = Repo(config.data_dir)
             repo.load_all()
             all_conditions = list(repo.conditions)
