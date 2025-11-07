@@ -1450,6 +1450,22 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         campaign_notes_btn.clicked.connect(self.open_campaign_notes)
         btns.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
+        # Add custom Delete button
+        delete_btn = QtWidgets.QPushButton("Delete")
+        delete_btn.setToolTip("Permanently delete this NPC")
+        delete_btn.clicked.connect(self.delete_npc)
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #d32f2f;
+                color: white;
+                padding: 5px 15px;
+            }
+            QPushButton:hover {
+                background-color: #b71c1c;
+            }
+        """)
+        btns.addButton(delete_btn, QtWidgets.QDialogButtonBox.ButtonRole.DestructiveRole)
+        
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
 
@@ -1534,6 +1550,67 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # NPC's campaign_notes have been updated, optionally refresh the window
             pass
+
+    def delete_npc(self):
+        """Delete this NPC permanently after confirmation"""
+        # Show confirmation dialog
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Delete NPC",
+            f"Are you sure? This will permanently delete {self.npc.name}.",
+            QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel,
+            QtWidgets.QMessageBox.StandardButton.Cancel  # Default to Cancel
+        )
+        
+        if reply == QtWidgets.QMessageBox.StandardButton.Ok:
+            try:
+                # Delete from npcs.json
+                npcs_file = Path(config.data_dir) / "npcs.json"
+                
+                if npcs_file.exists():
+                    with open(npcs_file, 'r', encoding='utf-8') as f:
+                        npcs_data = json.load(f)
+                    
+                    # Find and remove the NPC by name
+                    original_count = len(npcs_data)
+                    npcs_data = [npc for npc in npcs_data if npc.get("name") != self.npc.name]
+                    
+                    if len(npcs_data) < original_count:
+                        # NPC was found and removed
+                        with open(npcs_file, 'w', encoding='utf-8') as f:
+                            json.dump(npcs_data, f, indent=2, ensure_ascii=False)
+                        
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "NPC Deleted",
+                            f"{self.npc.name} has been permanently deleted."
+                        )
+                        
+                        # Close the window
+                        self.close()
+                        
+                        # Refresh the parent window if it's an NPCs browser
+                        if self.parent() and hasattr(self.parent(), 'populate_npcs'):
+                            self.parent().populate_npcs()
+                    else:
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Not Found",
+                            f"Could not find {self.npc.name} in the database."
+                        )
+                else:
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Error",
+                        "NPCs data file not found."
+                    )
+                    
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to delete NPC:\n{str(e)}"
+                )
         
 
 class StatBlockWindow(QtWidgets.QMainWindow):
