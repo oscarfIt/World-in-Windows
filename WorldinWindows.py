@@ -18,7 +18,7 @@ else:
 sys.path.insert(0, str(bundle_dir))
 
 # Import and run the main function from the package
-from world_in_windows import main
+from WorldInWindows import main
 
 if __name__ == "__main__":
     main()
