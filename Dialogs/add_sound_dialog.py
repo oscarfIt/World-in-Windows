@@ -5,7 +5,7 @@ import shutil
 from ..theme import DMHelperTheme
 from ..config import Config
 
-from ..AIGen import SoundGenerator, AudioGenerationMode
+from ..AIGen import SoundGenerator, SoundGenerationMode
 
 class AddSoundDialog(QtWidgets.QDialog):
     """Dialog for generating new audio clips"""
@@ -58,7 +58,7 @@ class AddSoundDialog(QtWidgets.QDialog):
         
         # Mode field
         self.mode_combo = QtWidgets.QComboBox()
-        for mode in AudioGenerationMode:
+        for mode in SoundGenerationMode:
             self.mode_combo.addItem(mode.value.replace('_', ' ').title(), mode)
         form.addRow("Audio Type:", self.mode_combo)
         
