@@ -109,6 +109,7 @@ class Repo:
                         backstory=row.get("backstory", ""),
                         additional_traits=norm_traits,  # works if your NPC supports it
                         campaign_notes=row.get("campaign_notes", ""),  # Include campaign notes
+                        alive=row.get("alive", True)  # Include alive status
                     )
                 except TypeError:
                     # Fallback to legacy signature (no additional_traits)
