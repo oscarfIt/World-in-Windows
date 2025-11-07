@@ -2,7 +2,7 @@ import os, base64, requests
 from pathlib import Path
 from enum import Enum
 
-from config import Config
+from ..config import Config
 
 
 class SoundGenerationMode(Enum):
