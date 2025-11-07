@@ -2,10 +2,10 @@ import os, base64, requests
 from pathlib import Path
 from enum import Enum
 
-from config import Config
+from ..config import Config
 
 
-class AudioGenerationMode(Enum):
+class SoundGenerationMode(Enum):
     """Audio generation modes for different types of sound creation"""
     SOUND_EFFECTS = "sound_effects"    # For sound effects like cow mooing, sword clashing
     AMBIENT = "ambient"                # For ambient sounds like forest, tavern noise
@@ -47,7 +47,7 @@ class SoundGenerator:
             print(f"Error checking credits: {e}")
             return None
 
-    def generate_sound_clip(self, prompt: str, duration: float = 5.0, mode: AudioGenerationMode = AudioGenerationMode.SOUND_EFFECTS) -> bytes:
+    def generate_sound_clip(self, prompt: str, duration: float = 5.0, mode: SoundGenerationMode = SoundGenerationMode.SOUND_EFFECTS) -> bytes:
         """
         Generate a sound clip based on a text prompt using Stability AI's audio generation API
         
@@ -75,12 +75,12 @@ class SoundGenerator:
         }
         
         # Add mode-specific parameters
-        if mode == AudioGenerationMode.SOUND_EFFECTS:
+        if mode == SoundGenerationMode.SOUND_EFFECTS:
             files["category"] = (None, "sound_effects")
-        elif mode == AudioGenerationMode.AMBIENT:
+        elif mode == SoundGenerationMode.AMBIENT:
             files["category"] = (None, "ambient")
             files["loop"] = (None, "true")  # Ambient sounds often should loop
-        elif mode == AudioGenerationMode.MUSIC:
+        elif mode == SoundGenerationMode.MUSIC:
             files["category"] = (None, "music")
             files["duration"] = (None, str(max(duration, 10.0)))  # Music usually needs longer duration
         
@@ -99,7 +99,7 @@ class SoundGenerator:
             raise
 
     def generate_and_save_sound(self, prompt: str, filename: str = None, duration: float = 5.0, 
-                               mode: AudioGenerationMode = AudioGenerationMode.SOUND_EFFECTS) -> Path:
+                               mode: SoundGenerationMode = SoundGenerationMode.SOUND_EFFECTS) -> Path:
         """
         Generate a sound clip and save it to the Media/Audio directory
         
@@ -161,7 +161,7 @@ class SoundGenerator:
             prompt=prompt,
             filename=filename,
             duration=max(3.0, len(dialogue) * 0.1),  # Estimate duration based on text length
-            mode=AudioGenerationMode.SOUND_EFFECTS
+            mode=SoundGenerationMode.SOUND_EFFECTS
         )
 
     def generate_location_ambience(self, location_name: str, location_type: str, duration: float = 30.0) -> Path:
@@ -195,7 +195,7 @@ class SoundGenerator:
             prompt=prompt,
             filename=filename,
             duration=duration,
-            mode=AudioGenerationMode.AMBIENT
+            mode=SoundGenerationMode.AMBIENT
         )
 
     def generate_combat_sound(self, action_description: str) -> Path:
@@ -215,6 +215,6 @@ class SoundGenerator:
             prompt=prompt,
             filename=filename,
             duration=3.0,  # Combat sounds are usually short
-            mode=AudioGenerationMode.SOUND_EFFECTS
+            mode=SoundGenerationMode.SOUND_EFFECTS
         )
 

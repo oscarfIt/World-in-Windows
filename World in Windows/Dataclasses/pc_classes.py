@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from typing import Optional
 from enum import Enum
 
-from stat_block import StatBlock
-from abilities import AbilityScores
-from spell import Spell, SpellSlot
-from item import Item
+from .stat_block import StatBlock
+from .abilities import AbilityScores
+from .spell import Spell, SpellSlot
+from .item import Item
 
 class PcClassName(Enum):
     Barbarian = "Barbarian"

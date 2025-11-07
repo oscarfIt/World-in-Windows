@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from npc import NPC
-from item import Item
+from .npc import NPC
+from .item import Item
 
 @dataclass
 class Location:
