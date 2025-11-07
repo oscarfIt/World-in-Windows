@@ -25,28 +25,6 @@ from config import Config
 # Global config instance
 config = Config()
 
-def _resolve_image_for_npc(npc) -> Path | None:
-    for attr in ("portrait_path", "image_path"):
-        p = getattr(npc, attr, None)
-        if p and Path(p).exists():
-            return Path(p)
-    guess_file_name = npc.name.replace(" ", "_").lower()
-    guess = config.get_npc_portraits() / f"{guess_file_name}.png"
-    return guess if guess.exists() else None
-
-def _resolve_image_for_entry(content_type: Spell | Item | ClassAction) -> Path | None:
-    if isinstance(content_type, Spell):
-        folder = config.get_spell_icons()
-    elif isinstance(content_type, Item):
-        folder = config.get_item_icons()
-    elif isinstance(content_type, ClassAction):
-        folder = config.get_ability_icons()
-    elif isinstance(content_type, NPC):
-        return _resolve_image_for_npc(content_type)
-    guess_file_name = content_type.name.replace(" ", "_").lower()
-    guess = folder / f"{guess_file_name}.png"
-    return guess if guess.exists() else None
-
 # --- Tree model utilities ---
 ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
 ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2   # NEW
