@@ -1,9 +1,9 @@
 import os, base64, requests
-from pathlib import Path
 from enum import Enum
 
-from config import Config
-from npc import NPC
+from ..config import Config
+
+from ..Dataclasses import NPC
 
 class ImageGenerationMode(Enum):
     CORE = "core"
