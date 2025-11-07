@@ -10,12 +10,11 @@
 import sys
 from PyQt6 import QtWidgets
 
-from .Windows import MainWindow
-
-from theme import DMHelperTheme
-from knowledge_base import KnowledgeBase
-from repo import Repo
-from config import Config
+from .Windows.main_window import MainWindow
+from .theme import DMHelperTheme
+from .knowledge_base import KnowledgeBase
+from .repo import Repo
+from .config import Config
 
 # Global config instance
 config = Config()
