@@ -9,6 +9,10 @@ from ..Dialogs import PathConfigDialog
 from .browse_windows import NPCsBrowserWindow, ItemsBrowserWindow, SpellsBrowserWindow, LocationsBrowserWindow, ConditionsBrowserWindow, SoundsBrowserWindow
 from .detail_windows import NPCDetailWindow
 
+# --- Tree model utilities ---
+ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
+ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2
+
 def build_tree_model(locations: List[Location]) -> QtGui.QStandardItemModel:
     """
     Build a two-column tree:

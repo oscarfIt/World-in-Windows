@@ -25,10 +25,6 @@ from config import Config
 # Global config instance
 config = Config()
 
-# --- Tree model utilities ---
-ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
-ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2
-
 # --- App entry ---
 def main():
     repo = Repo(config.data_dir)
