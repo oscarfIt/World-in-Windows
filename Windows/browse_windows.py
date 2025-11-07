@@ -4,8 +4,8 @@ import sys
 from pathlib import Path
 from typing import List
 
-from theme import DMHelperTheme
-from repo import Repo
+from ..theme import DMHelperTheme
+from ..repo import Repo
 from ..config import Config
 
 from ..knowledge_base import KnowledgeBase      # HMMMMMM

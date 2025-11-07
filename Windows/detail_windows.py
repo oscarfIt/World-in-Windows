@@ -2,7 +2,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from pathlib import Path
 import json
 
-from theme import DMHelperTheme
+from ..theme import DMHelperTheme
 from ..knowledge_base import KnowledgeBase
 from ..repo import Repo
 from ..config import Config
