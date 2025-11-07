@@ -11,8 +11,6 @@ from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, Stat
 from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview
 from ..AIGen import ImageGenerator, ImageGenerationMode
 
-from .detail_windows import StatBlockDetailWindow
-
 def _resolve_image_for_entry(config: Config, content_type: Spell | Item | ClassAction) -> Path | None:
     if isinstance(content_type, Spell):
         folder = config.get_spell_icons()
