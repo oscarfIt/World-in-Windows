@@ -1,10 +1,13 @@
 from PyQt6 import QtWidgets
 
+from ..config import Config
+
 class PathConfigDialog(QtWidgets.QDialog):
     """Dialog for configuring Data and Media directory paths"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.setWindowTitle("Configure Paths")
         self.setModal(True)
         self.resize(500, 200)
@@ -14,8 +17,8 @@ class PathConfigDialog(QtWidgets.QDialog):
         # Data directory section
         data_group = QtWidgets.QGroupBox("Data Directory")
         data_layout = QtWidgets.QHBoxLayout(data_group)
-        
-        self.data_path_edit = QtWidgets.QLineEdit(config.data_dir)
+
+        self.data_path_edit = QtWidgets.QLineEdit(self.config.data_dir)
         data_browse_btn = QtWidgets.QPushButton("Browse...")
         data_browse_btn.clicked.connect(self.browse_data_dir)
         
@@ -25,8 +28,8 @@ class PathConfigDialog(QtWidgets.QDialog):
         # Media directory section
         media_group = QtWidgets.QGroupBox("Media Directory")
         media_layout = QtWidgets.QHBoxLayout(media_group)
-        
-        self.media_path_edit = QtWidgets.QLineEdit(config.media_dir)
+
+        self.media_path_edit = QtWidgets.QLineEdit(self.config.media_dir)
         media_browse_btn = QtWidgets.QPushButton("Browse...")
         media_browse_btn.clicked.connect(self.browse_media_dir)
         
@@ -86,11 +89,11 @@ class PathConfigDialog(QtWidgets.QDialog):
             return
         
         # Update config
-        config.data_dir = new_data_dir
-        config.media_dir = new_media_dir
-        config.save()
-        
-        QtWidgets.QMessageBox.information(self, "Paths Updated", 
+        self.config.data_dir = new_data_dir
+        self.config.media_dir = new_media_dir
+        self.config.save()
+
+        QtWidgets.QMessageBox.information(self, "Paths Updated",
             "Directory paths have been updated. Please restart the application for changes to take effect.")
         
         self.accept()

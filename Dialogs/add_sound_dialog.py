@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 
 from theme import DMHelperTheme
+from ..config import Config
 
 from ..AIGen import SoundGenerator, AudioGenerationMode
 
@@ -10,6 +11,7 @@ class AddSoundDialog(QtWidgets.QDialog):
     """Dialog for generating new audio clips"""
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.setWindowTitle("Add Sound Clip")
         self.resize(500, 400)
         
@@ -107,7 +109,7 @@ class AddSoundDialog(QtWidgets.QDialog):
             mode = self.mode_combo.currentData()
             
             # Create audio directory if it doesn't exist
-            audio_dir = config.get_audio_files()
+            audio_dir = self.config.get_audio_files()
             audio_dir.mkdir(parents=True, exist_ok=True)
             
             # Create safe filename from sound name

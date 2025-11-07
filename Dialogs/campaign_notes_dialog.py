@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 
 from theme import DMHelperTheme
+from ..config import Config
 
 from ..Dataclasses import NPC
 
@@ -10,6 +11,7 @@ class CampaignNotesDialog(QtWidgets.QDialog):
     """Dialog for editing campaign notes for an NPC"""
     def __init__(self, npc: NPC, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.npc = npc
         self.setWindowTitle(f"Campaign Notes - {npc.name}")
         self.resize(600, 500)
@@ -94,7 +96,7 @@ class CampaignNotesDialog(QtWidgets.QDialog):
     def save_npc_to_json(self):
         """Update the NPC entry in npcs.json with the new campaign notes"""
         # Path to npcs.json
-        npcs_file = Path(config.data_dir) / "npcs.json"
+        npcs_file = Path(self.config.data_dir) / "npcs.json"
         
         if not npcs_file.exists():
             raise Exception("NPCs file not found")

@@ -6,12 +6,15 @@ from pathlib import Path
 from theme import DMHelperTheme
 from repo import Repo
 
+from ..config import Config
+
 from ..Dataclasses import Race, Alignment, PcClassName, MonsterManual, PcClass, NPC
 
 class AddNPCDialog(QtWidgets.QDialog):
     """Dialog for adding or editing an NPC"""
     def __init__(self, parent=None, edit_npc=None):
         super().__init__(parent)
+        self.config = Config()
         self.edit_npc = edit_npc  # NPC being edited, or None for new NPC
         self.original_name = edit_npc.name if edit_npc else None  # Store original name for updates
         
@@ -192,7 +195,7 @@ class AddNPCDialog(QtWidgets.QDialog):
         if stat_block_type == "Monster Manual":
             # Load Monster Manual files from Media/MonsterManual
             try:
-                monster_manual_dir = config.get_monster_manual_pages()
+                monster_manual_dir = self.config.get_monster_manual_pages()
                 if monster_manual_dir.exists():
                     # Get all image files (assuming they're the monster manual pages)
                     image_files = []
@@ -312,7 +315,7 @@ class AddNPCDialog(QtWidgets.QDialog):
             original_id = None
             if self.edit_npc:
                 try:
-                    repo = Repo(config.data_dir)
+                    repo = Repo(self.config.data_dir)
                     repo.load_all()
                     # Find the ID by looking through npcs_by_id dictionary
                     for npc_id, npc_obj in repo.npcs_by_id.items():
@@ -336,7 +339,7 @@ class AddNPCDialog(QtWidgets.QDialog):
         """Save the NPC to npcs.json file"""
         
         # Path to npcs.json in the Data directory
-        npcs_file = Path(config.data_dir) / "npcs.json"
+        npcs_file = Path(self.config.data_dir) / "npcs.json"
         
         # Load existing NPCs
         if npcs_file.exists():
