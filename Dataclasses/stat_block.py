@@ -4,7 +4,7 @@
 from PIL import Image
 from pathlib import Path
 
-from media_paths import MONSTER_MANUAL_PAGES
+from ..media_paths import MONSTER_MANUAL_PAGES
 
 class StatBlock:
     display_name: str

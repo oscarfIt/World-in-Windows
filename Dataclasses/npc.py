@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from race import Race
-from alignment import Alignment
-from stat_block import StatBlock
+from .race import Race
+from .alignment import Alignment
+from .stat_block import StatBlock
 
 @dataclass
 class NPC:
