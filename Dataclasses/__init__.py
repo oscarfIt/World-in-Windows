@@ -1,4 +1,4 @@
-from .abilities import AbilitieScores
+from .abilities import AbilityScores
 from .alignment import Alignment
 from .class_action import ClassAction
 from .condition import Condition
