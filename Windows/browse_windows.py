@@ -14,6 +14,9 @@ from ..Dialogs import AddSoundDialog, AddNPCDialog
 
 from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow, LocationDetailWindow, ConditionDetailWindow
 
+
+ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2  # Defined here and in main_window.py, gross
+
 class SpellsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
