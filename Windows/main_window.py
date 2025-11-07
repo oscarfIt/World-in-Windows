@@ -1,4 +1,14 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
+from typing import List, Optional
+
+from ..knowledge_base import KnowledgeBase  # HMMMM
+
+from ..Dataclasses import Location, NPC
+from ..Dialogs import PathConfigDialog
+
+from .browse_windows import NPCsBrowserWindow, ItemsBrowserWindow, SpellsBrowserWindow, LocationsBrowserWindow, ConditionsBrowserWindow, SoundsBrowserWindow
+from .detail_windows import NPCDetailWindow
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, locations: List[Location], kb: KnowledgeBase):
