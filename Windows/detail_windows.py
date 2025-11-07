@@ -1,4 +1,16 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
+from pathlib import Path
+import json
+
+from theme import DMHelperTheme
+from ..knowledge_base import KnowledgeBase
+from ..repo import Repo
+
+from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition
+from ..Dialogs import AddNPCDialog, CampaignNotesDialog
+from ..AIGen import ImageGenerator, ImageGenerationMode
+
+from .detail_windows import StatBlockDetailWindow
 
 class SpellDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
@@ -8,7 +20,6 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Spell — {spell.name}")
         self.resize(600, 520)
 
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         scroll = QtWidgets.QScrollArea()
@@ -74,7 +85,6 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Item — {item.name}")
         self.resize(600, 520)
 
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         scroll = QtWidgets.QScrollArea()
@@ -137,7 +147,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         self.resize(600, 520)
         
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         # Use a scroll area in case backstory is long
@@ -254,7 +263,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
     def open_statblock(self):
         if not self.npc.stat_block:
             return
-        window = StatBlockWindow(self.npc.stat_block, self.kb, self.npc.additional_traits, self)
+        window = StatBlockDetailWindow(self.npc.stat_block, self.kb, self.npc.additional_traits, self)
         window.show()
 
     def generate_portrait(self):
@@ -396,7 +405,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         self.resize(700, 600)
 
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         scroll = QtWidgets.QScrollArea()
@@ -564,7 +572,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         self.npc_dropdown.clear()
         
         try:
-            from repo import Repo
             repo = Repo(config.data_dir)
             repo.load_all()
             all_npcs = list(repo.npcs)
@@ -720,7 +727,6 @@ class ConditionDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Condition — {condition.name}")
         self.resize(600, 400)
 
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
 
         scroll = QtWidgets.QScrollArea()
@@ -768,7 +774,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         self.traits = traits if traits is not None else []
         
         # Apply dialog theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
         
         self._hover = HoverPreview(self)
