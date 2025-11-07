@@ -1,7 +1,7 @@
 from .main_window import MainWindow
 from .browse_windows import (SpellsBrowserWindow, 
                              ItemsBrowserWindow, 
-                             NPCsBrowserWindow,
+                             NPCBrowserWindow,
                              ConditionsBrowserWindow,
                              LocationsBrowserWindow,
                              SoundsBrowserWindow)
