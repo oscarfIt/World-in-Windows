@@ -7,7 +7,7 @@ from ..knowledge_base import KnowledgeBase
 from ..repo import Repo
 
 from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition
-from ..Dialogs import AddNPCDialog, CampaignNotesDialog
+from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview
 from ..AIGen import ImageGenerator, ImageGenerationMode
 
 from .detail_windows import StatBlockDetailWindow
