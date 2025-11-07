@@ -477,7 +477,7 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
             if hasattr(self.kb, 'entries'):
                 # Extract NPC entries from knowledge base
                 for entry in self.kb.entries.values():
-                    if entry.kind == "npc":
+                    if isinstance(entry.content, NPC):
                         # This is a fallback - we won't have the full NPC object
                         # but at least we can show the names
                         pass
