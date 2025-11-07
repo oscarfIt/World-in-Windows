@@ -1,5 +1,10 @@
 from PyQt6 import QtWidgets, QtCore
 from pathlib import Path
+import shutil
+
+from theme import DMHelperTheme
+
+from ..AIGen import SoundGenerator, AudioGenerationMode
 
 class AddSoundDialog(QtWidgets.QDialog):
     """Dialog for generating new audio clips"""
@@ -9,7 +14,6 @@ class AddSoundDialog(QtWidgets.QDialog):
         self.resize(500, 400)
         
         # Apply theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
         
         # Create layout
@@ -52,7 +56,6 @@ class AddSoundDialog(QtWidgets.QDialog):
         
         # Mode field
         self.mode_combo = QtWidgets.QComboBox()
-        from sound_generation import AudioGenerationMode
         for mode in AudioGenerationMode:
             self.mode_combo.addItem(mode.value.replace('_', ' ').title(), mode)
         form.addRow("Audio Type:", self.mode_combo)
@@ -123,7 +126,6 @@ class AddSoundDialog(QtWidgets.QDialog):
                 target_path = audio_dir / f"{safe_name}{extension}"
                 
                 # Copy the file
-                import shutil
                 shutil.copy2(source_file, target_path)
                 
                 QtWidgets.QMessageBox.information(self, "Success", 
@@ -150,7 +152,6 @@ class AddSoundDialog(QtWidgets.QDialog):
                 
                 try:
                     # Generate the sound
-                    from sound_generation import SoundGenerator
                     sound_generator = SoundGenerator()
                     audio_path = sound_generator.generate_and_save_sound(description, safe_name, duration, mode)
                     

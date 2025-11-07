@@ -2,6 +2,8 @@ from PyQt6 import QtWidgets
 from pathlib import Path
 import json
 
+from theme import DMHelperTheme
+
 from ..Dataclasses import NPC
 
 class CampaignNotesDialog(QtWidgets.QDialog):
@@ -13,7 +15,6 @@ class CampaignNotesDialog(QtWidgets.QDialog):
         self.resize(600, 500)
         
         # Apply theme
-        from theme import DMHelperTheme
         DMHelperTheme.apply_to_dialog(self)
         
         # Create layout
