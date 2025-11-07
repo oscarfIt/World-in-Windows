@@ -1,10 +1,10 @@
 from .main_window import MainWindow
-from .browse_windows import (SpellsBrowserWindow, 
-                             ItemsBrowserWindow, 
+from .browse_windows import (SpellBrowserWindow, 
+                             ItemBrowserWindow, 
                              NPCBrowserWindow,
-                             ConditionsBrowserWindow,
-                             LocationsBrowserWindow,
-                             SoundsBrowserWindow)
+                             ConditionBrowserWindow,
+                             LocationBrowserWindow,
+                             SoundBrowserWindow)
 from .detail_windows import (SpellDetailWindow,
                              ItemDetailWindow,
                              NPCDetailWindow,

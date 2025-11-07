@@ -18,7 +18,7 @@ from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow
 
 ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2  # Defined here and in main_window.py, gross
 
-class SpellsBrowserWindow(QtWidgets.QMainWindow):
+class SpellBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
@@ -119,10 +119,11 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
         window = SpellDetailWindow(spell, self.kb, self)
         window.show()
 
-class ItemsBrowserWindow(QtWidgets.QMainWindow):
+class ItemBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Items in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.kb = kb
         self.setWindowTitle("Items Browser")
         self.resize(800, 600)
@@ -217,7 +218,7 @@ class ItemsBrowserWindow(QtWidgets.QMainWindow):
         window = ItemDetailWindow(item, self.kb, self)
         window.show()
 
-class SoundsBrowserWindow(QtWidgets.QMainWindow):
+class SoundBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing and generating audio clips"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
@@ -560,7 +561,7 @@ class NPCBrowserWindow(QtWidgets.QMainWindow):
             # populate_npcs() will reload data from JSON files
             self.populate_npcs()
 
-class LocationsBrowserWindow(QtWidgets.QMainWindow):
+class LocationBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Locations in the campaign"""
     def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
         super().__init__(parent)
@@ -659,7 +660,7 @@ class LocationsBrowserWindow(QtWidgets.QMainWindow):
         window = LocationDetailWindow(loc, self.kb, self)
         window.show()
 
-class ConditionsBrowserWindow(QtWidgets.QMainWindow):
+class ConditionBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Conditions in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)

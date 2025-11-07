@@ -6,7 +6,7 @@ from ..knowledge_base import KnowledgeBase  # HMMMM
 from ..Dataclasses import Location, NPC
 from ..Dialogs import PathConfigDialog
 
-from .browse_windows import NPCBrowserWindow, ItemsBrowserWindow, SpellsBrowserWindow, LocationsBrowserWindow, ConditionsBrowserWindow, SoundsBrowserWindow
+from .browse_windows import NPCBrowserWindow, ItemBrowserWindow, SpellBrowserWindow, LocationBrowserWindow, ConditionBrowserWindow, SoundBrowserWindow
 from .detail_windows import NPCDetailWindow
 
 # --- Tree model utilities ---
@@ -378,26 +378,26 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def show_items(self):
         """Show items browser window"""
-        items_window = ItemsBrowserWindow(self.kb, self)
+        items_window = ItemBrowserWindow(self.kb, self)
         items_window.show()
     
     def show_sounds(self):
         """Show sounds browser window"""
-        sounds_window = SoundsBrowserWindow(self.kb, self)
+        sounds_window = SoundBrowserWindow(self.kb, self)
         sounds_window.show()
     
     def show_spells(self):
         """Show spells browser window"""
-        spells_window = SpellsBrowserWindow(self.kb, self)
+        spells_window = SpellBrowserWindow(self.kb, self)
         spells_window.show()
 
     def show_locations(self):
         """Show locations browser window"""
-        locations_window = LocationsBrowserWindow(self.kb, self.locations, self)
+        locations_window = LocationBrowserWindow(self.kb, self.locations, self)
         locations_window.show()
 
     def show_conditions(self):
         """Show conditions browser window"""
-        conditions_window = ConditionsBrowserWindow(self.kb, self)
+        conditions_window = ConditionBrowserWindow(self.kb, self)
         conditions_window.show()
 
