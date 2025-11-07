@@ -6,7 +6,6 @@ A Dungeons and Dragons management tool
 
 You can download the latest release for Windows **[here](https://github.com/oscarfIt/World-in-Windows/releases/latest/download/WorldInWindows.exe)**  
 Mac version will arrive shortly and for Linux see my detailed instructions below for building from source.
----
 
 If you would like to build it yourself from the source code I'm sure you're also savvy enough to figure it out.
 
