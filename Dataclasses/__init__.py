@@ -1,10 +1,11 @@
-from .abilities import Abilities
+from .abilities import AbilitieScores
 from .alignment import Alignment
 from .class_action import ClassAction
 from .condition import Condition
-from .item import Item
+from .item import Item, Rarity
 from .location import Location
 from .npc import NPC
 from .race import Race
-from .spell import Spell
-from .stat_block import StatBlock
+from .spell import Spell, SpellSlot
+from .stat_block import StatBlock, MonsterManual
+from .pc_classes import PcClass, PcClassName
