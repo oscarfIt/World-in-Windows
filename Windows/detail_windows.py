@@ -5,6 +5,7 @@ import json
 from theme import DMHelperTheme
 from ..knowledge_base import KnowledgeBase
 from ..repo import Repo
+from ..config import Config
 
 from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition
 from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview
@@ -12,7 +13,7 @@ from ..AIGen import ImageGenerator, ImageGenerationMode
 
 from .detail_windows import StatBlockDetailWindow
 
-def _resolve_image_for_entry(content_type: Spell | Item | ClassAction) -> Path | None:
+def _resolve_image_for_entry(config: Config, content_type: Spell | Item | ClassAction) -> Path | None:
     if isinstance(content_type, Spell):
         folder = config.get_spell_icons()
     elif isinstance(content_type, Item):
@@ -20,12 +21,12 @@ def _resolve_image_for_entry(content_type: Spell | Item | ClassAction) -> Path |
     elif isinstance(content_type, ClassAction):
         folder = config.get_ability_icons()
     elif isinstance(content_type, NPC):
-        return _resolve_image_for_npc(content_type)
+        return _resolve_image_for_npc(config, content_type)
     guess_file_name = content_type.name.replace(" ", "_").lower()
     guess = folder / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
-def _resolve_image_for_npc(npc) -> Path | None:
+def _resolve_image_for_npc(config: Config, npc) -> Path | None:
     for attr in ("portrait_path", "image_path"):
         p = getattr(npc, attr, None)
         if p and Path(p).exists():
@@ -38,6 +39,7 @@ def _resolve_image_for_npc(npc) -> Path | None:
 class SpellDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.spell = spell
         self.kb = kb
         self.setWindowTitle(f"Spell — {spell.name}")
@@ -68,7 +70,7 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
             return lab
 
         # Icon if available
-        icon_path = _resolve_image_for_entry(spell)
+        icon_path = _resolve_image_for_entry(self.config, spell)
         if icon_path:
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
@@ -103,6 +105,7 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
 class ItemDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, item, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.item = item
         self.kb = kb
         self.setWindowTitle(f"Item — {item.name}")
@@ -133,7 +136,7 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
             return lab
 
         # Icon if available
-        icon_path = _resolve_image_for_entry(item)
+        icon_path = _resolve_image_for_entry(self.config, item)
         if icon_path:
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
@@ -164,6 +167,7 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
 class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.npc = npc
         self.kb = kb
         self.setWindowTitle(f"NPC — {npc.name}")
@@ -197,7 +201,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
             return lab
 
-        portrait_path = _resolve_image_for_npc(npc)
+        portrait_path = _resolve_image_for_npc(self.config, npc)
         if portrait_path:
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
@@ -312,7 +316,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             progress.close()
             
             # Check if the portrait was actually created
-            portrait_path = _resolve_image_for_npc(self.npc)
+            portrait_path = _resolve_image_for_npc(self.config, self.npc)
             if portrait_path and Path(portrait_path).exists():
                 # Portrait generated successfully - show success message
                 QtWidgets.QMessageBox.information(self, "Success", 
@@ -372,7 +376,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         if reply == QtWidgets.QMessageBox.StandardButton.Ok:
             try:
                 # Delete from npcs.json
-                npcs_file = Path(config.data_dir) / "npcs.json"
+                npcs_file = Path(self.config.data_dir) / "npcs.json"
                 
                 if npcs_file.exists():
                     with open(npcs_file, 'r', encoding='utf-8') as f:
@@ -422,6 +426,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
 class LocationDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, location: Location, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.location = location
         self.kb = kb
         self.setWindowTitle(f"Location — {location.name}")
@@ -595,7 +600,7 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         self.npc_dropdown.clear()
         
         try:
-            repo = Repo(config.data_dir)
+            repo = Repo(self.config.data_dir)
             repo.load_all()
             all_npcs = list(repo.npcs)
             
@@ -705,7 +710,7 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         """Update the locations.json file with current location data"""
         try:
             # Path to locations.json
-            locations_file = Path(config.data_dir) / "locations.json"
+            locations_file = Path(self.config.data_dir) / "locations.json"
             
             if not locations_file.exists():
                 raise Exception("Locations file not found")
@@ -792,6 +797,7 @@ class ConditionDetailWindow(QtWidgets.QMainWindow):
 class StatBlockDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, sb: StatBlock, kb: KnowledgeBase, traits: list | None = None, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.sb = sb
         self.kb = kb
         self.traits = traits if traits is not None else []
@@ -959,7 +965,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             img_label = QtWidgets.QLabel()
             img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             if sb_image:
-                sb_image_path = config.get_monster_manual_pages() / sb_image
+                sb_image_path = self.config.get_monster_manual_pages() / sb_image
                 pix = QtGui.QPixmap(str(sb_image_path))
                 if not pix.isNull():
                     # scale-to-fit width while keeping aspect

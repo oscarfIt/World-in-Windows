@@ -6,6 +6,7 @@ from typing import List
 
 from theme import DMHelperTheme
 from repo import Repo
+from ..config import Config
 
 from ..knowledge_base import KnowledgeBase      # HMMMMMM
 
@@ -21,6 +22,7 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.kb = kb
         self.setWindowTitle("Spells Browser")
         self.resize(800, 600)
@@ -70,7 +72,7 @@ class SpellsBrowserWindow(QtWidgets.QMainWindow):
         """Populate the list with all Spells from the repository"""
         self.spells_list.clear()
         try:
-            repo = Repo(config.data_dir)
+            repo = Repo(self.config.data_dir)
             repo.load_all()
             all_spells = list(repo.spells)
         except Exception as e:
@@ -170,7 +172,7 @@ class ItemsBrowserWindow(QtWidgets.QMainWindow):
         """Populate the list with all Items from the repository"""
         self.items_list.clear()
         try:
-            repo = Repo(config.data_dir)
+            repo = Repo(self.config.data_dir)
             repo.load_all()
             all_items = list(repo.items)
         except Exception as e:
@@ -296,7 +298,7 @@ class SoundsBrowserWindow(QtWidgets.QMainWindow):
         self.sounds_list.clear()
         
         # Look for audio files in Media/Audio directory
-        audio_dir = config.get_audio_files()
+        audio_dir = self.config.get_audio_files()
         if not audio_dir.exists():
             return
         
@@ -462,7 +464,7 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         
         # Load NPCs directly from the repository (freshly loaded from JSON)
         try:
-            repo = Repo(config.data_dir)
+            repo = Repo(self.config.data_dir)
             repo.load_all()  # This will reload from JSON files including any new NPCs
             
             # Get all NPCs from the repository
@@ -708,7 +710,7 @@ class ConditionsBrowserWindow(QtWidgets.QMainWindow):
         """Populate the list with all Conditions from the repository"""
         self.conditions_list.clear()
         try:
-            repo = Repo(config.data_dir)
+            repo = Repo(self.config.data_dir)
             repo.load_all()
             all_conditions = list(repo.conditions)
         except Exception as e:
