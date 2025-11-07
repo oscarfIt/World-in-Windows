@@ -1,5 +1,7 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 from typing import List, Optional
+from pathlib import Path
+import sys
 
 from ..knowledge_base import KnowledgeBase  # HMMMM
 
@@ -97,6 +99,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, locations: List[Location], kb: KnowledgeBase):
         super().__init__()
         self.setWindowTitle("World in Windows")
+
+        if sys.platform == 'darwin':  # macOS
+            icon_path = Path(__file__).parent.parent / "Icon" / "beholder.icns"
+        else:  # Windows/Linux
+            icon_path = Path(__file__).parent.parent / "Icon" / "beholder.ico"
+        
+        if icon_path.exists():
+            self.setWindowIcon(QtGui.QIcon(str(icon_path)))
+        else:
+            print(f"Could not find icon at: {icon_path}")
+        
         self.resize(1000, 640)
         self.locations = locations
         self.kb = kb

@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 # --- Configuration system ---
-CONFIG_FILE = Path("dm_helper_config.json")
+CONFIG_FILE = Path("config.json")
 
 class Config:
     def __init__(self):
