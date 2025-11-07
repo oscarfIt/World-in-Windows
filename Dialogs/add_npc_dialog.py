@@ -1,3 +1,13 @@
+from PyQt6 import QtWidgets, QtCore
+import json
+from pathlib import Path
+
+
+from theme import DMHelperTheme
+from repo import Repo
+
+from ..Dataclasses import Race, Alignment, PcClassName, MonsterManual, PcClass, NPC
+
 class AddNPCDialog(QtWidgets.QDialog):
     """Dialog for adding or editing an NPC"""
     def __init__(self, parent=None, edit_npc=None):
@@ -10,7 +20,7 @@ class AddNPCDialog(QtWidgets.QDialog):
         self.resize(500, 700)
         
         # Apply theme
-        from theme import DMHelperTheme
+        
         DMHelperTheme.apply_to_dialog(self)
         
         # Create layout
@@ -27,7 +37,6 @@ class AddNPCDialog(QtWidgets.QDialog):
         
         # Race field
         self.race_combo = QtWidgets.QComboBox()
-        from race import Race
         # Sort races alphabetically by their display value
         sorted_races = sorted(Race, key=lambda r: r.value)
         for race in sorted_races:
@@ -46,7 +55,6 @@ class AddNPCDialog(QtWidgets.QDialog):
         
         # Alignment field
         self.alignment_combo = QtWidgets.QComboBox()
-        from alignment import Alignment
         for alignment in Alignment:
             self.alignment_combo.addItem(alignment.value, alignment)
         form.addRow("Alignment*:", self.alignment_combo)
@@ -206,7 +214,6 @@ class AddNPCDialog(QtWidgets.QDialog):
         elif stat_block_type == "PC Class":
             # Load PC Classes
             try:
-                from pc_classes import PcClassName
                 pc_classes = [pc_class.value for pc_class in PcClassName]
                 self.stat_block_selection_combo.addItems(sorted(pc_classes))
             except Exception as e:
@@ -305,7 +312,6 @@ class AddNPCDialog(QtWidgets.QDialog):
             original_id = None
             if self.edit_npc:
                 try:
-                    from repo import Repo
                     repo = Repo(config.data_dir)
                     repo.load_all()
                     # Find the ID by looking through npcs_by_id dictionary

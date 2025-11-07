@@ -1,3 +1,6 @@
+from PyQt6 import QtWidgets, QtCore
+from pathlib import Path
+
 class AddSoundDialog(QtWidgets.QDialog):
     """Dialog for generating new audio clips"""
     def __init__(self, parent=None):

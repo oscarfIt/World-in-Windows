@@ -1,3 +1,9 @@
+from PyQt6 import QtWidgets
+from pathlib import Path
+import json
+
+from ..Dataclasses import NPC
+
 class CampaignNotesDialog(QtWidgets.QDialog):
     """Dialog for editing campaign notes for an NPC"""
     def __init__(self, npc: NPC, parent=None):

@@ -1,3 +1,5 @@
+from PyQt6 import QtCore, QtWidgets
+
 class PathConfigDialog(QtWidgets.QDialog):
     """Dialog for configuring Data and Media directory paths"""
     
