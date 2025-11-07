@@ -8,18 +8,13 @@
 # pip install PyQt6
 
 import sys
-from PyQt6 import QtCore, QtGui, QtWidgets
-from typing import List, Optional
-from pathlib import Path
-import json
+from PyQt6 import QtWidgets
 
-from .Dataclasses import Spell, Item, ClassAction, NPC, Location, StatBlock, MonsterManual, PcClass, PcClassName
 from .Windows import MainWindow
 
 from theme import DMHelperTheme
-from knowledge_base import KBEntry, KnowledgeBase
+from knowledge_base import KnowledgeBase
 from repo import Repo
-from image_generation import ImageGenerator, ImageGenerationMode
 from config import Config
 
 # Global config instance
