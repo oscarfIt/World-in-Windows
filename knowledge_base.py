@@ -3,11 +3,7 @@ from dataclasses import dataclass
 import re
 from typing import Dict, Tuple, Optional, Iterable
 
-from spell import Spell
-from item import Item
-from class_action import ClassAction
-from npc import NPC
-from condition import Condition
+from .Dataclasses import Spell, Item, ClassAction, NPC, Condition
 
 def _npc_summary(n: NPC, max_len=180) -> str:
     text = n.appearance.strip() or n.backstory.strip()
@@ -43,17 +39,11 @@ class KnowledgeBase:
         # return KBEntry(kind=kind, name=ability.name, description=ability.description)
         return KBEntry(content=content, name=content.name, hover_description=desc)
 
-    # def add(self, kind: str, name: str, description: str):
-    #     self.entries[name] = KBEntry(kind=kind, name=name, description=description)
-
     def resolve(self, label: str) -> Optional[KBEntry]:
         if label in self.entries:
             return self.entries[label]
         canon = self._aliases.get(label.lower())
         return self.entries.get(canon) if canon else None
-
-    # def resolve(self, name: str) -> Optional[KBEntry]:
-    #     return self.entries.get(name)
 
     def ingest(self, spells: Iterable[Spell], items: Iterable[Item], actions: Iterable[ClassAction]):
         for s in spells:
@@ -110,23 +100,3 @@ class KnowledgeBase:
             return f'<a href="{label}">{label}</a>'
         
         return self._pattern.sub(repl, text)
-
-    # def linkify(self, text: str) -> str:
-    #     """
-    #     Replace any known entry names in `text` with HTML anchors.
-    #     Longest-first to avoid partial overlaps.
-    #     """
-    #     if not self.entries:
-    #         return text
-    #     # Escape names for regex, sort by length desc
-    #     names = sorted((re.escape(k) for k in self.entries.keys()),
-    #                    key=len, reverse=True)
-    #     # Use word boundaries where sensible (handles multi-word too)
-    #     pattern = re.compile(r'(?<!\w)(' + '|'.join(names) + r')(?!\w)')
-    #     def repl(m):
-    #         label = m.group(1)
-    #         # href contains the plain name; we'll parse it later
-    #         return f'<a href="{label}">{label}</a>'
-    #     # Basic HTML wrapping; convert newlines if you use multi-line traits
-    #     html = pattern.sub(repl, text)
-    #     return html
