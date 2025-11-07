@@ -4,7 +4,7 @@ A Dungeons and Dragons management tool
 
 ## The Executable
 
-You download the latest release [here]  
+You download the latest release **[here](https://github.com/oscarfIt/World-in-Windows/releases/latest/download/WorldInWindows.exe)**
 
 If you would like to build it yourself from the source code I'm sure you're also savvy enough to figure out.
 
