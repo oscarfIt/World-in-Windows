@@ -399,7 +399,7 @@ class SoundsBrowserWindow(QtWidgets.QMainWindow):
                 QtWidgets.QMessageBox.critical(self, "Delete Error", 
                     f"Could not delete file:\n{str(e)}")
 
-class NPCsBrowserWindow(QtWidgets.QMainWindow):
+class NPCBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all NPCs in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)

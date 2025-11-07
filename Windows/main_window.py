@@ -6,7 +6,7 @@ from ..knowledge_base import KnowledgeBase  # HMMMM
 from ..Dataclasses import Location, NPC
 from ..Dialogs import PathConfigDialog
 
-from .browse_windows import NPCsBrowserWindow, ItemsBrowserWindow, SpellsBrowserWindow, LocationsBrowserWindow, ConditionsBrowserWindow, SoundsBrowserWindow
+from .browse_windows import NPCBrowserWindow, ItemsBrowserWindow, SpellsBrowserWindow, LocationsBrowserWindow, ConditionsBrowserWindow, SoundsBrowserWindow
 from .detail_windows import NPCDetailWindow
 
 # --- Tree model utilities ---
@@ -373,7 +373,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
     def show_npcs(self):
         """Show NPCs browser window"""
-        npcs_window = NPCsBrowserWindow(self.kb, self)
+        npcs_window = NPCBrowserWindow(self.kb, self)
         npcs_window.show()
 
     def show_items(self):
