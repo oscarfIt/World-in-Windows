@@ -1411,6 +1411,14 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         form.addRow("Age:", label(npc.age))
         form.addRow("Alignment:", label(npc.alignment.value))
 
+        # Status (Alive/Deceased)
+        status_label = label("Alive ✓" if npc.alive else "Deceased ☠️")
+        if not npc.alive:
+            status_label.setStyleSheet("color: #cc0000; font-weight: bold;")
+        else:
+            status_label.setStyleSheet("color: #00aa00; font-weight: bold;")
+        form.addRow("Status:", status_label)
+
         # Appearance / Backstory as large wrapped labels
         form.addRow("Appearance:", label(npc.appearance or ""))
         form.addRow("Backstory:", label(npc.backstory or ""))
@@ -1441,6 +1449,22 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         campaign_notes_btn.setToolTip("View and edit campaign notes for this NPC")
         campaign_notes_btn.clicked.connect(self.open_campaign_notes)
         btns.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        
+        # Add custom Delete button
+        delete_btn = QtWidgets.QPushButton("Delete")
+        delete_btn.setToolTip("Permanently delete this NPC")
+        delete_btn.clicked.connect(self.delete_npc)
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #d32f2f;
+                color: white;
+                padding: 5px 15px;
+            }
+            QPushButton:hover {
+                background-color: #b71c1c;
+            }
+        """)
+        btns.addButton(delete_btn, QtWidgets.QDialogButtonBox.ButtonRole.DestructiveRole)
         
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
@@ -1526,6 +1550,67 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # NPC's campaign_notes have been updated, optionally refresh the window
             pass
+
+    def delete_npc(self):
+        """Delete this NPC permanently after confirmation"""
+        # Show confirmation dialog
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Delete NPC",
+            f"Are you sure? This will permanently delete {self.npc.name}.",
+            QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel,
+            QtWidgets.QMessageBox.StandardButton.Cancel  # Default to Cancel
+        )
+        
+        if reply == QtWidgets.QMessageBox.StandardButton.Ok:
+            try:
+                # Delete from npcs.json
+                npcs_file = Path(config.data_dir) / "npcs.json"
+                
+                if npcs_file.exists():
+                    with open(npcs_file, 'r', encoding='utf-8') as f:
+                        npcs_data = json.load(f)
+                    
+                    # Find and remove the NPC by name
+                    original_count = len(npcs_data)
+                    npcs_data = [npc for npc in npcs_data if npc.get("name") != self.npc.name]
+                    
+                    if len(npcs_data) < original_count:
+                        # NPC was found and removed
+                        with open(npcs_file, 'w', encoding='utf-8') as f:
+                            json.dump(npcs_data, f, indent=2, ensure_ascii=False)
+                        
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "NPC Deleted",
+                            f"{self.npc.name} has been permanently deleted."
+                        )
+                        
+                        # Close the window
+                        self.close()
+                        
+                        # Refresh the parent window if it's an NPCs browser
+                        if self.parent() and hasattr(self.parent(), 'populate_npcs'):
+                            self.parent().populate_npcs()
+                    else:
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Not Found",
+                            f"Could not find {self.npc.name} in the database."
+                        )
+                else:
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Error",
+                        "NPCs data file not found."
+                    )
+                    
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to delete NPC:\n{str(e)}"
+                )
         
 
 class StatBlockWindow(QtWidgets.QMainWindow):
@@ -1918,11 +2003,23 @@ class NPCsBrowserWindow(QtWidgets.QMainWindow):
         
         # Add to list widget
         for npc in all_npcs:
-            item = QtWidgets.QListWidgetItem(npc.name)
+            # Add deceased indicator to name if not alive
+            display_name = npc.name
+            if not npc.alive:
+                display_name = f"{npc.name} ☠️ [DECEASED]"
+            
+            item = QtWidgets.QListWidgetItem(display_name)
             item.setData(ROLE_NPC_PTR, npc)
             
             # Set proper item size for better spacing
             item.setSizeHint(QtCore.QSize(0, 32))  # Height of 32 pixels for each item
+            
+            # Style deceased NPCs differently
+            if not npc.alive:
+                item.setForeground(QtGui.QColor("#888888"))  # Gray text for deceased
+                font = item.font()
+                font.setItalic(True)
+                item.setFont(font)
             
             # Create tooltip with NPC info
             tooltip = self.create_npc_tooltip(npc)
@@ -2060,6 +2157,12 @@ class AddNPCDialog(QtWidgets.QDialog):
         self.traits_field.setMaximumHeight(80)
         form.addRow("Additional Traits:", self.traits_field)
         
+        # Alive checkbox
+        self.alive_checkbox = QtWidgets.QCheckBox("NPC is alive")
+        self.alive_checkbox.setChecked(True)  # Default to alive
+        self.alive_checkbox.setToolTip("Uncheck if this NPC is deceased")
+        form.addRow("Status:", self.alive_checkbox)
+        
         layout.addWidget(form_widget)
         
         # Add note about required fields
@@ -2143,6 +2246,10 @@ class AddNPCDialog(QtWidgets.QDialog):
         if npc.additional_traits:
             traits_text = '\n'.join(npc.additional_traits)
             self.traits_field.setPlainText(traits_text)
+        
+        # Alive status
+        if hasattr(npc, 'alive'):
+            self.alive_checkbox.setChecked(npc.alive)
     
     def update_stat_block_options(self):
         """Update the stat block selection combo based on the type selected"""
@@ -2246,6 +2353,14 @@ class AddNPCDialog(QtWidgets.QDialog):
             traits_text = self.traits_field.toPlainText().strip()
             traits = [line.strip() for line in traits_text.split('\n') if line.strip()] if traits_text else []
             
+            # Get alive status
+            alive = self.alive_checkbox.isChecked()
+            
+            # Preserve campaign_notes if editing
+            campaign_notes = ""
+            if self.edit_npc and hasattr(self.edit_npc, 'campaign_notes'):
+                campaign_notes = self.edit_npc.campaign_notes
+            
             # Create NPC object
             npc = NPC(
                 name=self.name_field.text().strip(),
@@ -2256,7 +2371,9 @@ class AddNPCDialog(QtWidgets.QDialog):
                 stat_block=stat_block,
                 appearance=self.appearance_field.toPlainText().strip(),
                 backstory=self.backstory_field.toPlainText().strip(),
-                additional_traits=traits
+                additional_traits=traits,
+                campaign_notes=campaign_notes,
+                alive=alive
             )
             
             # Save to JSON file
@@ -2346,7 +2463,8 @@ class AddNPCDialog(QtWidgets.QDialog):
             "appearance": npc.appearance,
             "backstory": npc.backstory,
             "additional_traits": npc.additional_traits,
-            "campaign_notes": getattr(npc, 'campaign_notes', "")
+            "campaign_notes": getattr(npc, 'campaign_notes', ""),
+            "alive": getattr(npc, 'alive', True)
         }
         
         # Add or update NPC in the list
