@@ -221,6 +221,7 @@ class SoundsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing and generating audio clips"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.kb = kb
         self.setWindowTitle("Sounds Browser")
         self.resize(800, 600)
@@ -662,6 +663,7 @@ class ConditionsBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Conditions in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.kb = kb
         self.setWindowTitle("Conditions Browser")
         self.resize(800, 600)
