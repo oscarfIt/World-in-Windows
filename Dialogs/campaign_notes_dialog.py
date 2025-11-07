@@ -2,7 +2,7 @@ from PyQt6 import QtWidgets
 from pathlib import Path
 import json
 
-from theme import DMHelperTheme
+from ..theme import DMHelperTheme
 from ..config import Config
 
 from ..Dataclasses import NPC

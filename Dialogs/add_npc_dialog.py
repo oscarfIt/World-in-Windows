@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 
 
-from theme import DMHelperTheme
-from repo import Repo
+from ..theme import DMHelperTheme
+from ..repo import Repo
 
 from ..config import Config
 

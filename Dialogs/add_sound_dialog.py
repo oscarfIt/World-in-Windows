@@ -2,7 +2,7 @@ from PyQt6 import QtWidgets, QtCore
 from pathlib import Path
 import shutil
 
-from theme import DMHelperTheme
+from ..theme import DMHelperTheme
 from ..config import Config
 
 from ..AIGen import SoundGenerator, AudioGenerationMode
