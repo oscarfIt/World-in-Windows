@@ -2,17 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Type, TypeVar, Dict, Optional
 
-from item import Item
-from spell import Spell
-from class_action import ClassAction
-from npc import NPC
-from location import Location
-from condition import Condition
-
-from stat_block import StatBlock, MonsterManual
-from pc_classes import PcClass, PcClassName
-from abilities import AbilityScores
-
+from .Dataclasses import Item, Spell, ClassAction, NPC, Race, Location, Condition, StatBlock, MonsterManual, PcClass, PcClassName, AbilityScores, Alignment
 
 T = TypeVar("T", Spell, Item, ClassAction, NPC)
 
@@ -81,8 +71,6 @@ class Repo:
 
 
     def _build_npcs(self, npcs_raw: List[dict]) -> None:
-        from race import Race
-        from alignment import Alignment
         for i, row in enumerate(npcs_raw):
             try:
                 sb = self._build_stat_block(row.get("stat_block"))
