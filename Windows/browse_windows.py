@@ -403,6 +403,7 @@ class NPCBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all NPCs in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
+        self.config = Config()
         self.kb = kb
         self.setWindowTitle("NPCs Browser")
         self.resize(800, 600)
