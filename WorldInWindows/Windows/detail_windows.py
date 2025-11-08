@@ -7,8 +7,8 @@ from ..knowledge_base import KnowledgeBase
 from ..repo import Repo
 from ..config import Config
 
-from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition
-from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview
+from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition, AbilityScores
+from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview, EditPcClassDialog
 from ..AIGen import ImageGenerator, ImageGenerationMode
 
 def _resolve_image_for_entry(config: Config, content_type: Spell | Item | ClassAction) -> Path | None:
@@ -1011,6 +1011,13 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
+        
+        if isinstance(sb, PcClass):
+            edit_btn = QtWidgets.QPushButton("Edit")
+            edit_btn.setToolTip("Edit PC Class stat block")
+            edit_btn.clicked.connect(self.edit_pc_class)
+            btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        
         layout.addWidget(btns)
         
         # Set the central widget
@@ -1065,6 +1072,35 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.warning(self, "Unknown Entry",
                 "The selected entry type is not recognized.")
         window.show()
+
+    def edit_pc_class(self):
+        """Open dialog to edit PC Class stat block"""
+        if not isinstance(self.sb, PcClass):
+            return
+        
+        # Try to get the NPC from the parent window
+        npc = None
+        parent = self.parent()
+        if isinstance(parent, NPCDetailWindow):
+            npc = parent.npc
+            
+        dialog = EditPcClassDialog(self.sb, npc, self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Reload the window to show updated stat block
+            self.reload_window()
+    
+    def reload_window(self):
+        """Reload the stat block window to show updated data"""
+        # Store the current window position and size
+        geometry = self.geometry()
+        
+        # Create a new window with the same stat block (which has been updated)
+        new_window = StatBlockDetailWindow(self.sb, self.kb, self.traits, self.parent())
+        new_window.setGeometry(geometry)  # Keep same position/size
+        new_window.show()
+        
+        # Close the current window
+        self.close()
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         """Keep monster image scaled to width while preserving aspect ratio."""

@@ -192,7 +192,7 @@ class Repo:
         if t == "pc_class":
             cls_name = PcClassName(spec.get("class", "Wizard"))
             level = int(spec.get("level", 1))
-            ability_scores = AbilityScores(spec.get("ability_scores", {}))
+            ability_scores = AbilityScores(**spec.get("ability_scores", {}))
             spells = spec.get("spells", [])
             pc = PcClass(cls_name, level, ability_scores, spells)
             return pc
