@@ -77,59 +77,14 @@ class BrowserWindow(QtWidgets.QMainWindow):
     def populate_entries(self):
         pass
 
-class SpellBrowserWindow(QtWidgets.QMainWindow):
+class SpellBrowserWindow(BrowserWindow):
     """Window for browsing all Spells in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.kb = kb
-        self.setWindowTitle("Spells Browser")
-        self.resize(800, 600)
+        super().__init__("Spell", kb, parent)
 
-        # Apply dialog theme
-        DMHelperTheme.apply_to_dialog(self)
-
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
-        title_label = QtWidgets.QLabel("All Spells")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
-        layout.addLayout(title_layout)
-
-        # Search bar
-        self.search = QtWidgets.QLineEdit()
-        self.search.setPlaceholderText("Search Spells...")
-        self.search.textChanged.connect(self.filter_spells)
-        layout.addWidget(self.search)
-
-        # Spells list
-        self.spells_list = QtWidgets.QListWidget()
-        self.spells_list.itemDoubleClicked.connect(self.open_spell_detail)
-        self.spells_list.setSpacing(2)
-        self.spells_list.setUniformItemSizes(True)
-        layout.addWidget(self.spells_list)
-
-        # Populate with spells
-        self.populate_spells()
-
-        # Close button
-        close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-
-        self.setCentralWidget(central_widget)
-
-    def populate_spells(self):
+    def populate_entries(self):
         """Populate the list with all Spells from the repository"""
-        self.spells_list.clear()
+        self.entry_list.clear()
         try:
             repo = Repo(self.config.data_dir)
             repo.load_all()
@@ -144,7 +99,7 @@ class SpellBrowserWindow(QtWidgets.QMainWindow):
             item.setSizeHint(QtCore.QSize(0, 32))
             tooltip = self.create_spell_tooltip(spell)
             item.setToolTip(tooltip)
-            self.spells_list.addItem(item)
+            self.entry_list.addItem(item)
 
     def create_spell_tooltip(self, spell: Spell) -> str:
         desc = spell.description or "No description"
@@ -152,10 +107,10 @@ class SpellBrowserWindow(QtWidgets.QMainWindow):
             desc = desc[:160].rstrip() + "…"
         return (f"{spell.name}\nLevel: {spell.level}  School: {spell.school}\n\n{desc}")
 
-    def filter_spells(self, text: str):
+    def filter_entries(self, text: str):
         text = text.lower().strip()
-        for i in range(self.spells_list.count()):
-            item = self.spells_list.item(i)
+        for i in range(self.entry_list.count()):
+            item = self.entry_list.item(i)
             spell = item.data(QtCore.Qt.ItemDataRole.UserRole)
             searchable_text = " ".join([
                 spell.name,
@@ -171,66 +126,21 @@ class SpellBrowserWindow(QtWidgets.QMainWindow):
             ]).lower()
             item.setHidden(text not in searchable_text if text else False)
 
-    def open_spell_detail(self, item: QtWidgets.QListWidgetItem):
+    def open_entry_detail(self, item: QtWidgets.QListWidgetItem):
         spell = item.data(QtCore.Qt.ItemDataRole.UserRole)
         if not spell:
             return
         window = SpellDetailWindow(spell, self.kb, self)
         window.show()
 
-class ItemBrowserWindow(QtWidgets.QMainWindow):
+class ItemBrowserWindow(BrowserWindow):
     """Window for browsing all Items in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.kb = kb
-        self.setWindowTitle("Items Browser")
-        self.resize(800, 600)
+        super().__init__("Item", kb, parent)
 
-        # Apply dialog theme
-        DMHelperTheme.apply_to_dialog(self)
-
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
-        title_label = QtWidgets.QLabel("All Items")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
-        layout.addLayout(title_layout)
-
-        # Search bar
-        self.search = QtWidgets.QLineEdit()
-        self.search.setPlaceholderText("Search Items...")
-        self.search.textChanged.connect(self.filter_items)
-        layout.addWidget(self.search)
-
-        # Items list
-        self.items_list = QtWidgets.QListWidget()
-        self.items_list.itemDoubleClicked.connect(self.open_item_detail)
-        self.items_list.setSpacing(2)
-        self.items_list.setUniformItemSizes(True)
-        layout.addWidget(self.items_list)
-
-        # Populate with items
-        self.populate_items()
-
-        # Close button
-        close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-
-        self.setCentralWidget(central_widget)
-
-    def populate_items(self):
+    def populate_entries(self):
         """Populate the list with all Items from the repository"""
-        self.items_list.clear()
+        self.entry_list.clear()
         try:
             repo = Repo(self.config.data_dir)
             repo.load_all()
@@ -246,7 +156,7 @@ class ItemBrowserWindow(QtWidgets.QMainWindow):
             item_widget.setSizeHint(QtCore.QSize(0, 32))
             tooltip = self.create_item_tooltip(item)
             item_widget.setToolTip(tooltip)
-            self.items_list.addItem(item_widget)
+            self.entry_list.addItem(item_widget)
 
     def create_item_tooltip(self, item: Item) -> str:
         desc = item.description or "No description"
@@ -255,10 +165,10 @@ class ItemBrowserWindow(QtWidgets.QMainWindow):
         attunement_text = " (Requires Attunement)" if item.attunement else ""
         return (f"{item.name}\nRarity: {item.rarity}{attunement_text}\n\n{desc}")
 
-    def filter_items(self, text: str):
+    def filter_entries(self, text: str):
         text = text.lower().strip()
-        for i in range(self.items_list.count()):
-            item_widget = self.items_list.item(i)
+        for i in range(self.entry_list.count()):
+            item_widget = self.entry_list.item(i)
             item = item_widget.data(QtCore.Qt.ItemDataRole.UserRole)
             searchable_text = " ".join([
                 item.name,
@@ -270,7 +180,7 @@ class ItemBrowserWindow(QtWidgets.QMainWindow):
             ]).lower()
             item_widget.setHidden(text not in searchable_text if text else False)
 
-    def open_item_detail(self, item_widget: QtWidgets.QListWidgetItem):
+    def open_entry_detail(self, item_widget: QtWidgets.QListWidgetItem):
         item = item_widget.data(QtCore.Qt.ItemDataRole.UserRole)
         if not item:
             return
