@@ -18,6 +18,65 @@ from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow
 
 ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2  # Defined here and in main_window.py, gross
 
+# Base class
+class BrowserWindow(QtWidgets.QMainWindow):
+    def __init__(self, entry_to_browse: str, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.config = Config()
+        self.kb = kb
+        self.setWindowTitle(f"{entry_to_browse} Browser")
+        self.resize(800, 600)
+
+        DMHelperTheme.apply_to_dialog(self)
+
+        central_widget = QtWidgets.QWidget()
+        self.vbox_layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Title and search
+        title_layout = QtWidgets.QHBoxLayout()
+        title_label = QtWidgets.QLabel(f"All {entry_to_browse}s")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        self.vbox_layout.addLayout(title_layout)
+
+        # Search bar
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText(f"Search {entry_to_browse}s...")
+        self.search.textChanged.connect(self.filter_entries)
+        self.vbox_layout.addWidget(self.search)
+
+        # Entry list
+        self.entry_list = QtWidgets.QListWidget()
+        self.entry_list.itemDoubleClicked.connect(self.open_entry_detail)
+        self.entry_list.setSpacing(2)
+        self.entry_list.setUniformItemSizes(True)
+        self.vbox_layout.addWidget(self.entry_list)
+
+        # Populate with entries
+        self.populate_entries()
+
+        # Close button
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+        self.vbox_layout.addLayout(button_layout)
+
+        self.setCentralWidget(central_widget)
+
+    # Following methods to be defined in derived classes
+
+    def filter_entries(self):
+        pass
+
+    def open_entry_detail(self):
+        pass
+
+    def populate_entries(self):
+        pass
+
 class SpellBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Spells in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
