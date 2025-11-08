@@ -977,22 +977,27 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         if not self.traits:
             vbox.addWidget(self._plain_label("— (none provided) —"))
         else:
-            for t in self.traits:
-                tb = QtWidgets.QTextBrowser()
-                tb.setOpenExternalLinks(False)  # we'll handle clicks
-                tb.setOpenLinks(False)
-                tb.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
-                tb.setReadOnly(True)
-                tb.setAcceptRichText(True)
+            tb = QtWidgets.QTextBrowser()
+            tb.setOpenExternalLinks(False)  # we'll handle clicks
+            tb.setOpenLinks(False)
+            tb.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+            tb.setReadOnly(True)
+            tb.setAcceptRichText(True)
 
-                tb.setMouseTracking(True)  # needed for hover events
-                tb.viewport().setMouseTracking(True)
+            tb.setMouseTracking(True)  # needed for hover events
+            tb.viewport().setMouseTracking(True)
 
+            combined_html = ""
+            for i, t in enumerate(self.traits):
                 html = self.kb.linkify(t)
-                tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{html}</div>")
-                tb.anchorClicked.connect(self._on_anchor_clicked)
-                tb.highlighted.connect(self._on_link_hovered)  # hover signal gives URL as text
-                vbox.addWidget(tb)
+                if i > 0:
+                    combined_html += "<br><br>"
+                combined_html += html
+            
+            tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{combined_html}</div>")
+            tb.anchorClicked.connect(self._on_anchor_clicked)
+            tb.highlighted.connect(self._on_link_hovered)  # hover signal gives URL as text
+            vbox.addWidget(tb)
 
         scroll.setWidget(content)
         layout.addWidget(scroll)
