@@ -33,6 +33,46 @@ def _resolve_image_for_npc(config: Config, npc) -> Path | None:
     guess = config.get_npc_portraits() / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
+class DetailWindowBase(QtWidgets.QMainWindow):
+    def __init__(self, entry: Spell | Item | ClassAction | NPC | Location, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.config = Config()
+        self.entry = entry
+        self.kb = kb
+        self.setWindowTitle(f"{entry.__class__.name} — {entry.name}")
+        self.resize(600, 520)
+
+        DMHelperTheme.apply_theme(self)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(content)
+        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        
+        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
+
+        def label(text: str) -> QtWidgets.QLabel:
+            lab = QtWidgets.QLabel(text)
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            lab.setMinimumWidth(300)
+            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+            return lab
+
+        icon_path = _resolve_image_for_entry(self.config, entry)
+
+        if icon_path:
+            img_label = QtWidgets.QLabel()
+            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            pix = QtGui.QPixmap(str(icon_path))
+            if not pix.isNull():
+                img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
+                form.addRow("Icon:", img_label)
 
 class SpellDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
