@@ -329,69 +329,20 @@ class SoundBrowserWindow(BrowserWindow):
                 QtWidgets.QMessageBox.critical(self, "Delete Error", 
                     f"Could not delete file:\n{str(e)}")
 
-class NPCBrowserWindow(QtWidgets.QMainWindow):
+class NPCBrowserWindow(BrowserWindow):
     """Window for browsing all NPCs in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.kb = kb
-        self.setWindowTitle("NPCs Browser")
-        self.resize(800, 600)
-        
-        # Apply dialog theme
-        DMHelperTheme.apply_to_dialog(self)
-        
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        
-        # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
-        title_label = QtWidgets.QLabel("All NPCs")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
+        super().__init__("NPC", kb, parent)
         
         # Add NPC button
         add_npc_btn = QtWidgets.QPushButton("Add NPC")
         add_npc_btn.setToolTip("Create a new NPC")
         add_npc_btn.clicked.connect(self.add_npc)
-        title_layout.addWidget(add_npc_btn)
-        
-        layout.addLayout(title_layout)
-        
-        # Search bar
-        self.search = QtWidgets.QLineEdit()
-        self.search.setPlaceholderText("Search NPCs...")
-        self.search.textChanged.connect(self.filter_npcs)
-        layout.addWidget(self.search)
-        
-        # NPCs list
-        self.npcs_list = QtWidgets.QListWidget()
-        self.npcs_list.itemDoubleClicked.connect(self.open_npc_detail)
-        
-        # Set proper spacing and sizing for list items
-        self.npcs_list.setSpacing(2)
-        self.npcs_list.setUniformItemSizes(True)
-        
-        layout.addWidget(self.npcs_list)
-        
-        # Populate with NPCs
-        self.populate_npcs()
-        
-        # Close button
-        close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-        
-        self.setCentralWidget(central_widget)
-        
-    def populate_npcs(self):
+        self.title_layout.addWidget(add_npc_btn)
+                
+    def populate_entries(self):
         """Populate the list with all NPCs from the repository"""
-        self.npcs_list.clear()
+        self.entry_list.clear()
         
         # Load NPCs directly from the repository (freshly loaded from JSON)
         try:
@@ -440,7 +391,7 @@ class NPCBrowserWindow(QtWidgets.QMainWindow):
             tooltip = self.create_npc_tooltip(npc)
             item.setToolTip(tooltip)
             
-            self.npcs_list.addItem(item)
+            self.entry_list.addItem(item)
     
     def create_npc_tooltip(self, npc: NPC) -> str:
         """Create a tooltip for an NPC"""
@@ -453,12 +404,12 @@ class NPCBrowserWindow(QtWidgets.QMainWindow):
                 f"Alignment: {npc.alignment.value}\n\n"
                 f"{appearance}")
     
-    def filter_npcs(self, text: str):
+    def filter_entries(self, text: str):
         """Filter the NPCs list based on search text"""
         text = text.lower().strip()
         
-        for i in range(self.npcs_list.count()):
-            item = self.npcs_list.item(i)
+        for i in range(self.entry_list.count()):
+            item = self.entry_list.item(i)
             npc = item.data(ROLE_NPC_PTR)
             
             # Search in name, race, alignment, and appearance
@@ -473,7 +424,7 @@ class NPCBrowserWindow(QtWidgets.QMainWindow):
             # Show/hide based on search match
             item.setHidden(text not in searchable_text if text else False)
     
-    def open_npc_detail(self, item: QtWidgets.QListWidgetItem):
+    def open_entry_detail(self, item: QtWidgets.QListWidgetItem):
         """Open the NPC detail window"""
         npc = item.data(ROLE_NPC_PTR)
         if not npc:
@@ -486,8 +437,8 @@ class NPCBrowserWindow(QtWidgets.QMainWindow):
         dialog = AddNPCDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # Refresh the NPCs list to show the new NPC
-            # populate_npcs() will reload data from JSON files
-            self.populate_npcs()
+            # populate_entries() will reload data from JSON files
+            self.populate_entries()
 
 class LocationBrowserWindow(QtWidgets.QMainWindow):
     """Window for browsing all Locations in the campaign"""
