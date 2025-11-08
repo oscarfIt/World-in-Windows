@@ -833,11 +833,25 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 f.setBold(True)
                 lab.setFont(f)
             return lab
+        
+        # Helper for section headings with enhanced styling
+        def section_heading(text: str):
+            lab = QtWidgets.QLabel(text)
+            lab.setStyleSheet("""
+                font-size: 14pt;
+                font-weight: bold;
+                color: white;
+                border-bottom: 2px solid #4A90E2;
+                padding-bottom: 4px;
+                margin-top: 8px;
+                margin-bottom: 4px;
+            """)
+            return lab
 
         # Branch on StatBlock type
         if isinstance(sb, PcClass):
             # Minimal info from PcClass (name + level)
-            vbox.addWidget(label("Player Class", bold=True))
+            vbox.addWidget(section_heading("Player Class"))
             name = getattr(sb, "name", None)
             level = getattr(sb, "level", None)
             spells = getattr(sb, "spells", [])
@@ -879,7 +893,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             # Add Ability Scores
             ability_scores = getattr(sb, "ability_scores", None)
             if ability_scores:
-                vbox.addWidget(label("Ability Scores", bold=True))
+                vbox.addWidget(section_heading("Ability Scores"))
                 
                 # Create two-column layout for ability scores
                 abilities_widget = QtWidgets.QWidget()
@@ -905,7 +919,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             # Add Spell Slots
             spell_slots = getattr(sb, "spell_slots", [])
             if spell_slots:
-                vbox.addWidget(label("Spell Slots", bold=True))
+                vbox.addWidget(section_heading("Spell Slots"))
                 mage_armor_cast = False
                 if sb.name == PcClassName.Wizard or sb.name == PcClassName.Sorcerer:
                     mage_armor_cast = "Mage Armor" in spells
@@ -954,7 +968,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                     vbox.addWidget(slot_widget)
 
             # Add Weapons (Items) heading and linkified spells display
-            vbox.addWidget(label("Weapons", bold=True))
+            vbox.addWidget(section_heading("Weapons"))
             weapons_text = ', '.join(weapons) if weapons else 'None'
             weapons_tb = QtWidgets.QTextBrowser()
             weapons_tb.setOpenExternalLinks(False)
@@ -972,7 +986,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             vbox.addWidget(weapons_tb)
 
             # Add Spells heading and linkified spells display
-            vbox.addWidget(label("Spells", bold=True))
+            vbox.addWidget(section_heading("Spells"))
             spells_text = ', '.join(spells) if spells else 'None'
             spells_tb = QtWidgets.QTextBrowser()
             spells_tb.setOpenExternalLinks(False)
@@ -1068,8 +1082,17 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         return lab
 
     def _bold_label(self, text: str) -> QtWidgets.QLabel:
-        lab = self._plain_label(text)
-        f = lab.font(); f.setBold(True); lab.setFont(f)
+        """Create a section heading label with enhanced styling"""
+        lab = QtWidgets.QLabel(text)
+        lab.setStyleSheet("""
+            font-size: 14pt;
+            font-weight: bold;
+            color: white;
+            border-bottom: 2px solid #4A90E2;
+            padding-bottom: 4px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        """)
         return lab
     
     def _on_link_hovered(self, qurl: QtCore.QUrl):
