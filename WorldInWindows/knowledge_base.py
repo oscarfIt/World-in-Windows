@@ -1,4 +1,3 @@
-# --- Hover knowledge base (minimal, inline for now) --------------------------
 from dataclasses import dataclass
 import re
 from typing import Dict, Tuple, Optional, Iterable
@@ -96,7 +95,8 @@ class KnowledgeBase:
         def repl(m: re.Match):
             label = m.group(1)
             # Keep the original casing for display; href uses the canonical lookup label
-            # We’ll resolve case-insensitively in _on_link_hovered/_on_anchor_clicked
-            return f'<a href="{label}">{label}</a>'
+            # We'll resolve case-insensitively in _on_link_hovered/_on_anchor_clicked
+            # Style links with bright yellow color and underline
+            return f'<a href="{label}" style="color: #FFD700; text-decoration: underline;">{label}</a>'
         
         return self._pattern.sub(repl, text)
