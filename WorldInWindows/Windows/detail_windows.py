@@ -850,6 +850,32 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             if armor_class is not None:
                 vbox.addWidget(label(f"Armor Class: {armor_class}"))
             
+            # Add Hit Points
+            hit_points = getattr(sb, "hit_points", None)
+            if hit_points is not None:
+                vbox.addWidget(label(f"Hit Points: {hit_points}"))
+            
+            # Add Move Speed
+            move_speed = getattr(sb, "move_speed", None)
+            if move_speed is not None:
+                vbox.addWidget(label(f"Move Speed: {move_speed} ft"))
+            
+            # Add Proficiency Bonus
+            proficiency_bonus = getattr(sb, "proficiency_bonus", None)
+            if proficiency_bonus is not None:
+                vbox.addWidget(label(f"Proficiency Bonus: +{proficiency_bonus}"))
+            
+            # Add Spell Save DC
+            spell_save_dc = getattr(sb, "spell_save_dc", None)
+            if spell_save_dc is not None:
+                vbox.addWidget(label(f"Spell Save DC: {spell_save_dc}"))
+            
+            # Add Spell Attack Modifier
+            spell_attack_modifier = getattr(sb, "spell_attack_modifier", None)
+            if spell_attack_modifier is not None:
+                sign = "+" if spell_attack_modifier >= 0 else ""
+                vbox.addWidget(label(f"Spell Attack Modifier: {sign}{spell_attack_modifier}"))
+            
             # Add Ability Scores
             ability_scores = getattr(sb, "ability_scores", None)
             if ability_scores:
