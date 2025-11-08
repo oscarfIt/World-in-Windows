@@ -75,8 +75,15 @@ class BrowserWindow(QtWidgets.QMainWindow):
 
     # Following methods to be defined in derived classes
 
-    def populate_entries(self):
-        pass
+    def populate_entries(self, new_entries: List):
+        self.entry_list.clear()
+        new_entries.sort(key=lambda x: x.name.lower())
+        for entry in new_entries:
+            item = QtWidgets.QListWidgetItem(entry.name)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, entry)
+            item.setSizeHint(QtCore.QSize(0, 32))
+            self.entry_list.addItem(item)
+
 
     def filter_entries(self):
         pass
@@ -85,13 +92,10 @@ class BrowserWindow(QtWidgets.QMainWindow):
         pass
 
 class SpellBrowserWindow(BrowserWindow):
-    """Window for browsing all Spells in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Spell", kb, parent)
 
     def populate_entries(self):
-        """Populate the list with all Spells from the repository"""
-        self.entry_list.clear()
         try:
             repo = Repo(self.config.data_dir)
             repo.load_all()
@@ -99,12 +103,7 @@ class SpellBrowserWindow(BrowserWindow):
         except Exception as e:
             print(f"Failed to load spells from repo: {e}")
             all_spells = []
-        all_spells.sort(key=lambda x: x.name.lower())
-        for spell in all_spells:
-            item = QtWidgets.QListWidgetItem(spell.name)
-            item.setData(QtCore.Qt.ItemDataRole.UserRole, spell)
-            item.setSizeHint(QtCore.QSize(0, 32))
-            self.entry_list.addItem(item)
+        super().populate_entries(all_spells)
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
@@ -133,13 +132,10 @@ class SpellBrowserWindow(BrowserWindow):
         window.show()
 
 class ItemBrowserWindow(BrowserWindow):
-    """Window for browsing all Items in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Item", kb, parent)
 
     def populate_entries(self):
-        """Populate the list with all Items from the repository"""
-        self.entry_list.clear()
         try:
             repo = Repo(self.config.data_dir)
             repo.load_all()
@@ -147,13 +143,7 @@ class ItemBrowserWindow(BrowserWindow):
         except Exception as e:
             print(f"Failed to load items from repo: {e}")
             all_items = []
-        
-        all_items.sort(key=lambda x: x.name.lower())
-        for item in all_items:
-            item_widget = QtWidgets.QListWidgetItem(item.name)
-            item_widget.setData(QtCore.Qt.ItemDataRole.UserRole, item)
-            item_widget.setSizeHint(QtCore.QSize(0, 32))
-            self.entry_list.addItem(item_widget)
+        super().populate_entries(all_items)
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
@@ -203,7 +193,7 @@ class SoundBrowserWindow(BrowserWindow):
         self.button_layout.insertWidget(2, delete_btn)
         
     def populate_entries(self):
-        """Populate the list with existing audio files"""
+        # This implementation is a bit different so we don't call the super's method
         self.entry_list.clear()
         
         # Look for audio files in Media/Audio directory
@@ -309,7 +299,7 @@ class NPCBrowserWindow(BrowserWindow):
         self.title_layout.addWidget(add_npc_btn)
                 
     def populate_entries(self):
-        """Populate the list with all NPCs from the repository"""
+        # This implementation is a bit different so we don't call the super's method
         self.entry_list.clear()
         
         # Load NPCs directly from the repository (freshly loaded from JSON)
@@ -393,15 +383,11 @@ class NPCBrowserWindow(BrowserWindow):
             self.populate_entries()
 
 class LocationBrowserWindow(BrowserWindow):
-    """Window for browsing all Locations in the campaign"""
     def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
         self.locations = locations
         super().__init__("Location", kb, parent)
 
     def populate_entries(self):
-        """Populate the list with all Locations from the repository"""
-        self.entry_list.clear()
-        
         # Get all locations (including nested ones)
         all_locations = []
         def collect_locations(locs):
@@ -411,13 +397,7 @@ class LocationBrowserWindow(BrowserWindow):
                     collect_locations(loc.children)
         
         collect_locations(self.locations)
-        all_locations.sort(key=lambda x: x.name.lower())
-        
-        for loc in all_locations:
-            item = QtWidgets.QListWidgetItem(loc.name)
-            item.setData(QtCore.Qt.ItemDataRole.UserRole, loc)
-            item.setSizeHint(QtCore.QSize(0, 32))
-            self.entry_list.addItem(item)
+        super().populate_entries(all_locations)
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
@@ -440,13 +420,10 @@ class LocationBrowserWindow(BrowserWindow):
         window.show()
 
 class ConditionBrowserWindow(BrowserWindow):
-    """Window for browsing all Conditions in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Condition", kb, parent)
 
     def populate_entries(self):
-        """Populate the list with all Conditions from the repository"""
-        self.entry_list.clear()
         try:
             repo = Repo(self.config.data_dir)
             repo.load_all()
@@ -454,12 +431,7 @@ class ConditionBrowserWindow(BrowserWindow):
         except Exception as e:
             print(f"Failed to load conditions from repo: {e}")
             all_conditions = []
-        all_conditions.sort(key=lambda x: x.name.lower())
-        for condition in all_conditions:
-            item = QtWidgets.QListWidgetItem(condition.name)
-            item.setData(QtCore.Qt.ItemDataRole.UserRole, condition)
-            item.setSizeHint(QtCore.QSize(0, 32))
-            self.entry_list.addItem(item)
+        super().populate_entries(all_conditions)
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
