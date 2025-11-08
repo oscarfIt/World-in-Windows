@@ -19,7 +19,7 @@ from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow
 ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2  # Defined here and in main_window.py, gross
 
 # Base class
-class BrowserWindow(QtWidgets.QMainWindow):
+class BrowserWindowBase(QtWidgets.QMainWindow):
     central_widget: QtWidgets.QWidget
     vbox_layout: QtWidgets.QVBoxLayout
     title_layout: QtWidgets.QHBoxLayout
@@ -91,7 +91,7 @@ class BrowserWindow(QtWidgets.QMainWindow):
     def open_entry_detail(self):
         pass
 
-class SpellBrowserWindow(BrowserWindow):
+class SpellBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Spell", kb, parent)
 
@@ -131,7 +131,7 @@ class SpellBrowserWindow(BrowserWindow):
         window = SpellDetailWindow(spell, self.kb, self)
         window.show()
 
-class ItemBrowserWindow(BrowserWindow):
+class ItemBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Item", kb, parent)
 
@@ -167,7 +167,7 @@ class ItemBrowserWindow(BrowserWindow):
         window = ItemDetailWindow(item, self.kb, self)
         window.show()
 
-class SoundBrowserWindow(BrowserWindow):
+class SoundBrowserWindow(BrowserWindowBase):
     """Window for browsing and generating audio clips"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Sound", kb, parent)
@@ -288,7 +288,7 @@ class SoundBrowserWindow(BrowserWindow):
                 QtWidgets.QMessageBox.critical(self, "Delete Error", 
                     f"Could not delete file:\n{str(e)}")
 
-class NPCBrowserWindow(BrowserWindow):
+class NPCBrowserWindow(BrowserWindowBase):
     """Window for browsing all NPCs in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("NPC", kb, parent)
@@ -382,7 +382,7 @@ class NPCBrowserWindow(BrowserWindow):
             # populate_entries() will reload data from JSON files
             self.populate_entries()
 
-class LocationBrowserWindow(BrowserWindow):
+class LocationBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
         self.locations = locations
         super().__init__("Location", kb, parent)
@@ -419,7 +419,7 @@ class LocationBrowserWindow(BrowserWindow):
         window = LocationDetailWindow(loc, self.kb, self)
         window.show()
 
-class ConditionBrowserWindow(BrowserWindow):
+class ConditionBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Condition", kb, parent)
 
