@@ -1,4 +1,3 @@
-# --- Hover knowledge base (minimal, inline for now) --------------------------
 from dataclasses import dataclass
 import re
 from typing import Dict, Tuple, Optional, Iterable
