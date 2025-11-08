@@ -440,59 +440,15 @@ class NPCBrowserWindow(BrowserWindow):
             # populate_entries() will reload data from JSON files
             self.populate_entries()
 
-class LocationBrowserWindow(QtWidgets.QMainWindow):
+class LocationBrowserWindow(BrowserWindow):
     """Window for browsing all Locations in the campaign"""
     def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
-        super().__init__(parent)
-        self.kb = kb
         self.locations = locations
-        self.setWindowTitle("Locations Browser")
-        self.resize(900, 600)
+        super().__init__("Location", kb, parent)
 
-        # Apply dialog theme
-        DMHelperTheme.apply_to_dialog(self)
-
-        # Central widget and layout
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
-        title_label = QtWidgets.QLabel("All Locations")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
-        layout.addLayout(title_layout)
-
-        # Search bar
-        self.search = QtWidgets.QLineEdit()
-        self.search.setPlaceholderText("Search Locations...")
-        self.search.textChanged.connect(self.filter_locations)
-        layout.addWidget(self.search)
-
-        # Locations list
-        self.locations_list = QtWidgets.QListWidget()
-        self.locations_list.itemDoubleClicked.connect(self.open_location_detail)
-        self.locations_list.setSpacing(2)
-        self.locations_list.setUniformItemSizes(True)
-        layout.addWidget(self.locations_list)
-
-        # Populate with locations
-        self.populate_locations()
-
-        # Close button
-        close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-
-        self.setCentralWidget(central_widget)
-
-    def populate_locations(self):
+    def populate_entries(self):
         """Populate the list with all Locations from the repository"""
-        self.locations_list.clear()
+        self.entry_list.clear()
         
         # Get all locations (including nested ones)
         all_locations = []
@@ -511,7 +467,7 @@ class LocationBrowserWindow(QtWidgets.QMainWindow):
             item.setSizeHint(QtCore.QSize(0, 32))
             tooltip = self.create_location_tooltip(loc)
             item.setToolTip(tooltip)
-            self.locations_list.addItem(item)
+            self.entry_list.addItem(item)
 
     def create_location_tooltip(self, loc: Location) -> str:
         desc = loc.description or "No description"
@@ -519,10 +475,10 @@ class LocationBrowserWindow(QtWidgets.QMainWindow):
             desc = desc[:160].rstrip() + "…"
         return f"{loc.name}\nRegion: {loc.region or '-'}\nNPCs: {len(loc.npcs)}\n\n{desc}"
 
-    def filter_locations(self, text: str):
+    def filter_entries(self, text: str):
         text = text.lower().strip()
-        for i in range(self.locations_list.count()):
-            item = self.locations_list.item(i)
+        for i in range(self.entry_list.count()):
+            item = self.entry_list.item(i)
             loc = item.data(QtCore.Qt.ItemDataRole.UserRole)
             searchable_text = " ".join([
                 loc.name,
@@ -532,7 +488,7 @@ class LocationBrowserWindow(QtWidgets.QMainWindow):
             ]).lower()
             item.setHidden(text not in searchable_text if text else False)
 
-    def open_location_detail(self, item: QtWidgets.QListWidgetItem):
+    def open_entry_detail(self, item: QtWidgets.QListWidgetItem):
         loc = item.data(QtCore.Qt.ItemDataRole.UserRole)
         if not loc:
             return
