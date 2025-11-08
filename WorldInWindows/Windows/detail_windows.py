@@ -7,8 +7,8 @@ from ..knowledge_base import KnowledgeBase
 from ..repo import Repo
 from ..config import Config
 
-from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition
-from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview
+from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, PcClassName, StatBlock, MonsterManual, Condition
+from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview, EditPcClassDialog
 from ..AIGen import ImageGenerator, ImageGenerationMode
 
 def _resolve_image_for_entry(config: Config, content_type: Spell | Item | ClassAction) -> Path | None:
@@ -845,6 +845,11 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
             
+            # Add Armor Class
+            armor_class = getattr(sb, "armor_class", None)
+            if armor_class is not None:
+                vbox.addWidget(label(f"Armor Class: {armor_class}"))
+            
             # Add Ability Scores
             ability_scores = getattr(sb, "ability_scores", None)
             if ability_scores:
@@ -857,15 +862,15 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 
                 # Left column: STR, DEX, CON
                 left_column = QtWidgets.QVBoxLayout()
-                left_column.addWidget(label(f"Strength: {ability_scores.Strength}"))
-                left_column.addWidget(label(f"Dexterity: {ability_scores.Dexterity}"))
-                left_column.addWidget(label(f"Constitution: {ability_scores.Constitution}"))
-                
+                left_column.addWidget(label(f"Strength: {ability_scores.strength}"))
+                left_column.addWidget(label(f"Dexterity: {ability_scores.dexterity}"))
+                left_column.addWidget(label(f"Constitution: {ability_scores.constitution}"))
+
                 # Right column: INT, WIS, CHA
                 right_column = QtWidgets.QVBoxLayout()
-                right_column.addWidget(label(f"Intelligence: {ability_scores.Intelligence}"))
-                right_column.addWidget(label(f"Wisdom: {ability_scores.Wisdom}"))
-                right_column.addWidget(label(f"Charisma: {ability_scores.Charisma}"))
+                right_column.addWidget(label(f"Intelligence: {ability_scores.intelligence}"))
+                right_column.addWidget(label(f"Wisdom: {ability_scores.wisdom}"))
+                right_column.addWidget(label(f"Charisma: {ability_scores.charisma}"))
                 
                 abilities_layout.addLayout(left_column)
                 abilities_layout.addLayout(right_column)
@@ -875,6 +880,9 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             spell_slots = getattr(sb, "spell_slots", [])
             if spell_slots:
                 vbox.addWidget(label("Spell Slots", bold=True))
+                mage_armor_cast = False
+                if sb.name == PcClassName.Wizard or sb.name == PcClassName.Sorcerer:
+                    mage_armor_cast = "Mage Armor" in spells
                 for slot in spell_slots:
                     # Create horizontal layout for each spell level
                     slot_widget = QtWidgets.QWidget()
@@ -889,7 +897,10 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                     for i in range(slot.count):
                         checkbox = QtWidgets.QCheckBox()
                         checkbox.setToolTip(f"Spell slot {i+1}")
-                        checkbox.setChecked(True)  # Start all slots as available (checked/blue)
+                        if mage_armor_cast and slot.level == 1 and i == slot.count - 1:
+                            checkbox.setChecked(False)  # Last slot used for Mage Armor
+                        else:
+                            checkbox.setChecked(True)  # Start all slots as available (checked/blue)
                         
                         # Custom styling for solid blue fill when checked
                         checkbox.setStyleSheet("""
@@ -1011,6 +1022,13 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
+        
+        if isinstance(sb, PcClass):
+            edit_btn = QtWidgets.QPushButton("Edit")
+            edit_btn.setToolTip("Edit PC Class stat block")
+            edit_btn.clicked.connect(self.edit_pc_class)
+            btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        
         layout.addWidget(btns)
         
         # Set the central widget
@@ -1065,6 +1083,35 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.warning(self, "Unknown Entry",
                 "The selected entry type is not recognized.")
         window.show()
+
+    def edit_pc_class(self):
+        """Open dialog to edit PC Class stat block"""
+        if not isinstance(self.sb, PcClass):
+            return
+        
+        # Try to get the NPC from the parent window
+        npc = None
+        parent = self.parent()
+        if isinstance(parent, NPCDetailWindow):
+            npc = parent.npc
+            
+        dialog = EditPcClassDialog(self.sb, npc, self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Reload the window to show updated stat block
+            self.reload_window()
+    
+    def reload_window(self):
+        """Reload the stat block window to show updated data"""
+        # Store the current window position and size
+        geometry = self.geometry()
+        
+        # Create a new window with the same stat block (which has been updated)
+        new_window = StatBlockDetailWindow(self.sb, self.kb, self.traits, self.parent())
+        new_window.setGeometry(geometry)  # Keep same position/size
+        new_window.show()
+        
+        # Close the current window
+        self.close()
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         """Keep monster image scaled to width while preserving aspect ratio."""

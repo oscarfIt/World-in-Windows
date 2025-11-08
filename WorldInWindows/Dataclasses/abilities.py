@@ -2,17 +2,20 @@ from dataclasses import dataclass
 
 @dataclass
 class AbilityScores:
-    Strength: int
-    Dexterity: int
-    Constitution: int
-    Intelligence: int
-    Wisdom: int
-    Charisma: int
+    strength: int
+    dexterity: int
+    constitution: int
+    intelligence: int
+    wisdom: int
+    charisma: int
 
-    def __init__(self, scores: dict = {}):
-        self.Strength = scores.get("Strength", 10)
-        self.Dexterity = scores.get("Dexterity", 10)
-        self.Constitution = scores.get("Constitution", 10)
-        self.Intelligence = scores.get("Intelligence", 10)
-        self.Wisdom = scores.get("Wisdom", 10)
-        self.Charisma = scores.get("Charisma", 10)
+    def __init__(self, strength: int = 10, dexterity: int = 10, constitution: int = 10, intelligence: int = 10, wisdom: int = 10, charisma: int = 10):
+        self.strength = strength
+        self.dexterity = dexterity
+        self.constitution = constitution
+        self.intelligence = intelligence
+        self.wisdom = wisdom
+        self.charisma = charisma
+
+    def get_modifier(self, score: int) -> int:
+        return (score - 10) // 2
