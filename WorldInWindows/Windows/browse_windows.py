@@ -495,59 +495,14 @@ class LocationBrowserWindow(BrowserWindow):
         window = LocationDetailWindow(loc, self.kb, self)
         window.show()
 
-class ConditionBrowserWindow(QtWidgets.QMainWindow):
+class ConditionBrowserWindow(BrowserWindow):
     """Window for browsing all Conditions in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.kb = kb
-        self.setWindowTitle("Conditions Browser")
-        self.resize(800, 600)
+        super().__init__("Condition", kb, parent)
 
-        # Apply dialog theme
-        DMHelperTheme.apply_to_dialog(self)
-
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
-        title_label = QtWidgets.QLabel("All Conditions")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
-        layout.addLayout(title_layout)
-
-        # Search bar
-        self.search = QtWidgets.QLineEdit()
-        self.search.setPlaceholderText("Search Conditions...")
-        self.search.textChanged.connect(self.filter_conditions)
-        layout.addWidget(self.search)
-
-        # Conditions list
-        self.conditions_list = QtWidgets.QListWidget()
-        self.conditions_list.itemDoubleClicked.connect(self.open_condition_detail)
-        self.conditions_list.setSpacing(2)
-        self.conditions_list.setUniformItemSizes(True)
-        layout.addWidget(self.conditions_list)
-
-        # Populate with conditions
-        self.populate_conditions()
-
-        # Close button
-        close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_btn)
-        layout.addLayout(button_layout)
-
-        self.setCentralWidget(central_widget)
-
-    def populate_conditions(self):
+    def populate_entries(self):
         """Populate the list with all Conditions from the repository"""
-        self.conditions_list.clear()
+        self.entry_list.clear()
         try:
             repo = Repo(self.config.data_dir)
             repo.load_all()
@@ -562,7 +517,7 @@ class ConditionBrowserWindow(QtWidgets.QMainWindow):
             item.setSizeHint(QtCore.QSize(0, 32))
             tooltip = self.create_condition_tooltip(condition)
             item.setToolTip(tooltip)
-            self.conditions_list.addItem(item)
+            self.entry_list.addItem(item)
 
     def create_condition_tooltip(self, condition) -> str:
         desc = condition.description or "No description"
@@ -570,10 +525,10 @@ class ConditionBrowserWindow(QtWidgets.QMainWindow):
             desc = desc[:160].rstrip() + "…"
         return f"{condition.name}\n\n{desc}"
 
-    def filter_conditions(self, text: str):
+    def filter_entries(self, text: str):
         text = text.lower().strip()
-        for i in range(self.conditions_list.count()):
-            item = self.conditions_list.item(i)
+        for i in range(self.entry_list.count()):
+            item = self.entry_list.item(i)
             condition = item.data(QtCore.Qt.ItemDataRole.UserRole)
             searchable_text = " ".join([
                 condition.name,
@@ -581,7 +536,7 @@ class ConditionBrowserWindow(QtWidgets.QMainWindow):
             ]).lower()
             item.setHidden(text not in searchable_text if text else False)
 
-    def open_condition_detail(self, item: QtWidgets.QListWidgetItem):
+    def open_entry_detail(self, item: QtWidgets.QListWidgetItem):
         condition = item.data(QtCore.Qt.ItemDataRole.UserRole)
         if not condition:
             return
