@@ -834,6 +834,16 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 lab.setFont(f)
             return lab
         
+        # Helper for field labels with bold field names
+        def field_label(field_name: str, value: str):
+            lab = QtWidgets.QLabel(f"<b>{field_name}:</b> {value}")
+            lab.setWordWrap(True)
+            lab.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+            )
+            return lab
+        
         # Helper for section headings with enhanced styling
         def section_heading(text: str):
             lab = QtWidgets.QLabel(text)
@@ -856,39 +866,39 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             level = getattr(sb, "level", None)
             spells = getattr(sb, "spells", [])
             weapons = getattr(sb, "weapons", [])
-            vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
-            vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
+            vbox.addWidget(field_label("Class", getattr(name, 'value', str(name) or 'Unknown')))
+            vbox.addWidget(field_label("Level", str(level if level is not None else 'Unknown')))
             
             # Add Armor Class
             armor_class = getattr(sb, "armor_class", None)
             if armor_class is not None:
-                vbox.addWidget(label(f"Armor Class: {armor_class}"))
+                vbox.addWidget(field_label("Armor Class", str(armor_class)))
             
             # Add Hit Points
             hit_points = getattr(sb, "hit_points", None)
             if hit_points is not None:
-                vbox.addWidget(label(f"Hit Points: {hit_points}"))
+                vbox.addWidget(field_label("Hit Points", str(hit_points)))
             
             # Add Move Speed
             move_speed = getattr(sb, "move_speed", None)
             if move_speed is not None:
-                vbox.addWidget(label(f"Move Speed: {move_speed} ft"))
+                vbox.addWidget(field_label("Move Speed", f"{move_speed} ft"))
             
             # Add Proficiency Bonus
             proficiency_bonus = getattr(sb, "proficiency_bonus", None)
             if proficiency_bonus is not None:
-                vbox.addWidget(label(f"Proficiency Bonus: +{proficiency_bonus}"))
+                vbox.addWidget(field_label("Proficiency Bonus", f"+{proficiency_bonus}"))
             
             # Add Spell Save DC
             spell_save_dc = getattr(sb, "spell_save_dc", None)
             if spell_save_dc is not None:
-                vbox.addWidget(label(f"Spell Save DC: {spell_save_dc}"))
+                vbox.addWidget(field_label("Spell Save DC", str(spell_save_dc)))
             
             # Add Spell Attack Modifier
             spell_attack_modifier = getattr(sb, "spell_attack_modifier", None)
             if spell_attack_modifier is not None:
                 sign = "+" if spell_attack_modifier >= 0 else ""
-                vbox.addWidget(label(f"Spell Attack Modifier: {sign}{spell_attack_modifier}"))
+                vbox.addWidget(field_label("Spell Attack Modifier", f"{sign}{spell_attack_modifier}"))
             
             # Add Ability Scores
             ability_scores = getattr(sb, "ability_scores", None)
@@ -902,15 +912,15 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 
                 # Left column: STR, DEX, CON
                 left_column = QtWidgets.QVBoxLayout()
-                left_column.addWidget(label(f"Strength: {ability_scores.strength}"))
-                left_column.addWidget(label(f"Dexterity: {ability_scores.dexterity}"))
-                left_column.addWidget(label(f"Constitution: {ability_scores.constitution}"))
+                left_column.addWidget(field_label("Strength", str(ability_scores.strength)))
+                left_column.addWidget(field_label("Dexterity", str(ability_scores.dexterity)))
+                left_column.addWidget(field_label("Constitution", str(ability_scores.constitution)))
 
                 # Right column: INT, WIS, CHA
                 right_column = QtWidgets.QVBoxLayout()
-                right_column.addWidget(label(f"Intelligence: {ability_scores.intelligence}"))
-                right_column.addWidget(label(f"Wisdom: {ability_scores.wisdom}"))
-                right_column.addWidget(label(f"Charisma: {ability_scores.charisma}"))
+                right_column.addWidget(field_label("Intelligence", str(ability_scores.intelligence)))
+                right_column.addWidget(field_label("Wisdom", str(ability_scores.wisdom)))
+                right_column.addWidget(field_label("Charisma", str(ability_scores.charisma)))
                 
                 abilities_layout.addLayout(left_column)
                 abilities_layout.addLayout(right_column)
@@ -930,7 +940,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                     slot_layout.setContentsMargins(0, 0, 0, 0)
                     
                     # Add level label
-                    level_label = label(f"Level {slot.level}:")
+                    level_label = field_label(f"Level {slot.level}", "")
                     slot_layout.addWidget(level_label)
                     
                     # Add checkboxes for each slot
