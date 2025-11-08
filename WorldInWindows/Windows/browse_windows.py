@@ -34,7 +34,7 @@ class BrowserWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"{entry_to_browse} Browser")
         self.resize(800, 600)
 
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         self.central_widget = QtWidgets.QWidget()
         self.vbox_layout = QtWidgets.QVBoxLayout(self.central_widget)

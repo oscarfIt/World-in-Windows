@@ -257,6 +257,6 @@ class DMHelperTheme:
         app.setStyleSheet(cls.get_main_stylesheet())
     
     @classmethod
-    def apply_to_dialog(cls, dialog):
+    def apply_theme(cls, window_or_dialog):
         """Apply theme to a specific dialog/window"""
-        dialog.setStyleSheet(cls.get_dialog_stylesheet())
+        window_or_dialog.setStyleSheet(cls.get_dialog_stylesheet())

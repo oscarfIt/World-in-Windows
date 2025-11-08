@@ -43,7 +43,7 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Spell — {spell.name}")
         self.resize(600, 520)
 
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -106,7 +106,7 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Item — {item.name}")
         self.resize(600, 520)
 
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -166,7 +166,7 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"NPC — {npc.name}")
         self.resize(600, 520)
         
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -400,7 +400,7 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Location — {location.name}")
         self.resize(700, 600)
 
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -702,7 +702,7 @@ class ConditionDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Condition — {condition.name}")
         self.resize(600, 400)
 
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -749,7 +749,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         self.kb = kb
         self.traits = traits if traits is not None else []
         
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
         
         self._hover = HoverPreview(self)
 
