@@ -51,7 +51,6 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         form = QtWidgets.QFormLayout(content)
         form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         
-        # Set field growth policy for better macOS compatibility
         form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
@@ -62,12 +61,10 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
                 QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
                 QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
             )
-            # Set minimum width to ensure proper text display on macOS
             lab.setMinimumWidth(300)
             lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
             return lab
 
-        # Icon if available
         icon_path = _resolve_image_for_entry(self.config, spell)
         if icon_path:
             img_label = QtWidgets.QLabel()
@@ -117,7 +114,6 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
         form = QtWidgets.QFormLayout(content)
         form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         
-        # Set field growth policy for better macOS compatibility
         form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
@@ -133,7 +129,6 @@ class ItemDetailWindow(QtWidgets.QMainWindow):
             lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
             return lab
 
-        # Icon if available
         icon_path = _resolve_image_for_entry(self.config, item)
         if icon_path:
             img_label = QtWidgets.QLabel()
@@ -171,10 +166,8 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"NPC — {npc.name}")
         self.resize(600, 520)
         
-        # Apply dialog theme
         DMHelperTheme.apply_to_dialog(self)
 
-        # Use a scroll area in case backstory is long
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -182,11 +175,9 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         form = QtWidgets.QFormLayout(content)
         form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         
-        # Set field growth policy for better macOS compatibility
         form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
-        # Helper to make selectable, wrapped labels with minimum width
         def label(text: str) -> QtWidgets.QLabel:
             lab = QtWidgets.QLabel(text)
             lab.setWordWrap(True)
@@ -220,7 +211,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         form.addRow("Age:", label(npc.age))
         form.addRow("Alignment:", label(npc.alignment.value))
 
-        # Status (Alive/Deceased)
         status_label = label("Alive ✓" if npc.alive else "Deceased ☠️")
         if not npc.alive:
             status_label.setStyleSheet("color: #cc0000; font-weight: bold;")
@@ -228,11 +218,9 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             status_label.setStyleSheet("color: #00aa00; font-weight: bold;")
         form.addRow("Status:", status_label)
 
-        # Appearance / Backstory as large wrapped labels
         form.addRow("Appearance:", label(npc.appearance or ""))
         form.addRow("Backstory:", label(npc.backstory or ""))
 
-        # StatBlock info (simple for now)
         sb = npc.stat_block
         sb_text = sb.display_name if sb else "None"
         self.stat_btn = QtWidgets.QPushButton(sb_text)
@@ -242,24 +230,20 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
 
         scroll.setWidget(content)
 
-        # Buttons (Edit, Campaign Notes, and Close)
         btns = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.StandardButton.Close
         )
         
-        # Add custom Edit button
         edit_btn = QtWidgets.QPushButton("Edit")
         edit_btn.setToolTip("Edit this NPC")
         edit_btn.clicked.connect(self.edit_npc)
         btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
-        # Add custom Campaign Notes button
         campaign_notes_btn = QtWidgets.QPushButton("Campaign Notes")
         campaign_notes_btn.setToolTip("View and edit campaign notes for this NPC")
         campaign_notes_btn.clicked.connect(self.open_campaign_notes)
         btns.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
-        # Add custom Delete button
         delete_btn = QtWidgets.QPushButton("Delete")
         delete_btn.setToolTip("Permanently delete this NPC")
         delete_btn.clicked.connect(self.delete_npc)
@@ -278,7 +262,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
 
-        # Central widget setup for QMainWindow
         central_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(central_widget)
         layout.addWidget(scroll)
@@ -294,7 +277,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
     def generate_portrait(self):
         """Generate an AI portrait for this NPC with loading dialog and auto-refresh"""
         try:
-            # Show loading dialog
             progress = QtWidgets.QProgressDialog("Generating portrait...", "Cancel", 0, 0, self)
             progress.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
             progress.setWindowTitle("Stability AI Image Generation")
@@ -303,24 +285,19 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
             progress.setCancelButton(None)  # Remove cancel button for simplicity
             progress.show()
             
-            # Process events to show the dialog immediately
             QtWidgets.QApplication.processEvents()
             
-            # Generate the portrait
             image_generator = ImageGenerator()
             image_generator.create_character_portrait(self.npc, ImageGenerationMode.CORE)
             
-            # Close the progress dialog
             progress.close()
             
-            # Check if the portrait was actually created
             portrait_path = _resolve_image_for_npc(self.config, self.npc)
             if portrait_path and Path(portrait_path).exists():
                 # Portrait generated successfully - show success message
                 QtWidgets.QMessageBox.information(self, "Success", 
                     f"Portrait generated successfully for {self.npc.name}!")
                 
-                # Reload the window to show the new portrait
                 self.reload_window()
             else:
                 QtWidgets.QMessageBox.warning(self, "Error", 
@@ -342,15 +319,12 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
 
     def reload_window(self):
         """Reload the NPC detail window to show updated portrait"""
-        # Store the current window position and size
         geometry = self.geometry()
         
-        # Create a new window with the same NPC
         new_window = NPCDetailWindow(self.npc, self.kb, self.parent())
         new_window.setGeometry(geometry)  # Keep same position/size
         new_window.show()
         
-        # Close the current window
         self.close()
 
     def open_campaign_notes(self):
@@ -362,7 +336,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
 
     def delete_npc(self):
         """Delete this NPC permanently after confirmation"""
-        # Show confirmation dialog
         reply = QtWidgets.QMessageBox.question(
             self,
             "Delete NPC",
@@ -373,7 +346,6 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
         
         if reply == QtWidgets.QMessageBox.StandardButton.Ok:
             try:
-                # Delete from npcs.json
                 npcs_file = Path(self.config.data_dir) / "npcs.json"
                 
                 if npcs_file.exists():
@@ -395,10 +367,8 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                             f"{self.npc.name} has been permanently deleted."
                         )
                         
-                        # Close the window
                         self.close()
                         
-                        # Refresh the parent window if it's an NPCs browser
                         if self.parent() and hasattr(self.parent(), 'populate_npcs'):
                             self.parent().populate_npcs()
                     else:
@@ -430,7 +400,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Location — {location.name}")
         self.resize(700, 600)
 
-        # Apply dialog theme
         DMHelperTheme.apply_to_dialog(self)
 
         scroll = QtWidgets.QScrollArea()
@@ -453,18 +422,15 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
                 lab.setFont(f)
             return lab
 
-        # Location details
         vbox.addWidget(label(location.name, bold=True))
         vbox.addWidget(label(f"Region: {location.region or 'Unknown'}"))
         vbox.addWidget(label(f"Description: {location.description or 'No description'}"))
         
-        # Tags
         tags = ", ".join(location.tags) if location.tags else "None"
         vbox.addWidget(label(f"Tags: {tags}"))
 
         vbox.addSpacing(10)
 
-        # NPCs in this location
         vbox.addWidget(label("NPCs in this Location:", bold=True))
         
         if location.npcs:
@@ -528,15 +494,12 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
 
         vbox.addSpacing(10)
 
-        # Add NPC to location section
         vbox.addWidget(label("Add NPC to Location:", bold=True))
         
-        # NPC dropdown
         self.npc_dropdown = QtWidgets.QComboBox()
         self.populate_npc_dropdown()
         vbox.addWidget(self.npc_dropdown)
         
-        # Add NPC button
         add_npc_layout = QtWidgets.QHBoxLayout()
         add_btn = QtWidgets.QPushButton("Add NPC to Location")
         add_btn.clicked.connect(self.add_npc_to_location)
@@ -546,7 +509,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
 
         vbox.addSpacing(10)
 
-        # Loot in this location
         vbox.addWidget(label("Loot in this Location:", bold=True))
         
         if location.loot:
@@ -582,7 +544,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
 
         scroll.setWidget(content)
 
-        # Close button at bottom
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
@@ -602,17 +563,14 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
             repo.load_all()
             all_npcs = list(repo.npcs)
             
-            # Get names of NPCs already in this location for comparison
             existing_npc_names = {npc.name for npc in self.location.npcs}
             
-            # Only show NPCs not already in this location (compare by name)
             available_npcs = [npc for npc in all_npcs if npc.name not in existing_npc_names]
             
             if not available_npcs:
                 self.npc_dropdown.addItem("No NPCs available to add", None)
                 return
                 
-            # Sort by name
             available_npcs.sort(key=lambda x: x.name.lower())
             
             for npc in available_npcs:
@@ -630,7 +588,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
                 "Please select an NPC to add to this location.")
             return
         
-        # Check if NPC is already in this location (double-check to prevent duplicates)
         existing_npc_names = {existing_npc.name for existing_npc in self.location.npcs}
         if npc.name in existing_npc_names:
             QtWidgets.QMessageBox.information(self, "NPC Already Present", 
@@ -638,17 +595,13 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
             return
         
         try:
-            # Add NPC to location
             self.location.add_npc(npc)
             
-            # Save changes to locations.json
             self.save_locations_to_json()
             
-            # Show success message
             QtWidgets.QMessageBox.information(self, "NPC Added", 
                 f"'{npc.name}' has been added to '{self.location.name}'.")
             
-            # Refresh the window to show the updated list
             self.refresh_window()
             
         except Exception as e:
@@ -657,7 +610,6 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
 
     def remove_npc_from_location(self, npc):
         """Remove an NPC from this location"""
-        # Confirm removal
         reply = QtWidgets.QMessageBox.question(self, "Remove NPC",
             f"Are you sure you want to remove '{npc.name}' from '{self.location.name}'?",
             QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
@@ -693,15 +645,12 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
 
     def refresh_window(self):
         """Refresh the location detail window to show updated data"""
-        # Store the current window position and size
         geometry = self.geometry()
         
-        # Create a new window with the same location
         new_window = LocationDetailWindow(self.location, self.kb, self.parent())
         new_window.setGeometry(geometry)  # Keep same position/size
         new_window.show()
         
-        # Close the current window
         self.close()
 
     def save_locations_to_json(self):
@@ -800,7 +749,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         self.kb = kb
         self.traits = traits if traits is not None else []
         
-        # Apply dialog theme
         DMHelperTheme.apply_to_dialog(self)
         
         self._hover = HoverPreview(self)
@@ -808,11 +756,9 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("Stat Block")
         self.resize(640, 720)
 
-        # Central widget setup for QMainWindow
         central_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(central_widget)
 
-        # Scrollable content
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         content = QtWidgets.QWidget()
@@ -820,7 +766,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         vbox.setContentsMargins(12, 12, 12, 12)
         vbox.setSpacing(10)
 
-        # Helper label
         def label(text: str, bold: bool = False):
             lab = QtWidgets.QLabel(text)
             lab.setWordWrap(True)
@@ -834,7 +779,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 lab.setFont(f)
             return lab
         
-        # Helper for field labels with bold field names
         def field_label(field_name: str, value: str):
             lab = QtWidgets.QLabel(f"<b>{field_name}:</b> {value}")
             lab.setWordWrap(True)
@@ -858,65 +802,59 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             """)
             return lab
 
-        # Branch on StatBlock type
         if isinstance(sb, PcClass):
-            # Minimal info from PcClass (name + level)
             vbox.addWidget(section_heading("Player Class"))
             name = getattr(sb, "name", None)
             level = getattr(sb, "level", None)
             spells = getattr(sb, "spells", [])
             weapons = getattr(sb, "weapons", [])
-            vbox.addWidget(field_label("Class", getattr(name, 'value', str(name) or 'Unknown')))
-            vbox.addWidget(field_label("Level", str(level if level is not None else 'Unknown')))
-            
-            # Add Armor Class
             armor_class = getattr(sb, "armor_class", None)
-            if armor_class is not None:
-                vbox.addWidget(field_label("Armor Class", str(armor_class)))
-            
-            # Add Hit Points
             hit_points = getattr(sb, "hit_points", None)
-            if hit_points is not None:
-                vbox.addWidget(field_label("Hit Points", str(hit_points)))
-            
-            # Add Move Speed
             move_speed = getattr(sb, "move_speed", None)
-            if move_speed is not None:
-                vbox.addWidget(field_label("Move Speed", f"{move_speed} ft"))
-            
-            # Add Proficiency Bonus
             proficiency_bonus = getattr(sb, "proficiency_bonus", None)
-            if proficiency_bonus is not None:
-                vbox.addWidget(field_label("Proficiency Bonus", f"+{proficiency_bonus}"))
-            
-            # Add Spell Save DC
             spell_save_dc = getattr(sb, "spell_save_dc", None)
-            if spell_save_dc is not None:
-                vbox.addWidget(field_label("Spell Save DC", str(spell_save_dc)))
-            
-            # Add Spell Attack Modifier
             spell_attack_modifier = getattr(sb, "spell_attack_modifier", None)
+            
+            class_info_widget = QtWidgets.QWidget()
+            class_info_layout = QtWidgets.QHBoxLayout(class_info_widget)
+            class_info_layout.setContentsMargins(0, 0, 0, 0)
+            
+            left_column = QtWidgets.QVBoxLayout()
+            left_column.addWidget(field_label("Class", getattr(name, 'value', str(name) or 'Unknown')))
+            left_column.addWidget(field_label("Level", str(level if level is not None else 'Unknown')))
+            if armor_class is not None:
+                left_column.addWidget(field_label("Armor Class", str(armor_class)))
+            if hit_points is not None:
+                left_column.addWidget(field_label("Hit Points", str(hit_points)))
+            
+            right_column = QtWidgets.QVBoxLayout()
+            if move_speed is not None:
+                right_column.addWidget(field_label("Move Speed", f"{move_speed} ft"))
+            if proficiency_bonus is not None:
+                right_column.addWidget(field_label("Proficiency Bonus", f"+{proficiency_bonus}"))
+            if spell_save_dc is not None:
+                right_column.addWidget(field_label("Spell Save DC", str(spell_save_dc)))
             if spell_attack_modifier is not None:
                 sign = "+" if spell_attack_modifier >= 0 else ""
-                vbox.addWidget(field_label("Spell Attack Modifier", f"{sign}{spell_attack_modifier}"))
+                right_column.addWidget(field_label("Spell Attack Modifier", f"{sign}{spell_attack_modifier}"))
             
-            # Add Ability Scores
+            class_info_layout.addLayout(left_column)
+            class_info_layout.addLayout(right_column)
+            vbox.addWidget(class_info_widget)
+            
             ability_scores = getattr(sb, "ability_scores", None)
             if ability_scores:
                 vbox.addWidget(section_heading("Ability Scores"))
                 
-                # Create two-column layout for ability scores
                 abilities_widget = QtWidgets.QWidget()
                 abilities_layout = QtWidgets.QHBoxLayout(abilities_widget)
                 abilities_layout.setContentsMargins(0, 0, 0, 0)
                 
-                # Left column: STR, DEX, CON
                 left_column = QtWidgets.QVBoxLayout()
                 left_column.addWidget(field_label("Strength", str(ability_scores.strength)))
                 left_column.addWidget(field_label("Dexterity", str(ability_scores.dexterity)))
                 left_column.addWidget(field_label("Constitution", str(ability_scores.constitution)))
 
-                # Right column: INT, WIS, CHA
                 right_column = QtWidgets.QVBoxLayout()
                 right_column.addWidget(field_label("Intelligence", str(ability_scores.intelligence)))
                 right_column.addWidget(field_label("Wisdom", str(ability_scores.wisdom)))
@@ -926,7 +864,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 abilities_layout.addLayout(right_column)
                 vbox.addWidget(abilities_widget)
             
-            # Add Spell Slots
             spell_slots = getattr(sb, "spell_slots", [])
             if spell_slots:
                 vbox.addWidget(section_heading("Spell Slots"))
@@ -934,16 +871,13 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 if sb.name == PcClassName.Wizard or sb.name == PcClassName.Sorcerer:
                     mage_armor_cast = "Mage Armor" in spells
                 for slot in spell_slots:
-                    # Create horizontal layout for each spell level
                     slot_widget = QtWidgets.QWidget()
                     slot_layout = QtWidgets.QHBoxLayout(slot_widget)
                     slot_layout.setContentsMargins(0, 0, 0, 0)
                     
-                    # Add level label
                     level_label = field_label(f"Level {slot.level}", "")
                     slot_layout.addWidget(level_label)
                     
-                    # Add checkboxes for each slot
                     for i in range(slot.count):
                         checkbox = QtWidgets.QCheckBox()
                         checkbox.setToolTip(f"Spell slot {i+1}")
@@ -952,7 +886,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                         else:
                             checkbox.setChecked(True)  # Start all slots as available (checked/blue)
                         
-                        # Custom styling for solid blue fill when checked
                         checkbox.setStyleSheet("""
                             QCheckBox::indicator {
                                 width: 16px;
@@ -973,11 +906,9 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                         
                         slot_layout.addWidget(checkbox)
                     
-                    # Add stretch to push everything to the left
                     slot_layout.addStretch()
                     vbox.addWidget(slot_widget)
 
-            # Add Weapons (Items) heading and linkified spells display
             vbox.addWidget(section_heading("Weapons"))
             weapons_text = ', '.join(weapons) if weapons else 'None'
             weapons_tb = QtWidgets.QTextBrowser()
@@ -995,7 +926,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             weapons_tb.highlighted.connect(self._on_link_hovered)
             vbox.addWidget(weapons_tb)
 
-            # Add Spells heading and linkified spells display
             vbox.addWidget(section_heading("Spells"))
             spells_text = ', '.join(spells) if spells else 'None'
             spells_tb = QtWidgets.QTextBrowser()
@@ -1016,7 +946,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         elif isinstance(sb, MonsterManual):
             vbox.addWidget(label("Monster Manual Entry", bold=True))
 
-            # Try to load the PNG page
             sb_image = getattr(sb, "stat_block_image", None)
             name = getattr(sb, "monster_name", "Unknown")
             vbox.addWidget(label(f"Name: {name}"))
@@ -1039,7 +968,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             vbox.addWidget(img_label)
 
         else:
-            # Unknown StatBlock type
             vbox.addWidget(label("Unknown StatBlock type.", bold=True))
             vbox.addWidget(label(f"Class: {sb.__class__.__name__}"))
 
@@ -1081,7 +1009,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         
         layout.addWidget(btns)
         
-        # Set the central widget
         self.setCentralWidget(central_widget)
 
     def _plain_label(self, text: str) -> QtWidgets.QLabel:
@@ -1106,7 +1033,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         return lab
     
     def _on_link_hovered(self, qurl: QtCore.QUrl):
-        # url is the anchor text (we set href to label)
         if not qurl or qurl.isEmpty():
             self._hover.hide()
             return
@@ -1117,7 +1043,6 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         if not entry:
             self._hover.hide()
             return
-        # Position near cursor
         pos = QtGui.QCursor.pos()
         self._hover.show_text(entry.hover_description, pos)
 
