@@ -857,15 +857,15 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                 
                 # Left column: STR, DEX, CON
                 left_column = QtWidgets.QVBoxLayout()
-                left_column.addWidget(label(f"Strength: {ability_scores.Strength}"))
-                left_column.addWidget(label(f"Dexterity: {ability_scores.Dexterity}"))
-                left_column.addWidget(label(f"Constitution: {ability_scores.Constitution}"))
-                
+                left_column.addWidget(label(f"Strength: {ability_scores.strength}"))
+                left_column.addWidget(label(f"Dexterity: {ability_scores.dexterity}"))
+                left_column.addWidget(label(f"Constitution: {ability_scores.constitution}"))
+
                 # Right column: INT, WIS, CHA
                 right_column = QtWidgets.QVBoxLayout()
-                right_column.addWidget(label(f"Intelligence: {ability_scores.Intelligence}"))
-                right_column.addWidget(label(f"Wisdom: {ability_scores.Wisdom}"))
-                right_column.addWidget(label(f"Charisma: {ability_scores.Charisma}"))
+                right_column.addWidget(label(f"Intelligence: {ability_scores.intelligence}"))
+                right_column.addWidget(label(f"Wisdom: {ability_scores.wisdom}"))
+                right_column.addWidget(label(f"Charisma: {ability_scores.charisma}"))
                 
                 abilities_layout.addLayout(left_column)
                 abilities_layout.addLayout(right_column)

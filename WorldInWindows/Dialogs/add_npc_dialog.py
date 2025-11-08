@@ -362,12 +362,12 @@ class AddNPCDialog(QtWidgets.QDialog):
                 "class": npc.stat_block.name.value if hasattr(npc.stat_block.name, 'value') else str(npc.stat_block.name),
                 "level": npc.stat_block.level,
                 "ability_scores": {
-                    "Strength": npc.stat_block.ability_scores.Strength,
-                    "Dexterity": npc.stat_block.ability_scores.Dexterity,
-                    "Constitution": npc.stat_block.ability_scores.Constitution,
-                    "Intelligence": npc.stat_block.ability_scores.Intelligence,
-                    "Wisdom": npc.stat_block.ability_scores.Wisdom,
-                    "Charisma": npc.stat_block.ability_scores.Charisma
+                    "strength": npc.stat_block.ability_scores.strength,
+                    "dexterity": npc.stat_block.ability_scores.dexterity,
+                    "constitution": npc.stat_block.ability_scores.constitution,
+                    "intelligence": npc.stat_block.ability_scores.intelligence,
+                    "wisdom": npc.stat_block.ability_scores.wisdom,
+                    "charisma": npc.stat_block.ability_scores.charisma
                 },
                 "spells": npc.stat_block.spells if hasattr(npc.stat_block, 'spells') else []
             }
