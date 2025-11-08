@@ -36,20 +36,20 @@ class PcClass(StatBlock):
     name : PcClassName
     level : int
     ability_scores: AbilityScores
-    armour_class: int
+    armor_class: int
     caster_type: CasterType
     weapons: list[Item] = field(default_factory=list)
     spells: list[str] = field(default_factory=list)    # Stored as a string not spell hmm
     spell_slots: list[SpellSlot] = field(default_factory=list)
 
-    def __init__(self, name: PcClassName, level: int = 1, ability_scores: AbilityScores = None, armour_class: Optional[int] = None, spells: Optional[list[str]] = None, weapons: Optional[list[Item]] = None):
+    def __init__(self, name: PcClassName, level: int = 1, ability_scores: AbilityScores = None, armor_class: Optional[int] = None, spells: Optional[list[str]] = None, weapons: Optional[list[Item]] = None):
         super().__init__(name.value + ", Level " + str(level))
         self.name = name
         self.level = level
         self.ability_scores = ability_scores if ability_scores is not None else AbilityScores()
         self.caster_type = self.determine_caster_type(name)
         self.spells = spells if spells is not None else []
-        self.armour_class = self.determine_default_armour_class() if armour_class is None or armour_class <= 10 else armour_class
+        self.armor_class = self.determine_default_armor_class() if armor_class is None or armor_class <= 10 else armor_class
         self.spell_slots = self.determine_spell_slots(level, self.caster_type)
         self.weapons = weapons if weapons is not None else []
 
@@ -66,8 +66,8 @@ class PcClass(StatBlock):
             case _:
                 return CasterType.NoneType
     
-    # If not wearing armour
-    def determine_default_armour_class(self) -> int:
+    # If not wearing armor
+    def determine_default_armor_class(self) -> int:
         match self.name:
             case PcClassName.Barbarian:
                 return BASE_AC + self.ability_scores.get_modifier(self.ability_scores.dexterity) + self.ability_scores.get_modifier(self.ability_scores.constitution)

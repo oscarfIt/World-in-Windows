@@ -193,9 +193,9 @@ class Repo:
             cls_name = PcClassName(spec.get("class", "Wizard"))
             level = int(spec.get("level", 1))
             ability_scores = AbilityScores(**spec.get("ability_scores", {}))
-            ac = spec.get("armour_class", None)
+            ac = spec.get("armor_class", None)
             spells = spec.get("spells", [])
-            pc = PcClass(name=cls_name, level=level, ability_scores=ability_scores, armour_class=ac, spells=spells)
+            pc = PcClass(name=cls_name, level=level, ability_scores=ability_scores, armor_class=ac, spells=spells)
             return pc
         # Fallback to empty StatBlock
         return StatBlock()
