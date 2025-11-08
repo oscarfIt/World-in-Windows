@@ -927,7 +927,25 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             vbox.addWidget(weapons_tb)
 
             vbox.addWidget(section_heading("Spells"))
-            spells_text = ', '.join(spells) if spells else 'None'
+            if not spells:
+                spells_text = 'None'
+            else:
+                mid_point = (len(spells) + 1) // 2
+                left_spells = spells[:mid_point]
+                right_spells = spells[mid_point:]
+                
+                left_html = self.kb.linkify('<br>'.join(left_spells))
+                right_html = self.kb.linkify('<br>'.join(right_spells)) if right_spells else ''
+                
+                spells_text = f"""
+                <table width="100%" style="border: none;">
+                    <tr style="vertical-align: top;">
+                        <td width="50%" style="border: none; padding-right: 10px;">{left_html}</td>
+                        <td width="50%" style="border: none; padding-left: 10px;">{right_html}</td>
+                    </tr>
+                </table>
+                """
+            
             spells_tb = QtWidgets.QTextBrowser()
             spells_tb.setOpenExternalLinks(False)
             spells_tb.setOpenLinks(False)
@@ -937,8 +955,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             spells_tb.setMouseTracking(True)
             spells_tb.viewport().setMouseTracking(True)
             
-            html = self.kb.linkify(spells_text)
-            spells_tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{html}</div>")
+            spells_tb.setHtml(f"<div style='font-size: 12pt; line-height: 1.35'>{spells_text}</div>")
             spells_tb.anchorClicked.connect(self._on_anchor_clicked)
             spells_tb.highlighted.connect(self._on_link_hovered)
             vbox.addWidget(spells_tb)
