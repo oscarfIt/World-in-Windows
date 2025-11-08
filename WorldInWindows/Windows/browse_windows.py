@@ -20,6 +20,13 @@ ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2  # Defined here and in main_w
 
 # Base class
 class BrowserWindow(QtWidgets.QMainWindow):
+    central_widget: QtWidgets.QWidget
+    vbox_layout: QtWidgets.QVBoxLayout
+    title_layout: QtWidgets.QHBoxLayout
+    button_layout: QtWidgets.QHBoxLayout
+
+    entry_list: QtWidgets.QListWidget
+
     def __init__(self, entry_to_browse: str, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
         self.config = Config()
@@ -29,16 +36,16 @@ class BrowserWindow(QtWidgets.QMainWindow):
 
         DMHelperTheme.apply_to_dialog(self)
 
-        central_widget = QtWidgets.QWidget()
-        self.vbox_layout = QtWidgets.QVBoxLayout(central_widget)
+        self.central_widget = QtWidgets.QWidget()
+        self.vbox_layout = QtWidgets.QVBoxLayout(self.central_widget)
 
         # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
+        self.title_layout = QtWidgets.QHBoxLayout()
         title_label = QtWidgets.QLabel(f"All {entry_to_browse}s")
         title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
-        self.vbox_layout.addLayout(title_layout)
+        self.title_layout.addWidget(title_label)
+        self.title_layout.addStretch()
+        self.vbox_layout.addLayout(self.title_layout)
 
         # Search bar
         self.search = QtWidgets.QLineEdit()
@@ -59,12 +66,12 @@ class BrowserWindow(QtWidgets.QMainWindow):
         # Close button
         close_btn = QtWidgets.QPushButton("Close")
         close_btn.clicked.connect(self.close)
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(close_btn)
-        self.vbox_layout.addLayout(button_layout)
+        self.button_layout = QtWidgets.QHBoxLayout()
+        self.button_layout.addStretch()
+        self.button_layout.addWidget(close_btn)
+        self.vbox_layout.addLayout(self.button_layout)
 
-        self.setCentralWidget(central_widget)
+        self.setCentralWidget(self.central_widget)
 
     # Following methods to be defined in derived classes
 
@@ -187,86 +194,38 @@ class ItemBrowserWindow(BrowserWindow):
         window = ItemDetailWindow(item, self.kb, self)
         window.show()
 
-class SoundBrowserWindow(QtWidgets.QMainWindow):
+class SoundBrowserWindow(BrowserWindow):
     """Window for browsing and generating audio clips"""
     def __init__(self, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.kb = kb
-        self.setWindowTitle("Sounds Browser")
-        self.resize(800, 600)
-
-        # Apply dialog theme
-        DMHelperTheme.apply_to_dialog(self)
-
-        # Create central widget and layout
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-
-        # Title and search
-        title_layout = QtWidgets.QHBoxLayout()
-        title_label = QtWidgets.QLabel("Audio Clips")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px 0;")
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
+        super().__init__("Sound", kb, parent)
         
         # Add Sound button
         add_sound_btn = QtWidgets.QPushButton("Add Sound")
         add_sound_btn.setToolTip("Generate a new audio clip")
         add_sound_btn.clicked.connect(self.add_sound)
-        title_layout.addWidget(add_sound_btn)
-        
-        layout.addLayout(title_layout)
-
-        # Search bar
-        self.search = QtWidgets.QLineEdit()
-        self.search.setPlaceholderText("Search audio clips...")
-        self.search.textChanged.connect(self.filter_sounds)
-        layout.addWidget(self.search)
-
-        # Sounds list
-        self.sounds_list = QtWidgets.QListWidget()
-        self.sounds_list.setSpacing(2)
-        self.sounds_list.setUniformItemSizes(True)
-        layout.addWidget(self.sounds_list)
-
-        # Populate with existing sounds
-        self.populate_sounds()
-
-        # Control buttons
-        control_layout = QtWidgets.QHBoxLayout()
-        
+        self.title_layout.addWidget(add_sound_btn)
+                
         # Play button
         play_btn = QtWidgets.QPushButton("Play")
         play_btn.setToolTip("Play selected audio clip")
         play_btn.clicked.connect(self.play_selected_sound)
-        control_layout.addWidget(play_btn)
+        self.button_layout.insertWidget(0, play_btn)
         
         # Stop button  
         stop_btn = QtWidgets.QPushButton("Stop")
         stop_btn.setToolTip("Stop audio playback")
         stop_btn.clicked.connect(self.stop_sound)
-        control_layout.addWidget(stop_btn)
+        self.button_layout.insertWidget(1, stop_btn)
         
         # Delete button
         delete_btn = QtWidgets.QPushButton("Delete")
         delete_btn.setToolTip("Delete selected audio clip")
         delete_btn.clicked.connect(self.delete_selected_sound)
-        control_layout.addWidget(delete_btn)
+        self.button_layout.insertWidget(2, delete_btn)
         
-        control_layout.addStretch()
-        
-        # Close button
-        close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        control_layout.addWidget(close_btn)
-        
-        layout.addLayout(control_layout)
-        self.setCentralWidget(central_widget)
-
-    def populate_sounds(self):
+    def populate_entries(self):
         """Populate the list with existing audio files"""
-        self.sounds_list.clear()
+        self.entry_list.clear()
         
         # Look for audio files in Media/Audio directory
         audio_dir = self.config.get_audio_files()
@@ -298,14 +257,14 @@ class SoundBrowserWindow(QtWidgets.QMainWindow):
                 pass
             item.setToolTip(tooltip)
             
-            self.sounds_list.addItem(item)
+            self.entry_list.addItem(item)
 
-    def filter_sounds(self, text: str):
+    def filter_entries(self, text: str):
         """Filter the sounds list based on search text"""
         text = text.lower().strip()
         
-        for i in range(self.sounds_list.count()):
-            item = self.sounds_list.item(i)
+        for i in range(self.entry_list.count()):
+            item = self.entry_list.item(i)
             # Search in filename
             item.setHidden(text not in item.text().lower() if text else False)
 
@@ -314,11 +273,11 @@ class SoundBrowserWindow(QtWidgets.QMainWindow):
         dialog = AddSoundDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # Refresh the sounds list to show the new sound
-            self.populate_sounds()
+            self.populate_entries()
 
     def play_selected_sound(self):
         """Play the selected audio clip"""
-        current_item = self.sounds_list.currentItem()
+        current_item = self.entry_list.currentItem()
         if not current_item:
             QtWidgets.QMessageBox.information(self, "No Selection", "Please select an audio clip to play.")
             return
@@ -348,7 +307,7 @@ class SoundBrowserWindow(QtWidgets.QMainWindow):
 
     def delete_selected_sound(self):
         """Delete the selected audio clip"""
-        current_item = self.sounds_list.currentItem()
+        current_item = self.entry_list.currentItem()
         if not current_item:
             QtWidgets.QMessageBox.information(self, "No Selection", "Please select an audio clip to delete.")
             return
@@ -363,7 +322,7 @@ class SoundBrowserWindow(QtWidgets.QMainWindow):
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             try:
                 audio_path.unlink()  # Delete the file
-                self.populate_sounds()  # Refresh the list
+                self.populate_entries()  # Refresh the list
                 QtWidgets.QMessageBox.information(self, "Deleted", 
                     f"Audio clip '{current_item.text()}' has been deleted.")
             except Exception as e:
