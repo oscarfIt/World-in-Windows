@@ -7,7 +7,7 @@ from ..knowledge_base import KnowledgeBase
 from ..repo import Repo
 from ..config import Config
 
-from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, StatBlock, MonsterManual, Condition, AbilityScores
+from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, PcClassName, StatBlock, MonsterManual, Condition
 from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview, EditPcClassDialog
 from ..AIGen import ImageGenerator, ImageGenerationMode
 
@@ -881,6 +881,9 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             spell_slots = getattr(sb, "spell_slots", [])
             if spell_slots:
                 vbox.addWidget(label("Spell Slots", bold=True))
+                mage_armor_cast = False
+                if sb.name == PcClassName.Wizard or sb.name == PcClassName.Sorcerer:
+                    mage_armor_cast = "Mage Armor" in spells
                 for slot in spell_slots:
                     # Create horizontal layout for each spell level
                     slot_widget = QtWidgets.QWidget()
@@ -895,7 +898,10 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
                     for i in range(slot.count):
                         checkbox = QtWidgets.QCheckBox()
                         checkbox.setToolTip(f"Spell slot {i+1}")
-                        checkbox.setChecked(True)  # Start all slots as available (checked/blue)
+                        if mage_armor_cast and slot.level == 1 and i == slot.count - 1:
+                            checkbox.setChecked(False)  # Last slot used for Mage Armor
+                        else:
+                            checkbox.setChecked(True)  # Start all slots as available (checked/blue)
                         
                         # Custom styling for solid blue fill when checked
                         checkbox.setStyleSheet("""
