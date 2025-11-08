@@ -845,6 +845,12 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
             vbox.addWidget(label(f"Class: {getattr(name, 'value', str(name) or 'Unknown')}"))
             vbox.addWidget(label(f"Level: {level if level is not None else 'Unknown'}"))
             
+            # Add Armour Class
+            armour_class = getattr(sb, "armour_class", None)
+            print(f"Armour Class: {armour_class}")
+            if armour_class is not None:
+                vbox.addWidget(label(f"Armour Class: {armour_class}"))
+            
             # Add Ability Scores
             ability_scores = getattr(sb, "ability_scores", None)
             if ability_scores:

@@ -16,3 +16,6 @@ class AbilityScores:
         self.intelligence = intelligence
         self.wisdom = wisdom
         self.charisma = charisma
+
+    def get_modifier(self, score: int) -> int:
+        return (score - 10) // 2

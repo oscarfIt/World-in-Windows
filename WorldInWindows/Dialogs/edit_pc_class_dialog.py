@@ -35,6 +35,12 @@ class EditPcClassDialog(QtWidgets.QDialog):
         self.level_spin.setValue(pc_class.level if pc_class.level else 1)
         form.addRow("Level:", self.level_spin)
         
+        # Add Armour Class field
+        self.ac_spin = QtWidgets.QSpinBox()
+        self.ac_spin.setRange(1, 30)
+        self.ac_spin.setValue(pc_class.armour_class if pc_class.armour_class else 10)
+        form.addRow("Armour Class:", self.ac_spin)
+        
         form.addRow(QtWidgets.QLabel(""))  # Spacer
         
         ability_scores_label = QtWidgets.QLabel("Ability Scores")
@@ -101,6 +107,8 @@ class EditPcClassDialog(QtWidgets.QDialog):
             self.pc_class.level = self.level_spin.value()
             print("Saving level:", self.pc_class.level)
             
+            self.pc_class.armour_class = self.ac_spin.value()
+            
             self.pc_class.ability_scores = AbilityScores(
                 strength=self.str_spin.value(),
                 dexterity=self.dex_spin.value(),
@@ -128,6 +136,7 @@ class EditPcClassDialog(QtWidgets.QDialog):
                             # Update the stat block data
                             if npc_entry.get("stat_block", {}).get("type") == "pc_class":
                                 npc_entry["stat_block"]["level"] = self.pc_class.level
+                                npc_entry["stat_block"]["armour_class"] = self.pc_class.armour_class
                                 npc_entry["stat_block"]["ability_scores"] = {
                                     "strength": self.pc_class.ability_scores.strength,
                                     "dexterity": self.pc_class.ability_scores.dexterity,
