@@ -75,13 +75,13 @@ class BrowserWindow(QtWidgets.QMainWindow):
 
     # Following methods to be defined in derived classes
 
+    def populate_entries(self):
+        pass
+
     def filter_entries(self):
         pass
 
     def open_entry_detail(self):
-        pass
-
-    def populate_entries(self):
         pass
 
 class SpellBrowserWindow(BrowserWindow):
@@ -104,15 +104,7 @@ class SpellBrowserWindow(BrowserWindow):
             item = QtWidgets.QListWidgetItem(spell.name)
             item.setData(QtCore.Qt.ItemDataRole.UserRole, spell)
             item.setSizeHint(QtCore.QSize(0, 32))
-            tooltip = self.create_spell_tooltip(spell)
-            item.setToolTip(tooltip)
             self.entry_list.addItem(item)
-
-    def create_spell_tooltip(self, spell: Spell) -> str:
-        desc = spell.description or "No description"
-        if len(desc) > 160:
-            desc = desc[:160].rstrip() + "…"
-        return (f"{spell.name}\nLevel: {spell.level}  School: {spell.school}\n\n{desc}")
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
@@ -161,16 +153,7 @@ class ItemBrowserWindow(BrowserWindow):
             item_widget = QtWidgets.QListWidgetItem(item.name)
             item_widget.setData(QtCore.Qt.ItemDataRole.UserRole, item)
             item_widget.setSizeHint(QtCore.QSize(0, 32))
-            tooltip = self.create_item_tooltip(item)
-            item_widget.setToolTip(tooltip)
             self.entry_list.addItem(item_widget)
-
-    def create_item_tooltip(self, item: Item) -> str:
-        desc = item.description or "No description"
-        if len(desc) > 160:
-            desc = desc[:160].rstrip() + "…"
-        attunement_text = " (Requires Attunement)" if item.attunement else ""
-        return (f"{item.name}\nRarity: {item.rarity}{attunement_text}\n\n{desc}")
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
@@ -201,25 +184,21 @@ class SoundBrowserWindow(BrowserWindow):
         
         # Add Sound button
         add_sound_btn = QtWidgets.QPushButton("Add Sound")
-        add_sound_btn.setToolTip("Generate a new audio clip")
         add_sound_btn.clicked.connect(self.add_sound)
         self.title_layout.addWidget(add_sound_btn)
                 
         # Play button
         play_btn = QtWidgets.QPushButton("Play")
-        play_btn.setToolTip("Play selected audio clip")
         play_btn.clicked.connect(self.play_selected_sound)
         self.button_layout.insertWidget(0, play_btn)
         
         # Stop button  
         stop_btn = QtWidgets.QPushButton("Stop")
-        stop_btn.setToolTip("Stop audio playback")
         stop_btn.clicked.connect(self.stop_sound)
         self.button_layout.insertWidget(1, stop_btn)
         
         # Delete button
         delete_btn = QtWidgets.QPushButton("Delete")
-        delete_btn.setToolTip("Delete selected audio clip")
         delete_btn.clicked.connect(self.delete_selected_sound)
         self.button_layout.insertWidget(2, delete_btn)
         
@@ -247,16 +226,6 @@ class SoundBrowserWindow(BrowserWindow):
             item = QtWidgets.QListWidgetItem(audio_file.stem)  # Name without extension
             item.setData(QtCore.Qt.ItemDataRole.UserRole, str(audio_file))  # Store full path
             item.setSizeHint(QtCore.QSize(0, 32))
-            
-            # Create tooltip with file info
-            tooltip = f"File: {audio_file.name}\nPath: {audio_file}"
-            try:
-                file_size = audio_file.stat().st_size
-                tooltip += f"\nSize: {file_size:,} bytes"
-            except:
-                pass
-            item.setToolTip(tooltip)
-            
             self.entry_list.addItem(item)
 
     def filter_entries(self, text: str):
@@ -336,7 +305,6 @@ class NPCBrowserWindow(BrowserWindow):
         
         # Add NPC button
         add_npc_btn = QtWidgets.QPushButton("Add NPC")
-        add_npc_btn.setToolTip("Create a new NPC")
         add_npc_btn.clicked.connect(self.add_npc)
         self.title_layout.addWidget(add_npc_btn)
                 
@@ -386,23 +354,7 @@ class NPCBrowserWindow(BrowserWindow):
                 font = item.font()
                 font.setItalic(True)
                 item.setFont(font)
-            
-            # Create tooltip with NPC info
-            tooltip = self.create_npc_tooltip(npc)
-            item.setToolTip(tooltip)
-            
             self.entry_list.addItem(item)
-    
-    def create_npc_tooltip(self, npc: NPC) -> str:
-        """Create a tooltip for an NPC"""
-        appearance = npc.appearance or "No appearance description"
-        if len(appearance) > 160:
-            appearance = appearance[:160].rstrip() + "…"
-        
-        return (f"{npc.name}\n"
-                f"Race: {npc.race.value}\n" 
-                f"Alignment: {npc.alignment.value}\n\n"
-                f"{appearance}")
     
     def filter_entries(self, text: str):
         """Filter the NPCs list based on search text"""
@@ -465,15 +417,7 @@ class LocationBrowserWindow(BrowserWindow):
             item = QtWidgets.QListWidgetItem(loc.name)
             item.setData(QtCore.Qt.ItemDataRole.UserRole, loc)
             item.setSizeHint(QtCore.QSize(0, 32))
-            tooltip = self.create_location_tooltip(loc)
-            item.setToolTip(tooltip)
             self.entry_list.addItem(item)
-
-    def create_location_tooltip(self, loc: Location) -> str:
-        desc = loc.description or "No description"
-        if len(desc) > 160:
-            desc = desc[:160].rstrip() + "…"
-        return f"{loc.name}\nRegion: {loc.region or '-'}\nNPCs: {len(loc.npcs)}\n\n{desc}"
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
@@ -515,15 +459,7 @@ class ConditionBrowserWindow(BrowserWindow):
             item = QtWidgets.QListWidgetItem(condition.name)
             item.setData(QtCore.Qt.ItemDataRole.UserRole, condition)
             item.setSizeHint(QtCore.QSize(0, 32))
-            tooltip = self.create_condition_tooltip(condition)
-            item.setToolTip(tooltip)
             self.entry_list.addItem(item)
-
-    def create_condition_tooltip(self, condition) -> str:
-        desc = condition.description or "No description"
-        if len(desc) > 160:
-            desc = desc[:160].rstrip() + "…"
-        return f"{condition.name}\n\n{desc}"
 
     def filter_entries(self, text: str):
         text = text.lower().strip()
