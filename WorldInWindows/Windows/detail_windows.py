@@ -33,219 +33,134 @@ def _resolve_image_for_npc(config: Config, npc) -> Path | None:
     guess = config.get_npc_portraits() / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
+class QFormDetailWindowBase(QtWidgets.QMainWindow):
+    form: QtWidgets.QFormLayout
+    buttons: QtWidgets.QDialogButtonBox
 
-class SpellDetailWindow(QtWidgets.QMainWindow):
+    def __init__(self, entry: Spell | Item | ClassAction | NPC | Condition, kb: KnowledgeBase, parent=None):
+        super().__init__(parent)
+        self.config = Config()
+        self.entry = entry
+        self.kb = kb
+        self.setWindowTitle(f"{entry.__class__.__name__} — {entry.name}")
+        self.resize(600, 520)
+
+        DMHelperTheme.apply_theme(self)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QtWidgets.QWidget()
+        self.form = QtWidgets.QFormLayout(content)
+        self.form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        
+        self.form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
+
+        if not isinstance(entry, Condition):
+            icon_path = _resolve_image_for_entry(self.config, entry)
+            if icon_path:
+                img_label = QtWidgets.QLabel()
+                img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+                pix = QtGui.QPixmap(str(icon_path))
+                if not pix.isNull():
+                    img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
+                    self.form.addRow(None, img_label)
+            elif isinstance(entry, NPC):
+                generate_btn = QtWidgets.QPushButton("Generate Portrait")
+                generate_btn.setToolTip("Generate an AI portrait for this NPC")
+                generate_btn.clicked.connect(self.generate_portrait)    # This is a bit weird but works
+                self.form.addRow(None, generate_btn)
+
+        scroll.setWidget(content)
+
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        self.buttons.rejected.connect(self.close)
+        self.buttons.accepted.connect(self.close)
+
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(central_widget)
+        layout.addWidget(scroll)
+        layout.addWidget(self.buttons)
+        self.setCentralWidget(central_widget)
+
+    def label(self, text: str) -> QtWidgets.QLabel:
+        lab = QtWidgets.QLabel(text)
+        lab.setWordWrap(True)
+        lab.setTextInteractionFlags(
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+            QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        lab.setMinimumWidth(300)
+        lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+        return lab
+
+class SpellDetailWindow(QFormDetailWindowBase):
     def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.spell = spell
-        self.kb = kb
-        self.setWindowTitle(f"Spell — {spell.name}")
-        self.resize(600, 520)
+        super().__init__(spell, kb, parent)
 
-        DMHelperTheme.apply_to_dialog(self)
+        self.form.addRow("<b>Name:</b>", self.label(spell.name))
+        self.form.addRow("<b>Level:</b>", self.label(str(spell.level)))
+        self.form.addRow("<b>School:</b>", self.label(spell.school))
+        self.form.addRow("<b>Casting Time</b>:", self.label(spell.casting_time))
+        self.form.addRow("<b>Range:</b>", self.label(spell.range))
+        self.form.addRow("<b>Damage:</b>", self.label(spell.damage if spell.damage else "N/A"))
+        self.form.addRow("<b>Components:</b>", self.label(spell.components))
+        self.form.addRow("<b>Duration:</b>", self.label(spell.duration))
+        self.form.addRow("<b>Upcasting:</b>", self.label(spell.upcast_info))
+        self.form.addRow("<b>Description:</b>", self.label(spell.description or ""))
 
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
-
-        icon_path = _resolve_image_for_entry(self.config, spell)
-        if icon_path:
-            img_label = QtWidgets.QLabel()
-            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            pix = QtGui.QPixmap(str(icon_path))
-            if not pix.isNull():
-                img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Icon:", img_label)
-
-        form.addRow("Name:", label(spell.name))
-        form.addRow("Level:", label(str(spell.level)))
-        form.addRow("School:", label(spell.school))
-        form.addRow("Casting Time:", label(spell.casting_time))
-        form.addRow("Range:", label(spell.range))
-        form.addRow("Damage:", label(spell.damage if spell.damage else "N/A"))
-        form.addRow("Components:", label(spell.components))
-        form.addRow("Duration:", label(spell.duration))
-        form.addRow("Upcasting:", label(spell.upcast_info))
-        form.addRow("Description:", label(spell.description or ""))
-
-        scroll.setWidget(content)
-
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
-
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        layout.addWidget(scroll)
-        layout.addWidget(btns)
-        self.setCentralWidget(central_widget)
-
-class ItemDetailWindow(QtWidgets.QMainWindow):
+class ItemDetailWindow(QFormDetailWindowBase):
     def __init__(self, item, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.item = item
-        self.kb = kb
-        self.setWindowTitle(f"Item — {item.name}")
-        self.resize(600, 520)
+        super().__init__(item, kb, parent)
 
-        DMHelperTheme.apply_to_dialog(self)
+        self.form.addRow("<b>Name:</b>", self.label(item.name))
+        self.form.addRow("<b>Rarity:</b>", self.label(item.rarity))
+        self.form.addRow("<b>Attunement:</b>", self.label("Yes" if item.attunement else "No"))
+        self.form.addRow("<b>Tags:</b>", self.label(", ".join(getattr(item, "tags", []))))
+        self.form.addRow("<b>Aliases:</b>", self.label(", ".join(getattr(item, "aliases", []))))
+        self.form.addRow("<b>Description:</b>", self.label(item.description or ""))
 
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            # Set minimum width to ensure proper text display on macOS
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
+class NPCDetailWindow(QFormDetailWindowBase):
+    npc: NPC
 
-        icon_path = _resolve_image_for_entry(self.config, item)
-        if icon_path:
-            img_label = QtWidgets.QLabel()
-            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            pix = QtGui.QPixmap(str(icon_path))
-            if not pix.isNull():
-                img_label.setPixmap(pix.scaledToWidth(80, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Icon:", img_label)
-
-        form.addRow("Name:", label(item.name))
-        form.addRow("Rarity:", label(item.rarity))
-        form.addRow("Attunement:", label("Yes" if item.attunement else "No"))
-        form.addRow("Tags:", label(", ".join(getattr(item, "tags", []))))
-        form.addRow("Aliases:", label(", ".join(getattr(item, "aliases", []))))
-        form.addRow("Description:", label(item.description or ""))
-
-        scroll.setWidget(content)
-
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
-
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        layout.addWidget(scroll)
-        layout.addWidget(btns)
-        self.setCentralWidget(central_widget)
-
-class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
         self.npc = npc
-        self.kb = kb
-        self.setWindowTitle(f"NPC — {npc.name}")
-        self.resize(600, 520)
-        
-        DMHelperTheme.apply_to_dialog(self)
+        super().__init__(npc, kb, parent)
 
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
+        self.form.addRow("<b>Name:</b>", self.label(npc.name))
+        self.form.addRow("<b>Race:</b>", self.label(npc.race.value))
+        self.form.addRow("<b>Sex:</b>", self.label(npc.sex))
+        self.form.addRow("<b>Age:</b>", self.label(npc.age))
+        self.form.addRow("<b>Alignment:</b>", self.label(npc.alignment.value))
 
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
-
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            # Set minimum width to ensure proper text display on macOS
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
-
-        portrait_path = _resolve_image_for_npc(self.config, npc)
-        if portrait_path:
-            img_label = QtWidgets.QLabel()
-            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            pix = QtGui.QPixmap(str(portrait_path))
-            if not pix.isNull():
-                # scale to a smaller width for this dialog; keeps aspect ratio
-                img_label.setPixmap(pix.scaledToWidth(300, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Portrait:", img_label)
-        else:
-            generate_btn = QtWidgets.QPushButton("Generate Portrait")
-            generate_btn.setToolTip("Generate an AI portrait for this NPC")
-            generate_btn.clicked.connect(self.generate_portrait)
-            form.addRow("Portrait:", generate_btn)
-
-        form.addRow("Name:", label(npc.name))
-        form.addRow("Race:", label(npc.race.value))
-        form.addRow("Sex:", label(npc.sex))
-        form.addRow("Age:", label(npc.age))
-        form.addRow("Alignment:", label(npc.alignment.value))
-
-        status_label = label("Alive ✓" if npc.alive else "Deceased ☠️")
+        status_label = self.label("Alive ✓" if npc.alive else "Deceased ☠️")
         if not npc.alive:
             status_label.setStyleSheet("color: #cc0000; font-weight: bold;")
         else:
             status_label.setStyleSheet("color: #00aa00; font-weight: bold;")
-        form.addRow("Status:", status_label)
+        self.form.addRow("<b>Status:</b>", status_label)
 
-        form.addRow("Appearance:", label(npc.appearance or ""))
-        form.addRow("Backstory:", label(npc.backstory or ""))
+        self.form.addRow("<b>Appearance:</b>", self.label(npc.appearance or ""))
+        self.form.addRow("<b>Backstory:</b>", self.label(npc.backstory or ""))
 
         sb = npc.stat_block
         sb_text = sb.display_name if sb else "None"
         self.stat_btn = QtWidgets.QPushButton(sb_text)
         self.stat_btn.setEnabled(sb is not None)
         self.stat_btn.clicked.connect(self.open_statblock)
-        form.addRow("Stat Block:", self.stat_btn)
-
-        scroll.setWidget(content)
-
-        btns = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.StandardButton.Close
-        )
+        self.form.addRow("<b>Stat Block:</b>", self.stat_btn)
         
         edit_btn = QtWidgets.QPushButton("Edit")
-        edit_btn.setToolTip("Edit this NPC")
         edit_btn.clicked.connect(self.edit_npc)
-        btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        self.buttons.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
         campaign_notes_btn = QtWidgets.QPushButton("Campaign Notes")
-        campaign_notes_btn.setToolTip("View and edit campaign notes for this NPC")
         campaign_notes_btn.clicked.connect(self.open_campaign_notes)
-        btns.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        self.buttons.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
         delete_btn = QtWidgets.QPushButton("Delete")
-        delete_btn.setToolTip("Permanently delete this NPC")
         delete_btn.clicked.connect(self.delete_npc)
         delete_btn.setStyleSheet("""
             QPushButton {
@@ -257,17 +172,8 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                 background-color: #b71c1c;
             }
         """)
-        btns.addButton(delete_btn, QtWidgets.QDialogButtonBox.ButtonRole.DestructiveRole)
+        self.buttons.addButton(delete_btn, QtWidgets.QDialogButtonBox.ButtonRole.DestructiveRole)
         
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
-
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        layout.addWidget(scroll)
-        layout.addWidget(btns)
-        self.setCentralWidget(central_widget)
-
     def open_statblock(self):
         if not self.npc.stat_block:
             return
@@ -400,7 +306,7 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         self.setWindowTitle(f"Location — {location.name}")
         self.resize(700, 600)
 
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -423,15 +329,12 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
             return lab
 
         vbox.addWidget(label(location.name, bold=True))
-        vbox.addWidget(label(f"Region: {location.region or 'Unknown'}"))
-        vbox.addWidget(label(f"Description: {location.description or 'No description'}"))
-        
-        tags = ", ".join(location.tags) if location.tags else "None"
-        vbox.addWidget(label(f"Tags: {tags}"))
+        vbox.addWidget(label(f"<b>Region:</b> {location.region or 'Unknown'}"))
+        vbox.addWidget(label(f"<b>Description:</b> {location.description or 'No description'}"))
 
         vbox.addSpacing(10)
 
-        vbox.addWidget(label("NPCs in this Location:", bold=True))
+        vbox.addWidget(label("<b>NPCs in this Location:</b>", bold=True))
         
         if location.npcs:
             for npc in location.npcs:
@@ -694,52 +597,13 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         window = NPCDetailWindow(npc, self.kb, self)
         window.show()
 
-class ConditionDetailWindow(QtWidgets.QMainWindow):
+class ConditionDetailWindow(QFormDetailWindowBase):
     def __init__(self, condition, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
         self.condition = condition
-        self.kb = kb
-        self.setWindowTitle(f"Condition — {condition.name}")
-        self.resize(600, 400)
-
-        DMHelperTheme.apply_to_dialog(self)
-
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        super().__init__(condition, kb, parent)
         
-        # Set field growth policy for better macOS compatibility
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
-
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            # Set minimum width to ensure proper text display on macOS
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
-
-        form.addRow("Name:", label(condition.name))
-        form.addRow("Description:", label(condition.description or ""))
-
-        scroll.setWidget(content)
-
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
-
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        layout.addWidget(scroll)
-        layout.addWidget(btns)
-        self.setCentralWidget(central_widget)
+        self.form.addRow("<b>Name:</b>", self.label(condition.name))
+        self.form.addRow("<b>Description:</b>", self.label(condition.description or ""))
 
 class StatBlockDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, sb: StatBlock, kb: KnowledgeBase, traits: list | None = None, parent=None):
@@ -749,7 +613,7 @@ class StatBlockDetailWindow(QtWidgets.QMainWindow):
         self.kb = kb
         self.traits = traits if traits is not None else []
         
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
         
         self._hover = HoverPreview(self)
 

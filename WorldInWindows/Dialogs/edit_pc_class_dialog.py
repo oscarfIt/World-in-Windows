@@ -16,7 +16,7 @@ class EditPcClassDialog(QtWidgets.QDialog):
         self.setWindowTitle("Edit PC Class Stat Block")
         self.resize(500, 700)
         
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
         
         layout = QtWidgets.QVBoxLayout(self)
         

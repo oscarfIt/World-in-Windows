@@ -17,7 +17,7 @@ class CampaignNotesDialog(QtWidgets.QDialog):
         self.resize(600, 500)
         
         # Apply theme
-        DMHelperTheme.apply_to_dialog(self)
+        DMHelperTheme.apply_theme(self)
         
         # Create layout
         layout = QtWidgets.QVBoxLayout(self)
