@@ -33,7 +33,7 @@ def _resolve_image_for_npc(config: Config, npc) -> Path | None:
     guess = config.get_npc_portraits() / f"{guess_file_name}.png"
     return guess if guess.exists() else None
 
-class DetailWindowBase(QtWidgets.QMainWindow):
+class QFormDetailWindowBase(QtWidgets.QMainWindow):
     form: QtWidgets.QFormLayout
     buttons: QtWidgets.QDialogButtonBox
 
@@ -94,7 +94,7 @@ class DetailWindowBase(QtWidgets.QMainWindow):
         lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
         return lab
 
-class SpellDetailWindow(DetailWindowBase):
+class SpellDetailWindow(QFormDetailWindowBase):
     def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
         super().__init__(spell, kb, parent)
 
@@ -110,7 +110,7 @@ class SpellDetailWindow(DetailWindowBase):
         self.form.addRow("<b>Description:</b>", self.label(spell.description or ""))
 
 
-class ItemDetailWindow(DetailWindowBase):
+class ItemDetailWindow(QFormDetailWindowBase):
     def __init__(self, item, kb: KnowledgeBase, parent=None):
         super().__init__(item, kb, parent)
 
@@ -122,7 +122,7 @@ class ItemDetailWindow(DetailWindowBase):
         self.form.addRow("<b>Description:</b>", self.label(item.description or ""))
 
 
-class NPCDetailWindow(DetailWindowBase):
+class NPCDetailWindow(QFormDetailWindowBase):
     npc: NPC
 
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
