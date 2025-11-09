@@ -16,6 +16,7 @@ class AddEntryDialogBase(QtWidgets.QDialog):
     edit_entry: NPC | Item | Spell | Location | Condition | None
     vbox_layout: QtWidgets.QVBoxLayout
     form: QtWidgets.QFormLayout
+    buttons: QtWidgets.QDialogButtonBox
 
     def __init__(self, entry_name: str, edit_entry: NPC | Item | Spell | Location | Condition | None = None, parent=None):
         super().__init__(parent)
@@ -23,7 +24,8 @@ class AddEntryDialogBase(QtWidgets.QDialog):
         self.edit_entry = edit_entry
         self.entry_name = entry_name
 
-        self.setWindowTitle(f"Add {entry_name}")
+        title = f"Edit {entry_name}" if self.edit_entry else f"Add {entry_name}"
+        self.setWindowTitle(title)
         self.resize(500, 400)   # Should experiment with this
 
         DMHelperTheme.apply_theme(self)
@@ -33,35 +35,33 @@ class AddEntryDialogBase(QtWidgets.QDialog):
         self.form = QtWidgets.QFormLayout(form_widget)
 
         self.vbox_layout.addWidget(form_widget)
+
+        # Buttons
+        self.buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok |
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
+        self.buttons.accepted.connect(self.ok_button_slot)
+        self.buttons.rejected.connect(self.reject)
+        self.vbox_layout.addWidget(self.buttons)
+
+    # Implement this is derived classes
+    def ok_button_slot():
+        pass
         
 
-class AddNPCDialog(QtWidgets.QDialog):
+class AddNPCDialog(AddEntryDialogBase):
     """Dialog for adding or editing an NPC"""
     def __init__(self, parent=None, edit_npc=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.edit_npc = edit_npc  # NPC being edited, or None for new NPC
-        self.original_name = edit_npc.name if edit_npc else None  # Store original name for updates
-        
-        title = "Edit NPC" if edit_npc else "Add New NPC"
-        self.setWindowTitle(title)
+        super().__init__(entry_name="NPC", edit_entry=edit_npc, parent=parent)
+        self.original_name = self.edit_entry.name if self.edit_entry else None  # Store original name for updates
+
         self.resize(500, 700)
-        
-        # Apply theme
-        
-        DMHelperTheme.apply_theme(self)
-        
-        # Create layout
-        layout = QtWidgets.QVBoxLayout(self)
-        
-        # Create form
-        form_widget = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(form_widget)
-        
+                
         # Name field
         self.name_field = QtWidgets.QLineEdit()
         self.name_field.setPlaceholderText("Enter NPC name...")
-        form.addRow("Name*:", self.name_field)
+        self.form.addRow("Name*:", self.name_field)
         
         # Race field
         self.race_combo = QtWidgets.QComboBox()
@@ -69,32 +69,32 @@ class AddNPCDialog(QtWidgets.QDialog):
         sorted_races = sorted(Race, key=lambda r: r.value)
         for race in sorted_races:
             self.race_combo.addItem(race.value, race)
-        form.addRow("Race*:", self.race_combo)
+        self.form.addRow("Race*:", self.race_combo)
         
         # Sex field
         self.sex_combo = QtWidgets.QComboBox()
         self.sex_combo.addItems(["Male", "Female", "Non-binary", "Other"])
         self.sex_combo.setEditable(True)  # Allow custom input
-        form.addRow("Sex:", self.sex_combo)
+        self.form.addRow("Sex:", self.sex_combo)
 
         self.age_field = QtWidgets.QLineEdit()
         self.age_field.setPlaceholderText("Describe the NPC's age...")
-        form.addRow("Age:", self.age_field)
+        self.form.addRow("Age:", self.age_field)
         
         # Alignment field
         self.alignment_combo = QtWidgets.QComboBox()
         for alignment in Alignment:
             self.alignment_combo.addItem(alignment.value, alignment)
-        form.addRow("Alignment*:", self.alignment_combo)
+        self.form.addRow("Alignment*:", self.alignment_combo)
         
         # Stat Block fields - Type and Selection
         self.stat_block_type_combo = QtWidgets.QComboBox()
         self.stat_block_type_combo.addItems(["Monster Manual", "PC Class"])
         self.stat_block_type_combo.currentTextChanged.connect(self.update_stat_block_options)
-        form.addRow("Stat Block Type:", self.stat_block_type_combo)
+        self.form.addRow("Stat Block Type:", self.stat_block_type_combo)
         
         self.stat_block_selection_combo = QtWidgets.QComboBox()
-        form.addRow("Stat Block:", self.stat_block_selection_combo)
+        self.form.addRow("Stat Block:", self.stat_block_selection_combo)
         
         # Initialize with Monster Manual options
         self.update_stat_block_options()
@@ -103,52 +103,44 @@ class AddNPCDialog(QtWidgets.QDialog):
         self.appearance_field = QtWidgets.QTextEdit()
         self.appearance_field.setPlaceholderText("Describe the NPC's physical appearance...")
         self.appearance_field.setMaximumHeight(100)
-        form.addRow("Appearance:", self.appearance_field)
+        self.form.addRow("Appearance:", self.appearance_field)
         
         # Backstory field
         self.backstory_field = QtWidgets.QTextEdit()
         self.backstory_field.setPlaceholderText("Describe the NPC's background and history...")
         self.backstory_field.setMaximumHeight(120)
-        form.addRow("Backstory:", self.backstory_field)
+        self.form.addRow("Backstory:", self.backstory_field)
         
         # Additional traits field
         self.traits_field = QtWidgets.QTextEdit()
         self.traits_field.setPlaceholderText("Additional traits (one per line)...")
         self.traits_field.setMaximumHeight(80)
-        form.addRow("Additional Traits:", self.traits_field)
+        self.form.addRow("Additional Traits:", self.traits_field)
         
         # Alive checkbox
         self.alive_checkbox = QtWidgets.QCheckBox("NPC is alive")
         self.alive_checkbox.setChecked(True)  # Default to alive
         self.alive_checkbox.setToolTip("Uncheck if this NPC is deceased")
-        form.addRow("Status:", self.alive_checkbox)
-        
-        layout.addWidget(form_widget)
+        self.form.addRow("Status:", self.alive_checkbox)
         
         # Add note about required fields
         note_label = QtWidgets.QLabel("* Required fields")
         note_label.setStyleSheet("color: #888; font-size: 11px;")
-        layout.addWidget(note_label)
-        
-        # Buttons
-        buttons = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.StandardButton.Save |
-            QtWidgets.QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.save_npc)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-        
+        self.vbox_layout.addWidget(note_label)
+                
         # Populate fields if editing an existing NPC
-        if self.edit_npc:
+        if self.self.edit_entry:
             self.populate_fields()
         
         # Focus on name field
         self.name_field.setFocus()
     
+    def ok_button_slot(self):
+        self.save_npc()
+    
     def populate_fields(self):
         """Populate form fields when editing an existing NPC"""
-        npc = self.edit_npc
+        npc = self.edit_entry
         
         # Name
         self.name_field.setText(npc.name)
@@ -268,22 +260,22 @@ class AddNPCDialog(QtWidgets.QDialog):
             stat_block_name = self.stat_block_selection_combo.currentText()
             
             # If editing and the stat block type/name hasn't changed, preserve the existing stat block
-            if self.edit_npc and self.edit_npc.stat_block:
+            if self.edit_entry and self.edit_entry.stat_block:
                 preserve_stat_block = False
                 
-                if isinstance(self.edit_npc.stat_block, MonsterManual) and stat_block_type == "Monster Manual":
+                if isinstance(self.edit_entry.stat_block, MonsterManual) and stat_block_type == "Monster Manual":
                     # Check if monster name is the same
-                    current_monster = self.edit_npc.stat_block.monster_name
+                    current_monster = self.edit_entry.stat_block.monster_name
                     if current_monster == stat_block_name or current_monster.replace("_", " ").title() == stat_block_name:
                         preserve_stat_block = True
-                        stat_block = self.edit_npc.stat_block
+                        stat_block = self.edit_entry.stat_block
                 
-                elif isinstance(self.edit_npc.stat_block, PcClass) and stat_block_type == "PC Class":
+                elif isinstance(self.edit_entry.stat_block, PcClass) and stat_block_type == "PC Class":
                     # Check if class name is the same
-                    current_class = self.edit_npc.stat_block.name.value if hasattr(self.edit_npc.stat_block.name, 'value') else str(self.edit_npc.stat_block.name)
+                    current_class = self.edit_entry.stat_block.name.value if hasattr(self.edit_entry.stat_block.name, 'value') else str(self.edit_entry.stat_block.name)
                     if current_class == stat_block_name:
                         preserve_stat_block = True
-                        stat_block = self.edit_npc.stat_block
+                        stat_block = self.edit_entry.stat_block
                 
                 if not preserve_stat_block:
                     # Stat block type or name changed, create a new one
@@ -317,8 +309,8 @@ class AddNPCDialog(QtWidgets.QDialog):
             
             # Preserve campaign_notes if editing
             campaign_notes = ""
-            if self.edit_npc and hasattr(self.edit_npc, 'campaign_notes'):
-                campaign_notes = self.edit_npc.campaign_notes
+            if self.edit_entry and hasattr(self.edit_entry, 'campaign_notes'):
+                campaign_notes = self.edit_entry.campaign_notes
             
             # Create NPC object
             npc = NPC(
@@ -338,19 +330,19 @@ class AddNPCDialog(QtWidgets.QDialog):
             # Save to JSON file
             # Find the original ID by looking it up in the repository
             original_id = None
-            if self.edit_npc:
+            if self.edit_entry:
                 try:
                     repo = Repo(self.config.data_dir)
                     repo.load_all()
                     # Find the ID by looking through npcs_by_id dictionary
                     for npc_id, npc_obj in repo.npcs_by_id.items():
-                        if npc_obj is self.edit_npc or npc_obj.name == self.original_name:
+                        if npc_obj is self.edit_entry or npc_obj.name == self.original_name:
                             original_id = npc_id
                             break
                 except Exception as e:
                     print(f"Could not find original ID: {e}")
             
-            self.save_npc_to_json(npc, is_edit=self.edit_npc is not None, original_name=self.original_name, original_id=original_id)
+            self.save_npc_to_json(npc, is_edit=self.edit_entry is not None, original_name=self.original_name, original_id=original_id)
             
             QtWidgets.QMessageBox.information(self, "Success", 
                 f"NPC '{npc.name}' has been saved successfully!")
@@ -497,15 +489,6 @@ class AddSoundDialog(AddEntryDialogBase):
         note_label.setStyleSheet("color: #888; font-size: 11px;")
         self.vbox_layout.addWidget(note_label)
         
-        # Buttons
-        buttons = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok |
-            QtWidgets.QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.generate_sound)
-        buttons.rejected.connect(self.reject)
-        self.vbox_layout.addWidget(buttons)
-        
         # Focus on name field
         self.name_field.setFocus()
     
@@ -521,6 +504,9 @@ class AddSoundDialog(AddEntryDialogBase):
             if selected_files:
                 self.file_field.setText(selected_files[0])
     
+    def ok_button_slot(self):
+        self.generate_sound()
+
     def generate_sound(self):
         """Generate or add the sound clip"""
         try:
