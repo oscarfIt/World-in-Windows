@@ -35,6 +35,7 @@ def _resolve_image_for_npc(config: Config, npc) -> Path | None:
 
 class DetailWindowBase(QtWidgets.QMainWindow):
     form: QtWidgets.QFormLayout
+    buttons: QtWidgets.QDialogButtonBox
 
     def __init__(self, entry: Spell | Item | ClassAction | NPC | Location, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
@@ -63,18 +64,23 @@ class DetailWindowBase(QtWidgets.QMainWindow):
             pix = QtGui.QPixmap(str(icon_path))
             if not pix.isNull():
                 img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
-                self.form.addRow("<b>Icon:</b>", img_label)
+                self.form.addRow(None, img_label)
+        elif isinstance(entry, NPC):
+            generate_btn = QtWidgets.QPushButton("Generate Portrait")
+            generate_btn.setToolTip("Generate an AI portrait for this NPC")
+            generate_btn.clicked.connect(self.generate_portrait)    # This is a bit weird but works
+            self.form.addRow(None, generate_btn)
 
         scroll.setWidget(content)
 
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
+        self.buttons.rejected.connect(self.close)
+        self.buttons.accepted.connect(self.close)
 
         central_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(central_widget)
         layout.addWidget(scroll)
-        layout.addWidget(btns)
+        layout.addWidget(self.buttons)
         self.setCentralWidget(central_widget)
 
     def label(self, text: str) -> QtWidgets.QLabel:
@@ -116,95 +122,45 @@ class ItemDetailWindow(DetailWindowBase):
         self.form.addRow("<b>Description:</b>", self.label(item.description or ""))
 
 
-class NPCDetailWindow(QtWidgets.QMainWindow):
+class NPCDetailWindow(DetailWindowBase):
+    npc: NPC
+
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
         self.npc = npc
-        self.kb = kb
-        self.setWindowTitle(f"NPC — {npc.name}")
-        self.resize(600, 520)
-        
-        DMHelperTheme.apply_theme(self)
+        super().__init__(npc, kb, parent)
 
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
+        self.form.addRow("<b>Name:</b>", self.label(npc.name))
+        self.form.addRow("<b>Race:</b>", self.label(npc.race.value))
+        self.form.addRow("<b>Sex:</b>", self.label(npc.sex))
+        self.form.addRow("<b>Age:</b>", self.label(npc.age))
+        self.form.addRow("<b>Alignment:</b>", self.label(npc.alignment.value))
 
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
-
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            # Set minimum width to ensure proper text display on macOS
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
-
-        portrait_path = _resolve_image_for_npc(self.config, npc)
-        if portrait_path:
-            img_label = QtWidgets.QLabel()
-            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            pix = QtGui.QPixmap(str(portrait_path))
-            if not pix.isNull():
-                # scale to a smaller width for this dialog; keeps aspect ratio
-                img_label.setPixmap(pix.scaledToWidth(300, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Portrait:", img_label)
-        else:
-            generate_btn = QtWidgets.QPushButton("Generate Portrait")
-            generate_btn.setToolTip("Generate an AI portrait for this NPC")
-            generate_btn.clicked.connect(self.generate_portrait)
-            form.addRow("Portrait:", generate_btn)
-
-        form.addRow("Name:", label(npc.name))
-        form.addRow("Race:", label(npc.race.value))
-        form.addRow("Sex:", label(npc.sex))
-        form.addRow("Age:", label(npc.age))
-        form.addRow("Alignment:", label(npc.alignment.value))
-
-        status_label = label("Alive ✓" if npc.alive else "Deceased ☠️")
+        status_label = self.label("Alive ✓" if npc.alive else "Deceased ☠️")
         if not npc.alive:
             status_label.setStyleSheet("color: #cc0000; font-weight: bold;")
         else:
             status_label.setStyleSheet("color: #00aa00; font-weight: bold;")
-        form.addRow("Status:", status_label)
+        self.form.addRow("<b>Status:</b>", status_label)
 
-        form.addRow("Appearance:", label(npc.appearance or ""))
-        form.addRow("Backstory:", label(npc.backstory or ""))
+        self.form.addRow("<b>Appearance:</b>", self.label(npc.appearance or ""))
+        self.form.addRow("<b>Backstory:</b>", self.label(npc.backstory or ""))
 
         sb = npc.stat_block
         sb_text = sb.display_name if sb else "None"
         self.stat_btn = QtWidgets.QPushButton(sb_text)
         self.stat_btn.setEnabled(sb is not None)
         self.stat_btn.clicked.connect(self.open_statblock)
-        form.addRow("Stat Block:", self.stat_btn)
-
-        scroll.setWidget(content)
-
-        btns = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.StandardButton.Close
-        )
+        self.form.addRow("<b>Stat Block:</b>", self.stat_btn)
         
         edit_btn = QtWidgets.QPushButton("Edit")
-        edit_btn.setToolTip("Edit this NPC")
         edit_btn.clicked.connect(self.edit_npc)
-        btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        self.buttons.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
         campaign_notes_btn = QtWidgets.QPushButton("Campaign Notes")
-        campaign_notes_btn.setToolTip("View and edit campaign notes for this NPC")
         campaign_notes_btn.clicked.connect(self.open_campaign_notes)
-        btns.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+        self.buttons.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
         
         delete_btn = QtWidgets.QPushButton("Delete")
-        delete_btn.setToolTip("Permanently delete this NPC")
         delete_btn.clicked.connect(self.delete_npc)
         delete_btn.setStyleSheet("""
             QPushButton {
@@ -216,17 +172,8 @@ class NPCDetailWindow(QtWidgets.QMainWindow):
                 background-color: #b71c1c;
             }
         """)
-        btns.addButton(delete_btn, QtWidgets.QDialogButtonBox.ButtonRole.DestructiveRole)
+        self.buttons.addButton(delete_btn, QtWidgets.QDialogButtonBox.ButtonRole.DestructiveRole)
         
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
-
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        layout.addWidget(scroll)
-        layout.addWidget(btns)
-        self.setCentralWidget(central_widget)
-
     def open_statblock(self):
         if not self.npc.stat_block:
             return
