@@ -329,15 +329,12 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
             return lab
 
         vbox.addWidget(label(location.name, bold=True))
-        vbox.addWidget(label(f"Region: {location.region or 'Unknown'}"))
-        vbox.addWidget(label(f"Description: {location.description or 'No description'}"))
-        
-        tags = ", ".join(location.tags) if location.tags else "None"
-        vbox.addWidget(label(f"Tags: {tags}"))
+        vbox.addWidget(label(f"<b>Region:</b> {location.region or 'Unknown'}"))
+        vbox.addWidget(label(f"<b>Description:</b> {location.description or 'No description'}"))
 
         vbox.addSpacing(10)
 
-        vbox.addWidget(label("NPCs in this Location:", bold=True))
+        vbox.addWidget(label("<b>NPCs in this Location:</b>", bold=True))
         
         if location.npcs:
             for npc in location.npcs:
