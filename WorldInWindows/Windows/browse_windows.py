@@ -47,6 +47,10 @@ class BrowserWindowBase(QtWidgets.QMainWindow):
         self.title_layout.addStretch()
         self.vbox_layout.addLayout(self.title_layout)
 
+        add_entry_btn = QtWidgets.QPushButton(f"Add {entry_to_browse}")
+        add_entry_btn.clicked.connect(self.add_entry)
+        self.title_layout.addWidget(add_entry_btn)
+
         # Search bar
         self.search = QtWidgets.QLineEdit()
         self.search.setPlaceholderText(f"Search {entry_to_browse}s...")
@@ -84,11 +88,13 @@ class BrowserWindowBase(QtWidgets.QMainWindow):
             item.setSizeHint(QtCore.QSize(0, 32))
             self.entry_list.addItem(item)
 
-
     def filter_entries(self):
         pass
 
     def open_entry_detail(self):
+        pass
+
+    def add_entry(self):
         pass
 
 class SpellBrowserWindow(BrowserWindowBase):
@@ -171,12 +177,7 @@ class SoundBrowserWindow(BrowserWindowBase):
     """Window for browsing and generating audio clips"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Sound", kb, parent)
-        
-        # Add Sound button
-        add_sound_btn = QtWidgets.QPushButton("Add Sound")
-        add_sound_btn.clicked.connect(self.add_sound)
-        self.title_layout.addWidget(add_sound_btn)
-                
+                        
         # Play button
         play_btn = QtWidgets.QPushButton("Play")
         play_btn.clicked.connect(self.play_selected_sound)
@@ -227,7 +228,7 @@ class SoundBrowserWindow(BrowserWindowBase):
             # Search in filename
             item.setHidden(text not in item.text().lower() if text else False)
 
-    def add_sound(self):
+    def add_entry(self):
         """Add/generate a new sound"""
         dialog = AddSoundDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
@@ -292,12 +293,7 @@ class NPCBrowserWindow(BrowserWindowBase):
     """Window for browsing all NPCs in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("NPC", kb, parent)
-        
-        # Add NPC button
-        add_npc_btn = QtWidgets.QPushButton("Add NPC")
-        add_npc_btn.clicked.connect(self.add_npc)
-        self.title_layout.addWidget(add_npc_btn)
-                
+                        
     def populate_entries(self):
         # This implementation is a bit different so we don't call the super's method
         self.entry_list.clear()
@@ -374,7 +370,7 @@ class NPCBrowserWindow(BrowserWindowBase):
         window = NPCDetailWindow(npc, self.kb, self)
         window.show()
     
-    def add_npc(self):
+    def add_entry(self):
         """Add a new NPC"""
         dialog = AddNPCDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
