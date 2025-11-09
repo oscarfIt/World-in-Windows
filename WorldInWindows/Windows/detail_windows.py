@@ -34,12 +34,14 @@ def _resolve_image_for_npc(config: Config, npc) -> Path | None:
     return guess if guess.exists() else None
 
 class DetailWindowBase(QtWidgets.QMainWindow):
+    form: QtWidgets.QFormLayout
+
     def __init__(self, entry: Spell | Item | ClassAction | NPC | Location, kb: KnowledgeBase, parent=None):
         super().__init__(parent)
         self.config = Config()
         self.entry = entry
         self.kb = kb
-        self.setWindowTitle(f"{entry.__class__.name} — {entry.name}")
+        self.setWindowTitle(f"{entry.__class__.__name__} — {entry.name}")
         self.resize(600, 520)
 
         DMHelperTheme.apply_theme(self)
@@ -47,22 +49,11 @@ class DetailWindowBase(QtWidgets.QMainWindow):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        self.form = QtWidgets.QFormLayout(content)
+        self.form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
-
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
+        self.form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
 
         icon_path = _resolve_image_for_entry(self.config, entry)
 
@@ -72,58 +63,7 @@ class DetailWindowBase(QtWidgets.QMainWindow):
             pix = QtGui.QPixmap(str(icon_path))
             if not pix.isNull():
                 img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Icon:", img_label)
-
-class SpellDetailWindow(QtWidgets.QMainWindow):
-    def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.spell = spell
-        self.kb = kb
-        self.setWindowTitle(f"Spell — {spell.name}")
-        self.resize(600, 520)
-
-        DMHelperTheme.apply_theme(self)
-
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
-
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
-
-        icon_path = _resolve_image_for_entry(self.config, spell)
-        if icon_path:
-            img_label = QtWidgets.QLabel()
-            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            pix = QtGui.QPixmap(str(icon_path))
-            if not pix.isNull():
-                img_label.setPixmap(pix.scaledToWidth(150, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Icon:", img_label)
-
-        form.addRow("Name:", label(spell.name))
-        form.addRow("Level:", label(str(spell.level)))
-        form.addRow("School:", label(spell.school))
-        form.addRow("Casting Time:", label(spell.casting_time))
-        form.addRow("Range:", label(spell.range))
-        form.addRow("Damage:", label(spell.damage if spell.damage else "N/A"))
-        form.addRow("Components:", label(spell.components))
-        form.addRow("Duration:", label(spell.duration))
-        form.addRow("Upcasting:", label(spell.upcast_info))
-        form.addRow("Description:", label(spell.description or ""))
+                self.form.addRow("<b>Icon:</b>", img_label)
 
         scroll.setWidget(content)
 
@@ -136,6 +76,33 @@ class SpellDetailWindow(QtWidgets.QMainWindow):
         layout.addWidget(scroll)
         layout.addWidget(btns)
         self.setCentralWidget(central_widget)
+
+    def label(self, text: str) -> QtWidgets.QLabel:
+        lab = QtWidgets.QLabel(text)
+        lab.setWordWrap(True)
+        lab.setTextInteractionFlags(
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
+            QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
+        lab.setMinimumWidth(300)
+        lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+        return lab
+
+class SpellDetailWindow(DetailWindowBase):
+    def __init__(self, spell: Spell, kb: KnowledgeBase, parent=None):
+        super().__init__(spell, kb, parent)
+
+        self.form.addRow("<b>Name:</b>", self.label(spell.name))
+        self.form.addRow("<b>Level:</b>", self.label(str(spell.level)))
+        self.form.addRow("<b>School:</b>", self.label(spell.school))
+        self.form.addRow("<b>Casting Time</b>:", self.label(spell.casting_time))
+        self.form.addRow("<b>Range:</b>", self.label(spell.range))
+        self.form.addRow("<b>Damage:</b>", self.label(spell.damage if spell.damage else "N/A"))
+        self.form.addRow("<b>Components:</b>", self.label(spell.components))
+        self.form.addRow("<b>Duration:</b>", self.label(spell.duration))
+        self.form.addRow("<b>Upcasting:</b>", self.label(spell.upcast_info))
+        self.form.addRow("<b>Description:</b>", self.label(spell.description or ""))
+
 
 class ItemDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, item, kb: KnowledgeBase, parent=None):
