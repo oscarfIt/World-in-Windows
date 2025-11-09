@@ -104,65 +104,17 @@ class SpellDetailWindow(DetailWindowBase):
         self.form.addRow("<b>Description:</b>", self.label(spell.description or ""))
 
 
-class ItemDetailWindow(QtWidgets.QMainWindow):
+class ItemDetailWindow(DetailWindowBase):
     def __init__(self, item, kb: KnowledgeBase, parent=None):
-        super().__init__(parent)
-        self.config = Config()
-        self.item = item
-        self.kb = kb
-        self.setWindowTitle(f"Item — {item.name}")
-        self.resize(600, 520)
+        super().__init__(item, kb, parent)
 
-        DMHelperTheme.apply_theme(self)
+        self.form.addRow("<b>Name:</b>", self.label(item.name))
+        self.form.addRow("<b>Rarity:</b>", self.label(item.rarity))
+        self.form.addRow("<b>Attunement:</b>", self.label("Yes" if item.attunement else "No"))
+        self.form.addRow("<b>Tags:</b>", self.label(", ".join(getattr(item, "tags", []))))
+        self.form.addRow("<b>Aliases:</b>", self.label(", ".join(getattr(item, "aliases", []))))
+        self.form.addRow("<b>Description:</b>", self.label(item.description or ""))
 
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        content = QtWidgets.QWidget()
-        form = QtWidgets.QFormLayout(content)
-        form.setLabelAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        
-        form.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        form.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
-
-        def label(text: str) -> QtWidgets.QLabel:
-            lab = QtWidgets.QLabel(text)
-            lab.setWordWrap(True)
-            lab.setTextInteractionFlags(
-                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse |
-                QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
-            )
-            # Set minimum width to ensure proper text display on macOS
-            lab.setMinimumWidth(300)
-            lab.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
-            return lab
-
-        icon_path = _resolve_image_for_entry(self.config, item)
-        if icon_path:
-            img_label = QtWidgets.QLabel()
-            img_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-            pix = QtGui.QPixmap(str(icon_path))
-            if not pix.isNull():
-                img_label.setPixmap(pix.scaledToWidth(80, QtCore.Qt.TransformationMode.SmoothTransformation))
-                form.addRow("Icon:", img_label)
-
-        form.addRow("Name:", label(item.name))
-        form.addRow("Rarity:", label(item.rarity))
-        form.addRow("Attunement:", label("Yes" if item.attunement else "No"))
-        form.addRow("Tags:", label(", ".join(getattr(item, "tags", []))))
-        form.addRow("Aliases:", label(", ".join(getattr(item, "aliases", []))))
-        form.addRow("Description:", label(item.description or ""))
-
-        scroll.setWidget(content)
-
-        btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.close)
-        btns.accepted.connect(self.close)
-
-        central_widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(central_widget)
-        layout.addWidget(scroll)
-        layout.addWidget(btns)
-        self.setCentralWidget(central_widget)
 
 class NPCDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, npc: NPC, kb: KnowledgeBase, parent=None):
