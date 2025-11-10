@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import Enum
 
 @dataclass
 class Spell:
@@ -19,3 +20,14 @@ class Spell:
 class SpellSlot:
     level: int
     count: int
+
+
+class SpellSchool(Enum):
+    ABJURATION = "Abjuration"
+    CONJURATION = "Conjuration"
+    DIVINATION = "Divination"
+    ENCHANTMENT = "Enchantment"
+    EVOCATION = "Evocation"
+    ILLUSION = "Illusion"
+    NECROMANCY = "Necromancy"
+    TRANSMUTATION = "Transmutation"
