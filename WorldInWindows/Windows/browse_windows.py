@@ -392,20 +392,14 @@ class NPCBrowserWindow(BrowserWindowBase):
             self.populate_entries()
 
 class LocationBrowserWindow(BrowserWindowBase):
-    def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
+    def __init__(self, kb: KnowledgeBase, locations: List[Location], repo: Repo, parent=None):
         self.locations = locations
+        self.repo = repo
         super().__init__("Location", kb, parent)
 
     def populate_entries(self):
-        # Get all locations (including nested ones)
-        all_locations = []
-        def collect_locations(locs):
-            for loc in locs:
-                all_locations.append(loc)
-                if hasattr(loc, 'children') and loc.children:
-                    collect_locations(loc.children)
-        
-        collect_locations(self.locations)
+        # Get all locations from repo (including nested ones)
+        all_locations = self.repo.get_all_locations()
         super().populate_entries(all_locations)
 
     def filter_entries(self, text: str):

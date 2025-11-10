@@ -34,7 +34,7 @@ def main():
     # Apply the D&D themed styling
     DMHelperTheme.apply_to_application(app)
     
-    win = MainWindow(repo.locations, kb)
+    win = MainWindow(repo, kb)
     win.show()
     sys.exit(app.exec())
 

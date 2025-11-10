@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 from ..knowledge_base import KnowledgeBase  # HMMMM
+from ..repo import Repo
 
 from ..Dataclasses import Location, NPC
 from ..Dialogs import PathConfigDialog
@@ -15,7 +16,7 @@ from .detail_windows import NPCDetailWindow
 ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
 ROLE_NPC_PTR = QtCore.Qt.ItemDataRole.UserRole + 2
 
-def build_tree_model(locations: List[Location]) -> QtGui.QStandardItemModel:
+def build_tree_model(locations: List[Location], all_locations: List[Location]) -> QtGui.QStandardItemModel:
     """
     Build a two-column tree:
     Column 0: Location name
@@ -47,7 +48,8 @@ def build_tree_model(locations: List[Location]) -> QtGui.QStandardItemModel:
         else:
             parent_item.appendRow(items)
         # Recurse for children
-        for child in loc.children:
+        children = loc.get_children(all_locations)
+        for child in children:
             add_node(items[0], child)
 
     for loc in top_level:
@@ -96,7 +98,7 @@ def filter_tree(tree_view: QtWidgets.QTreeView, model: QtGui.QStandardItemModel,
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, locations: List[Location], kb: KnowledgeBase):
+    def __init__(self, repo: Repo, kb: KnowledgeBase):
         super().__init__()
         self.setWindowTitle("World in Windows")
 
@@ -111,7 +113,8 @@ class MainWindow(QtWidgets.QMainWindow):
             print(f"Could not find icon at: {icon_path}")
         
         self.resize(1000, 640)
-        self.locations = locations
+        self.repo = repo
+        self.locations = repo.top_level_locations
         self.kb = kb
 
         # Widgets
@@ -130,7 +133,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.create_menu_bar()
 
         # Build model
-        self.model = build_tree_model(self.locations)
+        all_locs = self.repo.get_all_locations()
+        self.model = build_tree_model(self.locations, all_locs)
         self.proxy = QtCore.QSortFilterProxyModel()  # not filtering via proxy; we keep it for header resize behavior
         self.proxy.setSourceModel(self.model)
         self.location_tree.setModel(self.model)
@@ -406,7 +410,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def show_locations(self):
         """Show locations browser window"""
-        locations_window = LocationBrowserWindow(self.kb, self.locations, self)
+        locations_window = LocationBrowserWindow(self.kb, self.locations, self.repo, self)
         locations_window.show()
 
     def show_conditions(self):
