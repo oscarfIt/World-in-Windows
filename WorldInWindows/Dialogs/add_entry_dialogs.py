@@ -725,7 +725,66 @@ class AddLocationDialog(AddEntryDialogBase):
         with open(locations_file, 'w', encoding='utf-8') as f:
             json.dump(locations_data, f, indent=2, ensure_ascii=False)
 
+class AddConditionDialog(AddEntryDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(entry_name="Condition", parent=parent)
         
+        self.name_field = QtWidgets.QLineEdit()
+        self.name_field.setPlaceholderText("Enter a name for this condition")
+        self.form.addRow("Condition Name*:", self.name_field)
+
+        self.description_field = QtWidgets.QTextEdit()
+        self.description_field.setPlaceholderText("Enter the condition description...")
+        self.description_field.setMaximumHeight(200)
+        self.form.addRow("Description:", self.description_field)
+
+        self.name_field.setFocus()
+
+    def ok_button_slot(self):
+        self.add_condition()
+    
+    def add_condition(self):
+        try:
+            if not self.name_field.text().strip():
+                QtWidgets.QMessageBox.warning(self, "Validation Error", "Condition name is required!")
+                return
+            
+            condition = Condition(
+                name=self.name_field.text().strip(),
+                description=self.description_field.toPlainText().strip()
+            )
+            
+            self.save_condition_to_json(condition)
+
+            QtWidgets.QMessageBox.information(self, "Success",
+                f"Condition '{condition.name}' has been saved successfully!")
+            self.accept()
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error",
+                f"Failed to save condition:\n{str(e)}")
+            
+    def save_condition_to_json(self, condition: Condition):
+
+        conditions_file = Path(self.config.data_dir) / "conditions.json"
+        
+        if conditions_file.exists():
+            with open(conditions_file, 'r', encoding='utf-8') as f:
+                conditions_data = json.load(f)
+        else:
+            conditions_data = []
+        
+        condition_dict = {
+            "name": condition.name,
+            "description": condition.description
+        }
+        
+        # Add new Condition
+        conditions_data.append(condition_dict)
+        
+        # Save back to file
+        with open(conditions_file, 'w', encoding='utf-8') as f:
+            json.dump(conditions_data, f, indent=2, ensure_ascii=False)
 
 class AddSoundDialog(AddEntryDialogBase):
     def __init__(self, parent=None):

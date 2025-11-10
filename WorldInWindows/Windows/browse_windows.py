@@ -11,7 +11,7 @@ from ..config import Config
 from ..knowledge_base import KnowledgeBase      # HMMMMMM
 
 from ..Dataclasses import Spell, Item, NPC, Location
-from ..Dialogs import AddSoundDialog, AddNPCDialog, AddSpellDialog, AddItemDialog, AddLocationDialog
+from ..Dialogs import AddSoundDialog, AddNPCDialog, AddSpellDialog, AddItemDialog, AddLocationDialog, AddConditionDialog
 
 from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow, LocationDetailWindow, ConditionDetailWindow
 
@@ -458,3 +458,8 @@ class ConditionBrowserWindow(BrowserWindowBase):
             return
         window = ConditionDetailWindow(condition, self.kb, self)
         window.show()
+
+    def add_entry(self):
+        dialog = AddConditionDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.populate_entries()
