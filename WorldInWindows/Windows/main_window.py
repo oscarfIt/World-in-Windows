@@ -360,8 +360,29 @@ class MainWindow(QtWidgets.QMainWindow):
         help_menu.addAction(about_action)
 
     def refresh_data(self):
-        """Refresh all data from files"""
-        QtWidgets.QMessageBox.information(self, "Refresh", "Data refresh functionality coming soon!")
+        try:
+            self.repo.load_all()
+            
+            self.kb.entries.clear()
+            self.kb._aliases.clear()
+            self.kb._pattern = None
+            self.kb.ingest(self.repo.spells, self.repo.items, self.repo.class_actions)
+            self.kb.ingest_npcs(self.repo.npcs_by_id.values())
+            self.kb.ingest_conditions(self.repo.conditions)
+            
+            self.locations = self.repo.top_level_locations
+            
+            all_locs = self.repo.get_all_locations()
+            self.model = build_tree_model(self.locations, all_locs)
+            self.location_tree.setModel(self.model)
+            
+            self.npc_list.clear()
+            
+            self.location_tree.expandAll()
+            
+            QtWidgets.QMessageBox.information(self, "Refresh Complete", "All data has been refreshed from files.")
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Refresh Error", f"Failed to refresh data:\n{str(e)}")
     
     def export_data(self):
         """Export data to a file"""
