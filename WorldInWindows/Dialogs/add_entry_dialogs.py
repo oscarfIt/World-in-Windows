@@ -8,7 +8,7 @@ from ..repo import Repo
 
 from ..config import Config
 
-from ..Dataclasses import Race, Alignment, PcClassName, MonsterManual, PcClass, NPC, Item, Spell, Condition, Location, SpellSchool
+from ..Dataclasses import Race, Alignment, PcClassName, MonsterManual, PcClass, NPC, Item, Spell, Condition, Location, SpellSchool, Rarity
 from ..AIGen import SoundGenerationMode, SoundGenerator
 
 class AddEntryDialogBase(QtWidgets.QDialog):
@@ -565,7 +565,87 @@ class AddSpellDialog(AddEntryDialogBase):
         with open(spells_file, 'w', encoding='utf-8') as f:
             json.dump(spells_data, f, indent=2, ensure_ascii=False)
 
+class AddItemDialog(AddEntryDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(entry_name="Item", parent=parent)
+        
+        self.name_field = QtWidgets.QLineEdit()
+        self.name_field.setPlaceholderText("Enter a name for this item")
+        self.form.addRow("Item Name*:", self.name_field)
 
+        self.rarity_field = QtWidgets.QComboBox()
+        for rarity in Rarity:
+            self.rarity_field.addItem(rarity.value, rarity)
+        self.form.addRow("Rarity:", self.rarity_field)
+
+        self.description_field = QtWidgets.QTextEdit()
+        self.description_field.setPlaceholderText("Enter the item description...")
+        self.description_field.setMaximumHeight(150)
+        self.form.addRow("Description:", self.description_field)
+
+        self.attunement_checkbox = QtWidgets.QCheckBox()
+        self.form.addRow("Requires Attunement:", self.attunement_checkbox)
+
+        self.name_field.setFocus()
+
+    def ok_button_slot(self):
+        self.add_item()
+
+    def add_item(self):
+        try:
+            # Validate required fields
+            if not self.name_field.text().strip():
+                QtWidgets.QMessageBox.warning(self, "Validation Error", "Item name is required!")
+                return
+            
+            # Create Item object
+            item = Item(
+                name=self.name_field.text().strip(),
+                rarity=self.rarity_field.currentData(),
+                description=self.description_field.toPlainText().strip(),
+                attunement=self.attunement_checkbox.isChecked()
+            )
+            
+            # Save to JSON file
+            self.save_item_to_json(item)
+
+            QtWidgets.QMessageBox.information(self, "Success",
+                f"Item '{item.name}' has been saved successfully!")
+            self.accept()
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error",
+                f"Failed to save item:\n{str(e)}")
+
+    def save_item_to_json(self, item: Item):
+        """Save the Item to items.json file"""
+
+        # Path to items.json in the Data directory
+        items_file = Path(self.config.data_dir) / "items.json"
+        
+        # Load existing Items
+        if items_file.exists():
+            with open(items_file, 'r', encoding='utf-8') as f:
+                items_data = json.load(f)
+        else:
+            items_data = []
+        
+        # Convert Item to dictionary format
+        items_dict = {
+            "name": item.name,
+            "rarity": item.rarity.value,
+            "description": item.description,
+            "attunement": item.attunement
+        }
+        
+        # Add new Item
+        items_data.append(items_dict)
+        
+        # Save back to file
+        with open(items_file, 'w', encoding='utf-8') as f:
+            json.dump(items_data, f, indent=2, ensure_ascii=False)
+        
+        
 
 class AddSoundDialog(AddEntryDialogBase):
     def __init__(self, parent=None):

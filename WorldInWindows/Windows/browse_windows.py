@@ -11,7 +11,7 @@ from ..config import Config
 from ..knowledge_base import KnowledgeBase      # HMMMMMM
 
 from ..Dataclasses import Spell, Item, NPC, Location
-from ..Dialogs import AddSoundDialog, AddNPCDialog, AddSpellDialog
+from ..Dialogs import AddSoundDialog, AddNPCDialog, AddSpellDialog, AddItemDialog
 
 from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow, LocationDetailWindow, ConditionDetailWindow
 
@@ -179,6 +179,13 @@ class ItemBrowserWindow(BrowserWindowBase):
             return
         window = ItemDetailWindow(item, self.kb, self)
         window.show()
+
+    def add_entry(self):
+        dialog = AddItemDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Refresh the items list to show the new item
+            # populate_entries() will reload data from JSON files
+            self.populate_entries()
 
 class SoundBrowserWindow(BrowserWindowBase):
     """Window for browsing and generating audio clips"""
