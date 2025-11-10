@@ -687,7 +687,7 @@ class AddLocationDialog(AddEntryDialogBase):
                 name=self.name_field.text().strip(),
                 description=self.description_field.toPlainText().strip(),
                 region=self.region_field.text().strip(),
-                parent=self.parent_field.currentData()
+                parent=self.parent_field.currentData().lower().replace(" ", "_") if self.parent_field.currentData() else None
             )
             
             self.save_location_to_json(location)
@@ -711,6 +711,7 @@ class AddLocationDialog(AddEntryDialogBase):
             locations_data = []
         
         location_dict = {
+            "id": location.name.lower().replace(" ", "_"),
             "name": location.name,
             "description": location.description,
             "region": location.region,
