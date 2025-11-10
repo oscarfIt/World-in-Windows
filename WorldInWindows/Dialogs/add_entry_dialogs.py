@@ -129,7 +129,7 @@ class AddNPCDialog(AddEntryDialogBase):
         self.vbox_layout.addWidget(note_label)
                 
         # Populate fields if editing an existing NPC
-        if self.self.edit_entry:
+        if self.edit_entry:
             self.populate_fields()
         
         # Focus on name field
