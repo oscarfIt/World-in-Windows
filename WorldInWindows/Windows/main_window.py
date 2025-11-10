@@ -5,7 +5,7 @@ import sys
 
 from ..knowledge_base import KnowledgeBase  # HMMMM
 from ..repo import Repo
-from ..version import __version__, __release_name__, __release_date__
+from ..version import __version__, __release_date__
 
 from ..Dataclasses import Location, NPC
 from ..Dialogs import PathConfigDialog
@@ -407,7 +407,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Show about dialog"""
         QtWidgets.QMessageBox.about(self, "About World in Windows", 
             f"World in Windows v{__version__}\n"
-            f'"{__release_name__}" - {__release_date__}\n\n'
+            f'{__release_date__}\n\n'
             "A tool for managing D&D campaigns.\n\n"
             "Built with PyQt6\n"
             "© 2025")

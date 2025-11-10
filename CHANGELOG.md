@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed features
 
+## [1.2.1] - 2025-11-10
+
+### Fixed
+- Erroneous __release_name__ import in main_window.py
+
 ## [1.2.0] - 2025-11-10
 ### Added
 - Add functionality for all Browse Dialogs (Spell, Item, Condition, Location)
