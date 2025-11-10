@@ -11,7 +11,7 @@ from ..config import Config
 from ..knowledge_base import KnowledgeBase      # HMMMMMM
 
 from ..Dataclasses import Spell, Item, NPC, Location
-from ..Dialogs import AddSoundDialog, AddNPCDialog
+from ..Dialogs import AddSoundDialog, AddNPCDialog, AddSpellDialog, AddItemDialog, AddLocationDialog, AddConditionDialog
 
 from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow, LocationDetailWindow, ConditionDetailWindow
 
@@ -46,6 +46,10 @@ class BrowserWindowBase(QtWidgets.QMainWindow):
         self.title_layout.addWidget(title_label)
         self.title_layout.addStretch()
         self.vbox_layout.addLayout(self.title_layout)
+
+        add_entry_btn = QtWidgets.QPushButton(f"Add {entry_to_browse}")
+        add_entry_btn.clicked.connect(self.add_entry)
+        self.title_layout.addWidget(add_entry_btn)
 
         # Search bar
         self.search = QtWidgets.QLineEdit()
@@ -84,11 +88,13 @@ class BrowserWindowBase(QtWidgets.QMainWindow):
             item.setSizeHint(QtCore.QSize(0, 32))
             self.entry_list.addItem(item)
 
-
     def filter_entries(self):
         pass
 
     def open_entry_detail(self):
+        pass
+
+    def add_entry(self):
         pass
 
 class SpellBrowserWindow(BrowserWindowBase):
@@ -131,6 +137,13 @@ class SpellBrowserWindow(BrowserWindowBase):
         window = SpellDetailWindow(spell, self.kb, self)
         window.show()
 
+    def add_entry(self):
+        dialog = AddSpellDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Refresh the NPCs list to show the new NPC
+            # populate_entries() will reload data from JSON files
+            self.populate_entries()
+
 class ItemBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Item", kb, parent)
@@ -167,16 +180,18 @@ class ItemBrowserWindow(BrowserWindowBase):
         window = ItemDetailWindow(item, self.kb, self)
         window.show()
 
+    def add_entry(self):
+        dialog = AddItemDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Refresh the items list to show the new item
+            # populate_entries() will reload data from JSON files
+            self.populate_entries()
+
 class SoundBrowserWindow(BrowserWindowBase):
     """Window for browsing and generating audio clips"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("Sound", kb, parent)
-        
-        # Add Sound button
-        add_sound_btn = QtWidgets.QPushButton("Add Sound")
-        add_sound_btn.clicked.connect(self.add_sound)
-        self.title_layout.addWidget(add_sound_btn)
-                
+                        
         # Play button
         play_btn = QtWidgets.QPushButton("Play")
         play_btn.clicked.connect(self.play_selected_sound)
@@ -227,7 +242,7 @@ class SoundBrowserWindow(BrowserWindowBase):
             # Search in filename
             item.setHidden(text not in item.text().lower() if text else False)
 
-    def add_sound(self):
+    def add_entry(self):
         """Add/generate a new sound"""
         dialog = AddSoundDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
@@ -292,12 +307,7 @@ class NPCBrowserWindow(BrowserWindowBase):
     """Window for browsing all NPCs in the campaign"""
     def __init__(self, kb: KnowledgeBase, parent=None):
         super().__init__("NPC", kb, parent)
-        
-        # Add NPC button
-        add_npc_btn = QtWidgets.QPushButton("Add NPC")
-        add_npc_btn.clicked.connect(self.add_npc)
-        self.title_layout.addWidget(add_npc_btn)
-                
+                        
     def populate_entries(self):
         # This implementation is a bit different so we don't call the super's method
         self.entry_list.clear()
@@ -374,8 +384,7 @@ class NPCBrowserWindow(BrowserWindowBase):
         window = NPCDetailWindow(npc, self.kb, self)
         window.show()
     
-    def add_npc(self):
-        """Add a new NPC"""
+    def add_entry(self):
         dialog = AddNPCDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # Refresh the NPCs list to show the new NPC
@@ -383,20 +392,14 @@ class NPCBrowserWindow(BrowserWindowBase):
             self.populate_entries()
 
 class LocationBrowserWindow(BrowserWindowBase):
-    def __init__(self, kb: KnowledgeBase, locations: List[Location], parent=None):
+    def __init__(self, kb: KnowledgeBase, locations: List[Location], repo: Repo, parent=None):
         self.locations = locations
+        self.repo = repo
         super().__init__("Location", kb, parent)
 
     def populate_entries(self):
-        # Get all locations (including nested ones)
-        all_locations = []
-        def collect_locations(locs):
-            for loc in locs:
-                all_locations.append(loc)
-                if hasattr(loc, 'children') and loc.children:
-                    collect_locations(loc.children)
-        
-        collect_locations(self.locations)
+        # Get all locations from repo (including nested ones)
+        all_locations = self.repo.get_all_locations()
         super().populate_entries(all_locations)
 
     def filter_entries(self, text: str):
@@ -418,6 +421,11 @@ class LocationBrowserWindow(BrowserWindowBase):
             return
         window = LocationDetailWindow(loc, self.kb, self)
         window.show()
+
+    def add_entry(self):
+        dialog = AddLocationDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.populate_entries()
 
 class ConditionBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, parent=None):
@@ -450,3 +458,8 @@ class ConditionBrowserWindow(BrowserWindowBase):
             return
         window = ConditionDetailWindow(condition, self.kb, self)
         window.show()
+
+    def add_entry(self):
+        dialog = AddConditionDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.populate_entries()

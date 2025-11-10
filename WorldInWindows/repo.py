@@ -31,8 +31,9 @@ class Repo:
         self.class_actions_by_name: Dict[str, ClassAction] = {}
         self.conditions_by_name: Dict[str, Condition] = {}
 
-        # Locations (top-level only; child locations reachable via .children)
-        self.locations: List[Location] = []
+        # Locations (top-level only; child locations accessible via parent relationships)
+        self.top_level_locations: List[Location] = []
+        self._all_locations: List[Location] = []  # Flat list of all locations for tree traversal
 
     def load_all(self):
         self.spells = self._load_list("spells.json", Spell)
@@ -155,32 +156,36 @@ class Repo:
                         if npc not in loc.npcs:
                             loc.npcs.append(npc)
 
-        # Third pass: establish nesting
+        # Third pass: establish parent-child relationships
         for row in locs_raw:
-            parent = loc_objs.get(row.get("id", row["name"]))
-            if not parent:
+            loc = loc_objs.get(row.get("id", row["name"]))
+            if not loc:
                 continue
-            for child_id in row.get("children", []):
-                child = loc_objs.get(child_id)
-                if child:
-                    try:
-                        parent.add_child(child)
-                    except Exception:
-                        # Fallback if add_child not present
-                        child.parent = parent
-                        parent.children = getattr(parent, "children", [])
-                        if child not in parent.children:
-                            parent.children.append(child)
+            parent_id = row.get("parent")
+            if parent_id:
+                parent = loc_objs.get(parent_id)
+                if parent:
+                    loc.parent = parent
 
         # Fourth pass: propagate NPCs from child to parent locations
         # Only propagate from leaf nodes (locations with no children) to avoid redundancy
-        leaf_locations = [loc for loc in loc_objs.values() if not getattr(loc, 'children', [])]
+        all_locs = list(loc_objs.values())
+        self._all_locations = all_locs  # Store flat list for tree operations
+        leaf_locations = [loc for loc in all_locs if not loc.get_children(all_locs)]
         for loc in leaf_locations:
             if hasattr(loc, 'propagate_npcs_to_parent'):
                 loc.propagate_npcs_to_parent()
 
         # Top-level locations (no parent)
-        self.locations = [l for l in loc_objs.values() if getattr(l, "parent", None) is None]
+        self.top_level_locations = [l for l in all_locs if l.parent is None]
+    
+    def get_all_locations(self) -> List[Location]:
+        """Get a flat list of all locations (including nested ones)."""
+        return self._all_locations.copy()
+    
+    def get_location_children(self, location: Location) -> List[Location]:
+        """Get direct children of a location."""
+        return location.get_children(self._all_locations)
 
     def _build_stat_block(self, spec: Optional[dict]) -> Optional[StatBlock]:
         if not spec:
