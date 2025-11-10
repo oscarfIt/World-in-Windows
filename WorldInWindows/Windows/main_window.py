@@ -5,7 +5,7 @@ import sys
 
 from ..knowledge_base import KnowledgeBase  # HMMMM
 from ..repo import Repo
-from ..version import __version__, __release_name__, __release_date__
+from ..version import __version__, __release_date__
 
 from ..Dataclasses import Location, NPC
 from ..Dialogs import PathConfigDialog
