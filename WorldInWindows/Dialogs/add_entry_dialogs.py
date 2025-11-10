@@ -644,7 +644,86 @@ class AddItemDialog(AddEntryDialogBase):
         # Save back to file
         with open(items_file, 'w', encoding='utf-8') as f:
             json.dump(items_data, f, indent=2, ensure_ascii=False)
+
+class AddLocationDialog(AddEntryDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(entry_name="Location", parent=parent)
         
+        self.name_field = QtWidgets.QLineEdit()
+        self.name_field.setPlaceholderText("Enter a name for this location")
+        self.form.addRow("Location Name*:", self.name_field)
+
+        self.description_field = QtWidgets.QTextEdit()
+        self.description_field.setPlaceholderText("Enter the location description...")
+        self.description_field.setMaximumHeight(200)
+        self.form.addRow("Description:", self.description_field)
+
+        self.region_field = QtWidgets.QLineEdit()
+        self.region_field.setPlaceholderText("Enter the region or area this location belongs to...")
+        self.form.addRow("Region/Area:", self.region_field)
+
+        # This doesn't work rn
+        self.parent_field = QtWidgets.QComboBox()
+        # Check the locations from locatinos.json
+        self.parent_field.addItem("None", None)  # Default option
+        locations_file = Path(self.config.data_dir) / "locations.json"
+        if locations_file.exists():
+            with open(locations_file, 'r', encoding='utf-8') as f:
+                locations_data = json.load(f)
+                for loc in locations_data:
+                    self.parent_field.addItem(loc.get("name", "Unnamed Location"), loc.get("name"))
+        self.form.addRow("Parent Location:", self.parent_field)
+
+    def ok_button_slot(self):
+        self.add_location()
+
+    def add_location(self):
+        try:
+            if not self.name_field.text().strip():
+                QtWidgets.QMessageBox.warning(self, "Validation Error", "Location name is required!")
+                return
+            
+            location = Location(
+                name=self.name_field.text().strip(),
+                description=self.description_field.toPlainText().strip(),
+                region=self.region_field.text().strip(),
+                parent=self.parent_field.currentData()
+            )
+            
+            self.save_location_to_json(location)
+
+            QtWidgets.QMessageBox.information(self, "Success",
+                f"Location '{location.name}' has been saved successfully!")
+            self.accept()
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error",
+                f"Failed to save location:\n{str(e)}")
+            
+    def save_location_to_json(self, location: Location):
+
+        locations_file = Path(self.config.data_dir) / "locations.json"
+        
+        if locations_file.exists():
+            with open(locations_file, 'r', encoding='utf-8') as f:
+                locations_data = json.load(f)
+        else:
+            locations_data = []
+        
+        location_dict = {
+            "name": location.name,
+            "description": location.description,
+            "region": location.region,
+            "parent": location.parent
+        }
+        
+        # Add new Location
+        locations_data.append(location_dict)
+        
+        # Save back to file
+        with open(locations_file, 'w', encoding='utf-8') as f:
+            json.dump(locations_data, f, indent=2, ensure_ascii=False)
+
         
 
 class AddSoundDialog(AddEntryDialogBase):
