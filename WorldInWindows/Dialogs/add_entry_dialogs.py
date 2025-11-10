@@ -8,7 +8,7 @@ from ..repo import Repo
 
 from ..config import Config
 
-from ..Dataclasses import Race, Alignment, PcClassName, MonsterManual, PcClass, NPC, Item, Spell, Condition, Location
+from ..Dataclasses import Race, Alignment, PcClassName, MonsterManual, PcClass, NPC, Item, Spell, Condition, Location, SpellSchool
 from ..AIGen import SoundGenerationMode, SoundGenerator
 
 class AddEntryDialogBase(QtWidgets.QDialog):
@@ -441,6 +441,130 @@ class AddNPCDialog(AddEntryDialogBase):
         # Save back to file
         with open(npcs_file, 'w', encoding='utf-8') as f:
             json.dump(npcs_data, f, indent=2, ensure_ascii=False)
+
+class AddSpellDialog(AddEntryDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(entry_name="Spell", parent=parent)
+        
+        # Spell Name field
+        self.name_field = QtWidgets.QLineEdit()
+        self.name_field.setPlaceholderText("Enter a name for this spell (e.g., 'Fire Ball', 'Hold Person', 'Disintegrate')...")
+        self.form.addRow("Spell Name*:", self.name_field)
+
+        self.level_field = QtWidgets.QSpinBox()
+        self.level_field.setRange(0, 9)
+        self.level_field.setValue(5)
+        self.form.addRow("Level:", self.level_field)
+
+        self.school_field = QtWidgets.QComboBox()
+        for school in SpellSchool:
+            self.school_field.addItem(school.value, school)
+        self.form.addRow("School:", self.school_field)
+
+        self.casting_time_field = QtWidgets.QLineEdit()
+        self.casting_time_field.setPlaceholderText("e.g., '1 action', '1 minute', '1 reaction'...")
+        self.form.addRow("Casting Time:", self.casting_time_field)
+
+        self.range_field = QtWidgets.QLineEdit()
+        self.range_field.setPlaceholderText("e.g., '60ft', 'Touch', 'Self'...")
+        self.form.addRow("Range:", self.range_field)
+
+        self.components_field = QtWidgets.QLineEdit()
+        self.components_field.setPlaceholderText("e.g., 'V, S, M (a tiny ball of bat guano and sulfur)'...")
+        self.form.addRow("Components:", self.components_field)
+
+        self.duration_field = QtWidgets.QLineEdit()
+        self.duration_field.setPlaceholderText("e.g., 'Instantaneous', 'Concentration, up to 1 minute'...")
+        self.form.addRow("Duration:", self.duration_field)
+
+        self.description_field = QtWidgets.QTextEdit()
+        self.description_field.setPlaceholderText("Enter the spell description...")
+        self.description_field.setMaximumHeight(150)
+        self.form.addRow("Description:", self.description_field)
+
+        self.damage_field = QtWidgets.QLineEdit()
+        self.damage_field.setPlaceholderText("e.g., '8d6 fire damage', leave blank if none...")
+        self.form.addRow("Damage:", self.damage_field)
+
+        self.upcast_info_field = QtWidgets.QTextEdit()
+        self.upcast_info_field.setPlaceholderText("Enter upcast information, or leave default...")
+        self.upcast_info_field.setMaximumHeight(100)
+        self.form.addRow("Upcast Info:", self.upcast_info_field)
+
+        self.name_field.setFocus()
+
+    def ok_button_slot(self):
+        self.add_spell()
+
+    def add_spell(self):
+        """Save the spell (new) to spells.json"""
+        try:
+            # Validate required fields
+            if not self.name_field.text().strip():
+                QtWidgets.QMessageBox.warning(self, "Validation Error", "Spell name is required!")
+                return
+            
+            # Create Spell object
+            spell = Spell(
+                name=self.name_field.text().strip(),
+                level=self.level_field.value(),
+                school=self.school_field.currentData(),
+                casting_time=self.casting_time_field.text().strip(),
+                range=self.range_field.text().strip(),
+                components=self.components_field.text().strip(),
+                duration=self.duration_field.text().strip(),
+                description=self.description_field.toPlainText().strip(),
+                damage=self.damage_field.text().strip() if self.damage_field.text().strip() else None,
+                upcast_info=self.upcast_info_field.toPlainText().strip() if self.upcast_info_field.toPlainText().strip() else "Casting this spell at higher levels provides no additional benefit."
+            )
+            
+            # Save to JSON file
+            self.save_spell_to_json(spell)
+            
+            QtWidgets.QMessageBox.information(self, "Success", 
+                f"Spell '{spell.name}' has been saved successfully!")
+            self.accept()
+            
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", 
+                f"Failed to save spell:\n{str(e)}")
+            
+    def save_spell_to_json(self, spell: Spell):
+        """Save the Spell to spells.json file"""
+        
+        # Path to spells.json in the Data directory
+        spells_file = Path(self.config.data_dir) / "spells.json"
+        
+        # Load existing Spells
+        if spells_file.exists():
+            with open(spells_file, 'r', encoding='utf-8') as f:
+                spells_data = json.load(f)
+        else:
+            spells_data = []
+        
+        # Convert Spell to dictionary format
+        spell_dict = {
+            "name": spell.name,
+            "level": spell.level,
+            "school": spell.school.value,
+            "casting_time": spell.casting_time,
+            "range": spell.range,
+            "components": spell.components,
+            "duration": spell.duration,
+            "description": spell.description,
+            "damage": spell.damage,
+            "upcast_info": spell.upcast_info,
+            "tags": spell.tags,
+            "aliases": spell.aliases
+        }
+        
+        # Add new Spell
+        spells_data.append(spell_dict)
+        
+        # Save back to file
+        with open(spells_file, 'w', encoding='utf-8') as f:
+            json.dump(spells_data, f, indent=2, ensure_ascii=False)
+
 
 
 class AddSoundDialog(AddEntryDialogBase):

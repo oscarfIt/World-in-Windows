@@ -11,7 +11,7 @@ from ..config import Config
 from ..knowledge_base import KnowledgeBase      # HMMMMMM
 
 from ..Dataclasses import Spell, Item, NPC, Location
-from ..Dialogs import AddSoundDialog, AddNPCDialog
+from ..Dialogs import AddSoundDialog, AddNPCDialog, AddSpellDialog
 
 from .detail_windows import SpellDetailWindow, ItemDetailWindow, NPCDetailWindow, LocationDetailWindow, ConditionDetailWindow
 
@@ -136,6 +136,13 @@ class SpellBrowserWindow(BrowserWindowBase):
             return
         window = SpellDetailWindow(spell, self.kb, self)
         window.show()
+
+    def add_entry(self):
+        dialog = AddSpellDialog(self)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # Refresh the NPCs list to show the new NPC
+            # populate_entries() will reload data from JSON files
+            self.populate_entries()
 
 class ItemBrowserWindow(BrowserWindowBase):
     def __init__(self, kb: KnowledgeBase, parent=None):
@@ -371,7 +378,6 @@ class NPCBrowserWindow(BrowserWindowBase):
         window.show()
     
     def add_entry(self):
-        """Add a new NPC"""
         dialog = AddNPCDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # Refresh the NPCs list to show the new NPC
