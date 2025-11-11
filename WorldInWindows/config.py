@@ -1,8 +1,12 @@
 from pathlib import Path
+from platformdirs import user_config_dir
 import json
 
 # --- Configuration system ---
-CONFIG_FILE = Path("config.json")
+# Check that this works on Windows
+APP_NAME = "WorldInWindows"
+CONFIG_FILE = Path(user_config_dir(APP_NAME, False)) / "config.json"
+CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 class Config:
     def __init__(self):
