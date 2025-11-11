@@ -1,8 +1,21 @@
 from pathlib import Path
+from platformdirs import user_config_dir
 import json
 
 # --- Configuration system ---
-CONFIG_FILE = Path("config.json")
+# Check that this works on Windows
+APP_NAME = "WorldInWindows"
+CONFIG_FILE = Path(user_config_dir(APP_NAME, False)) / "config.json"
+CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+LEGACY = Path("config.json")
+if LEGACY.exists() and not CONFIG_FILE.exists():
+    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        CONFIG_FILE.write_text(LEGACY.read_text(encoding="utf-8"), encoding="utf-8")
+        print(f"[Config] Migrated {LEGACY} → {CONFIG_FILE}")
+    except Exception as e:
+        print(f"[Config] Migration failed: {e}")
 
 class Config:
     def __init__(self):

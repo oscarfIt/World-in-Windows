@@ -253,20 +253,20 @@ class MainWindow(QtWidgets.QMainWindow):
         file_menu.addAction(export_action)
         
         file_menu.addSeparator()
+
+        configure_paths_action = QtGui.QAction("&Set Data and Media Paths...", self)
+        configure_paths_action.setShortcut("Ctrl+P")
+        configure_paths_action.setStatusTip("Set the paths to data and media files")
+        configure_paths_action.triggered.connect(self.configure_paths)
+        file_menu.addAction(configure_paths_action)
+        
+        file_menu.addSeparator()
         
         exit_action = QtGui.QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.setStatusTip("Exit the application")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
-        
-        # Settings Menu
-        settings_menu = menubar.addMenu("&Settings")
-        
-        configure_paths_action = QtGui.QAction("Configure &Paths...", self)
-        configure_paths_action.setStatusTip("Configure Data and Media directory paths")
-        configure_paths_action.triggered.connect(self.configure_paths)
-        settings_menu.addAction(configure_paths_action)
         
         # Edit Menu
         edit_menu = menubar.addMenu("&Edit")
