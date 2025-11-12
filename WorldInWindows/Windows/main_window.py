@@ -368,7 +368,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.kb._aliases.clear()
             self.kb._pattern = None
             self.kb.ingest(self.repo.spells, self.repo.items, self.repo.class_actions)
-            self.kb.ingest_npcs(self.repo.npcs_by_id.values())
+            self.kb.ingest_npcs(self.repo.npcs_by_name.values())
             self.kb.ingest_conditions(self.repo.conditions)
             
             self.locations = self.repo.top_level_locations

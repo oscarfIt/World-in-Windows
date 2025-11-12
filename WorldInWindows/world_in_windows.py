@@ -26,7 +26,7 @@ def main():
 
     kb = KnowledgeBase()
     kb.ingest(repo.spells, repo.items, repo.class_actions)
-    kb.ingest_npcs(repo.npcs_by_id.values())
+    kb.ingest_npcs(repo.npcs_by_name.values())
     kb.ingest_conditions(repo.conditions)
 
     app = QtWidgets.QApplication(sys.argv)

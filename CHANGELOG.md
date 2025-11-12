@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug fixes
 
 ### Removed
-- Removed features
+- IDs from Locations and NPCs
 
 ## [1.2.1] - 2025-11-10
 

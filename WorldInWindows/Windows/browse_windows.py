@@ -318,7 +318,7 @@ class NPCBrowserWindow(BrowserWindowBase):
             repo.load_all()  # This will reload from JSON files including any new NPCs
             
             # Get all NPCs from the repository
-            all_npcs = list(repo.npcs_by_id.values())
+            all_npcs = list(repo.npcs_by_name.values())
             
         except Exception as e:
             # Fallback to knowledge base if repo loading fails
