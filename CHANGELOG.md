@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Edit buttons and functionality to Spell, Item, Condition, and Location Detail windows
+- Functionality to open LocationDetailWindow from main window
 
 ### Changed
 - Changes to existing features
