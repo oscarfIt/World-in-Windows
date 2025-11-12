@@ -108,7 +108,6 @@ class CampaignNotesDialog(QtWidgets.QDialog):
         # Find and update the NPC entry
         npc_updated = False
         for npc_entry in npcs_data:
-            # Try to match by name first, then by id if available
             if npc_entry.get("name") == self.npc.name:
                 npc_entry["campaign_notes"] = self.npc.campaign_notes
                 npc_updated = True
