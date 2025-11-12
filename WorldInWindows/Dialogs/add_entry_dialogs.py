@@ -775,7 +775,6 @@ class AddLocationDialog(AddEntryDialogBase):
         else:
             locations_data = []
         
-        print(f"Saving location: {location}")
         location_dict = {
             "name": location.name,
             "description": location.description,
