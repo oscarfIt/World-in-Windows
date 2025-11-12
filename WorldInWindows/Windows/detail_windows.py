@@ -614,8 +614,7 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
             for loc_entry in locations_data:
                 # Match by name (locations should have unique names)
                 if loc_entry.get("name") == self.location.name:
-                    # Update the npc_ids field with current NPCs
-                    loc_entry["npc_ids"] = [npc.name for npc in self.location.npcs]
+                    loc_entry["npcs"] = [npc.name for npc in self.location.npcs]
                     location_updated = True
                     break
             

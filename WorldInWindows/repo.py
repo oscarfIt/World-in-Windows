@@ -22,7 +22,6 @@ class Repo:
 
         # NPCs & fast lookup maps
         self.npcs: List[NPC] = []
-        self.npcs_by_id: Dict[str, NPC] = {}
         self.npcs_by_name: Dict[str, NPC] = {}
 
         # Items/Spells maps (by name) — useful for KB / linking
@@ -116,9 +115,7 @@ class Repo:
                     setattr(npc, "additional_traits", norm_traits)
                     setattr(npc, "campaign_notes", row.get("campaign_notes", ""))
 
-                nid = row.get("id", row["name"])
                 self.npcs.append(npc)
-                self.npcs_by_id[nid] = npc
                 self.npcs_by_name[npc.name] = npc
 
             except Exception as e:
@@ -137,17 +134,17 @@ class Repo:
                     tags=row.get("tags", []),
                     npcs=[],
                 )
-                loc_objs[row.get("id", row["name"])] = loc
+                loc_objs[row.get("name")] = loc
             except Exception as e:
                 print(f"[WARN] Skipping locations.json[{i}] (shell): {e}")
 
         # Second pass: attach NPCs
         for row in locs_raw:
-            loc = loc_objs.get(row.get("id", row["name"]))
+            loc = loc_objs.get(row.get("name"))
             if not loc:
                 continue
-            for nid in row.get("npc_ids", []):
-                npc = self.npcs_by_id.get(nid) or self.npcs_by_name.get(nid)
+            for name in row.get("npcs", []):
+                npc = self.npcs.get(name) or self.npcs_by_name.get(name)
                 if npc:
                     try:
                         loc.add_npc(npc)
@@ -158,12 +155,12 @@ class Repo:
 
         # Third pass: establish parent-child relationships
         for row in locs_raw:
-            loc = loc_objs.get(row.get("id", row["name"]))
+            loc = loc_objs.get(row.get("name"))
             if not loc:
                 continue
-            parent_id = row.get("parent")
-            if parent_id:
-                parent = loc_objs.get(parent_id)
+            parent = row.get("parent")
+            if parent:
+                parent = loc_objs.get(parent)
                 if parent:
                     loc.parent = parent
 

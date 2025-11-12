@@ -328,21 +328,21 @@ class AddNPCDialog(AddEntryDialogBase):
             )
             
             # Save to JSON file
-            # Find the original ID by looking it up in the repository
-            original_id = None
+            # Find the original name by looking it up in the repository
+            original_name = None
             if self.edit_entry:
                 try:
                     repo = Repo(self.config.data_dir)
                     repo.load_all()
-                    # Find the ID by looking through npcs_by_id dictionary
-                    for npc_id, npc_obj in repo.npcs_by_id.items():
+                    # Find the name by looking through npcs_by_name dictionary
+                    for npc_name, npc_obj in repo.npcs_by_name.items():
                         if npc_obj is self.edit_entry or npc_obj.name == self.original_name:
-                            original_id = npc_id
+                            original_name = npc_name
                             break
                 except Exception as e:
-                    print(f"Could not find original ID: {e}")
-            
-            self.save_npc_to_json(npc, is_edit=self.edit_entry is not None, original_name=self.original_name, original_id=original_id)
+                    print(f"Could not find original name: {e}")
+
+            self.save_npc_to_json(npc, is_edit=self.edit_entry is not None, original_name=self.original_name)
             
             QtWidgets.QMessageBox.information(self, "Success", 
                 f"NPC '{npc.name}' has been saved successfully!")
@@ -352,7 +352,7 @@ class AddNPCDialog(AddEntryDialogBase):
             QtWidgets.QMessageBox.critical(self, "Error", 
                 f"Failed to save NPC:\n{str(e)}")
     
-    def save_npc_to_json(self, npc: NPC, is_edit=False, original_name=None, original_id=None):
+    def save_npc_to_json(self, npc: NPC, is_edit=False, original_name=None):
         """Save the NPC to npcs.json file"""
         
         # Path to npcs.json in the Data directory
@@ -395,15 +395,12 @@ class AddNPCDialog(AddEntryDialogBase):
                 "name": getattr(npc.stat_block, 'display_name', 'Unknown')
             }
         
-        # Use original ID if editing, otherwise generate new ID from name
-        if is_edit and original_id:
-            npc_id = original_id
+        if is_edit and original_name:
+            npc_name = original_name
         else:
-            # Generate a simple ID from the name (lowercase, replace spaces with underscores)
-            npc_id = npc.name.lower().replace(" ", "_").replace("'", "").replace("-", "_")
-        
+            npc_name = npc.name
+
         npc_dict = {
-            "id": npc_id,
             "name": npc.name,
             "race": npc.race.value,
             "sex": npc.sex,
@@ -418,20 +415,18 @@ class AddNPCDialog(AddEntryDialogBase):
         }
         
         # Add or update NPC in the list
-        if is_edit and (original_id or original_name):
-            # Find and update existing NPC using original ID first, then name as fallback
+        if is_edit and original_name:
             updated = False
             for i, existing_npc in enumerate(npcs_data):
-                if (original_id and existing_npc.get("id") == original_id) or \
-                   (original_name and existing_npc.get("name") == original_name):
-                    print(f"Updating existing NPC ID '{original_id}': {original_name} -> {npc.name}")
+                if (original_name and existing_npc.get("name") == original_name):
+                    print(f"Updating existing NPC: {original_name} -> {npc.name}")
                     npcs_data[i] = npc_dict
                     updated = True
                     break
             
             if not updated:
                 # Original NPC not found, add as new
-                print(f"Original NPC '{original_name}' (ID: {original_id}) not found, adding as new")
+                print(f"Original NPC '{original_name}' not found, adding as new")
                 npcs_data.append(npc_dict)
         else:
             # Add new NPC
@@ -781,7 +776,6 @@ class AddLocationDialog(AddEntryDialogBase):
             locations_data = []
         
         location_dict = {
-            "id": location.name.lower().replace(" ", "_"),
             "name": location.name,
             "description": location.description,
             "region": location.region,
@@ -790,9 +784,8 @@ class AddLocationDialog(AddEntryDialogBase):
         
         if self.edit_entry and self.original_name:
             updated = False
-            original_id = self.original_name.lower().replace(" ", "_")
             for i, existing_loc in enumerate(locations_data):
-                if existing_loc.get("id") == original_id or existing_loc.get("name") == self.original_name:
+                if existing_loc.get("name") == self.original_name:
                     locations_data[i] = location_dict
                     updated = True
                     break
