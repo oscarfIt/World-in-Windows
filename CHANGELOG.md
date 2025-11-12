@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Work in progress features go here
+- Edit buttons and functionality to Spell, Item, Condition, and Location Detail windows
 
 ### Changed
 - Changes to existing features
