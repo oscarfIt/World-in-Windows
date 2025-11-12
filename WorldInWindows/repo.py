@@ -94,6 +94,7 @@ class Repo:
                         alignment=_parse_enum(Alignment, row["alignment"]),
                         stat_block=sb if sb is not None else StatBlock(),
                         appearance=row.get("appearance", ""),
+                        personality=row.get("personality", ""),
                         backstory=row.get("backstory", ""),
                         additional_traits=norm_traits,  # works if your NPC supports it
                         campaign_notes=row.get("campaign_notes", ""),  # Include campaign notes
@@ -109,6 +110,7 @@ class Repo:
                         alignment=_parse_enum(Alignment, row["alignment"]),
                         stat_block=sb if sb is not None else StatBlock(),
                         appearance=row.get("appearance", ""),
+                        personality=row.get("personality", ""),
                         backstory=row.get("backstory", ""),
                     )
                     # attach as attribute for UI if needed

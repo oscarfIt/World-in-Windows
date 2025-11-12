@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Edit buttons and functionality to Spell, Item, Condition, and Location Detail windows
 - Functionality to open LocationDetailWindow from main window
+- Personality field to NPC
 
 ### Changed
 - Changes to existing features
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - IDs from Locations and NPCs
+- Duplicate Edit button in NPCDetailWindow
 
 ## [1.2.1] - 2025-11-10
 

@@ -370,6 +370,7 @@ class NPCBrowserWindow(BrowserWindowBase):
                 npc.race.value,
                 npc.alignment.value,
                 npc.appearance or "",
+                npc.personality or "",
                 npc.backstory or ""
             ]).lower()
             
