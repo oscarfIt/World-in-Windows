@@ -14,12 +14,13 @@ class NPC:
     alignment: Alignment
     stat_block: StatBlock
     appearance: str
+    personality: str
     backstory: str
     additional_traits: List[str]
     alive: bool
     campaign_notes: Optional[str] = field(default="")
 
-    def __init__(self, name: str, race: Race, sex: str, age: str, alignment: Alignment, stat_block: StatBlock, appearance: str, backstory: str, additional_traits: Optional[List[str]] = None, campaign_notes: Optional[str] = None, alive: bool = True):
+    def __init__(self, name: str, race: Race, sex: str, age: str, alignment: Alignment, stat_block: StatBlock, appearance: str, personality: str, backstory: str, additional_traits: Optional[List[str]] = None, campaign_notes: Optional[str] = None, alive: bool = True):
         self.name = name
         self.race = race
         self.sex = sex
@@ -27,6 +28,7 @@ class NPC:
         self.alignment = alignment
         self.stat_block = stat_block
         self.appearance = appearance
+        self.personality = personality
         self.backstory = backstory
         self.additional_traits = additional_traits if additional_traits is not None else []
         self.campaign_notes = campaign_notes if campaign_notes is not None else ""

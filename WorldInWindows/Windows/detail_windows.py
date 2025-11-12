@@ -173,6 +173,7 @@ class NPCDetailWindow(QFormDetailWindowBase):
         self.form.addRow("<b>Status:</b>", status_label)
 
         self.form.addRow("<b>Appearance:</b>", self.label(npc.appearance or ""))
+        self.form.addRow("<b>Personality:</b>", self.label(npc.personality or ""))
         self.form.addRow("<b>Backstory:</b>", self.label(npc.backstory or ""))
 
         sb = npc.stat_block

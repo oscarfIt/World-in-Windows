@@ -104,6 +104,12 @@ class AddNPCDialog(AddEntryDialogBase):
         self.appearance_field.setPlaceholderText("Describe the NPC's physical appearance...")
         self.appearance_field.setMaximumHeight(100)
         self.form.addRow("Appearance:", self.appearance_field)
+
+        # Peronality field
+        self.personality_field = QtWidgets.QTextEdit()
+        self.personality_field.setPlaceholderText("Describe the NPC's personality traits...")
+        self.personality_field.setMaximumHeight(100)
+        self.form.addRow("Personality:", self.personality_field)
         
         # Backstory field
         self.backstory_field = QtWidgets.QTextEdit()
@@ -189,6 +195,9 @@ class AddNPCDialog(AddEntryDialogBase):
         # Appearance
         if npc.appearance:
             self.appearance_field.setPlainText(npc.appearance)
+
+        if npc.personality:
+            self.personality_field.setPlainText(npc.personality)
         
         # Backstory
         if npc.backstory:
@@ -321,6 +330,7 @@ class AddNPCDialog(AddEntryDialogBase):
                 alignment=alignment,
                 stat_block=stat_block,
                 appearance=self.appearance_field.toPlainText().strip(),
+                personality=self.personality_field.toPlainText().strip(),
                 backstory=self.backstory_field.toPlainText().strip(),
                 additional_traits=traits,
                 campaign_notes=campaign_notes,
@@ -408,6 +418,7 @@ class AddNPCDialog(AddEntryDialogBase):
             "alignment": npc.alignment.value,
             "stat_block": stat_block_data,
             "appearance": npc.appearance,
+            "personality": npc.personality,
             "backstory": npc.backstory,
             "additional_traits": npc.additional_traits,
             "campaign_notes": getattr(npc, 'campaign_notes', ""),
