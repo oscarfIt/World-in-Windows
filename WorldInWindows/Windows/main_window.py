@@ -11,7 +11,7 @@ from ..Dataclasses import Location, NPC
 from ..Dialogs import PathConfigDialog
 
 from .browse_windows import NPCBrowserWindow, ItemBrowserWindow, SpellBrowserWindow, LocationBrowserWindow, ConditionBrowserWindow, SoundBrowserWindow
-from .detail_windows import NPCDetailWindow
+from .detail_windows import NPCDetailWindow, LocationDetailWindow
 
 # --- Tree model utilities ---
 ROLE_LOCATION_PTR = QtCore.Qt.ItemDataRole.UserRole + 1
@@ -126,6 +126,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.location_tree.setAlternatingRowColors(True)
         self.location_tree.setUniformRowHeights(True)
         self.location_tree.setExpandsOnDoubleClick(True)
+        
+        self.location_tree.doubleClicked.connect(self.open_location_detail)
 
         self.npc_list = QtWidgets.QListWidget()
         self.npc_list.itemDoubleClicked.connect(self.open_npc_detail)
@@ -219,6 +221,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if not npc:
             return
         window = NPCDetailWindow(npc, self.kb, self)
+        window.show()
+
+    def open_location_detail(self, item: QtWidgets.QTreeWidgetItem):
+        loc = item.data(ROLE_LOCATION_PTR)
+        if not loc:
+            return
+        window = LocationDetailWindow(loc, self.kb, self)
         window.show()
 
 
