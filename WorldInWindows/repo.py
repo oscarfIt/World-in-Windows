@@ -144,7 +144,7 @@ class Repo:
             if not loc:
                 continue
             for name in row.get("npcs", []):
-                npc = self.npcs.get(name) or self.npcs_by_name.get(name)
+                npc = self.npcs_by_name.get(name)
                 if npc:
                     try:
                         loc.add_npc(npc)
