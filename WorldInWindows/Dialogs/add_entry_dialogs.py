@@ -443,8 +443,9 @@ class AddNPCDialog(AddEntryDialogBase):
             json.dump(npcs_data, f, indent=2, ensure_ascii=False)
 
 class AddSpellDialog(AddEntryDialogBase):
-    def __init__(self, parent=None):
-        super().__init__(entry_name="Spell", parent=parent)
+    def __init__(self, parent=None, edit_spell=None):
+        super().__init__(entry_name="Spell", edit_entry=edit_spell, parent=parent)
+        self.original_name = self.edit_entry.name if self.edit_entry else None
         
         # Spell Name field
         self.name_field = QtWidgets.QLineEdit()
@@ -492,6 +493,27 @@ class AddSpellDialog(AddEntryDialogBase):
         self.form.addRow("Upcast Info:", self.upcast_info_field)
 
         self.name_field.setFocus()
+        
+        if self.edit_entry:
+            self.populate_fields()
+    
+    def populate_fields(self):
+        spell = self.edit_entry
+        self.name_field.setText(spell.name)
+        self.level_field.setValue(spell.level)
+        
+        for i in range(self.school_field.count()):
+            if self.school_field.itemData(i) == spell.school:
+                self.school_field.setCurrentIndex(i)
+                break
+        
+        self.casting_time_field.setText(spell.casting_time)
+        self.range_field.setText(spell.range)
+        self.components_field.setText(spell.components)
+        self.duration_field.setText(spell.duration)
+        self.description_field.setPlainText(spell.description or "")
+        self.damage_field.setText(spell.damage or "")
+        self.upcast_info_field.setPlainText(spell.upcast_info)
 
     def ok_button_slot(self):
         self.add_spell()
@@ -558,16 +580,26 @@ class AddSpellDialog(AddEntryDialogBase):
             "aliases": spell.aliases
         }
         
-        # Add new Spell
-        spells_data.append(spell_dict)
+        if self.edit_entry and self.original_name:
+            updated = False
+            for i, existing_spell in enumerate(spells_data):
+                if existing_spell.get("name") == self.original_name:
+                    spells_data[i] = spell_dict
+                    updated = True
+                    break
+            if not updated:
+                spells_data.append(spell_dict)
+        else:
+            spells_data.append(spell_dict)
         
         # Save back to file
         with open(spells_file, 'w', encoding='utf-8') as f:
             json.dump(spells_data, f, indent=2, ensure_ascii=False)
 
 class AddItemDialog(AddEntryDialogBase):
-    def __init__(self, parent=None):
-        super().__init__(entry_name="Item", parent=parent)
+    def __init__(self, parent=None, edit_item=None):
+        super().__init__(entry_name="Item", edit_entry=edit_item, parent=parent)
+        self.original_name = self.edit_entry.name if self.edit_entry else None
         
         self.name_field = QtWidgets.QLineEdit()
         self.name_field.setPlaceholderText("Enter a name for this item")
@@ -587,6 +619,21 @@ class AddItemDialog(AddEntryDialogBase):
         self.form.addRow("Requires Attunement:", self.attunement_checkbox)
 
         self.name_field.setFocus()
+        
+        if self.edit_entry:
+            self.populate_fields()
+    
+    def populate_fields(self):
+        item = self.edit_entry
+        self.name_field.setText(item.name)
+        
+        for i in range(self.rarity_field.count()):
+            if self.rarity_field.itemData(i) == item.rarity:
+                self.rarity_field.setCurrentIndex(i)
+                break
+        
+        self.description_field.setPlainText(item.description or "")
+        self.attunement_checkbox.setChecked(item.attunement)
 
     def ok_button_slot(self):
         self.add_item()
@@ -638,16 +685,25 @@ class AddItemDialog(AddEntryDialogBase):
             "attunement": item.attunement
         }
         
-        # Add new Item
-        items_data.append(items_dict)
+        if self.edit_entry and self.original_name:
+            updated = False
+            for i, existing_item in enumerate(items_data):
+                if existing_item.get("name") == self.original_name:
+                    items_data[i] = items_dict
+                    updated = True
+                    break
+            if not updated:
+                items_data.append(items_dict)
+        else:
+            items_data.append(items_dict)
         
-        # Save back to file
         with open(items_file, 'w', encoding='utf-8') as f:
             json.dump(items_data, f, indent=2, ensure_ascii=False)
 
 class AddLocationDialog(AddEntryDialogBase):
-    def __init__(self, parent=None):
-        super().__init__(entry_name="Location", parent=parent)
+    def __init__(self, parent=None, edit_location=None):
+        super().__init__(entry_name="Location", edit_entry=edit_location, parent=parent)
+        self.original_name = self.edit_entry.name if self.edit_entry else None
         
         self.name_field = QtWidgets.QLineEdit()
         self.name_field.setPlaceholderText("Enter a name for this location")
@@ -662,7 +718,6 @@ class AddLocationDialog(AddEntryDialogBase):
         self.region_field.setPlaceholderText("Enter the region or area this location belongs to...")
         self.form.addRow("Region/Area:", self.region_field)
 
-        # This doesn't work rn
         self.parent_field = QtWidgets.QComboBox()
         # Check the locations from locatinos.json
         self.parent_field.addItem("None", None)  # Default option
@@ -673,6 +728,21 @@ class AddLocationDialog(AddEntryDialogBase):
                 for loc in locations_data:
                     self.parent_field.addItem(loc.get("name", "Unnamed Location"), loc.get("name"))
         self.form.addRow("Parent Location:", self.parent_field)
+        
+        if self.edit_entry:
+            self.populate_fields()
+    
+    def populate_fields(self):
+        location = self.edit_entry
+        self.name_field.setText(location.name)
+        self.description_field.setPlainText(location.description or "")
+        self.region_field.setText(location.region or "")
+        
+        if location.parent:
+            for i in range(self.parent_field.count()):
+                if self.parent_field.itemData(i) == location.parent.name:
+                    self.parent_field.setCurrentIndex(i)
+                    break
 
     def ok_button_slot(self):
         self.add_location()
@@ -718,16 +788,27 @@ class AddLocationDialog(AddEntryDialogBase):
             "parent": location.parent
         }
         
-        # Add new Location
-        locations_data.append(location_dict)
+        if self.edit_entry and self.original_name:
+            updated = False
+            original_id = self.original_name.lower().replace(" ", "_")
+            for i, existing_loc in enumerate(locations_data):
+                if existing_loc.get("id") == original_id or existing_loc.get("name") == self.original_name:
+                    locations_data[i] = location_dict
+                    updated = True
+                    break
+            if not updated:
+                locations_data.append(location_dict)
+        else:
+            locations_data.append(location_dict)
         
         # Save back to file
         with open(locations_file, 'w', encoding='utf-8') as f:
             json.dump(locations_data, f, indent=2, ensure_ascii=False)
 
 class AddConditionDialog(AddEntryDialogBase):
-    def __init__(self, parent=None):
-        super().__init__(entry_name="Condition", parent=parent)
+    def __init__(self, parent=None, edit_condition=None):
+        super().__init__(entry_name="Condition", edit_entry=edit_condition, parent=parent)
+        self.original_name = self.edit_entry.name if self.edit_entry else None
         
         self.name_field = QtWidgets.QLineEdit()
         self.name_field.setPlaceholderText("Enter a name for this condition")
@@ -739,6 +820,14 @@ class AddConditionDialog(AddEntryDialogBase):
         self.form.addRow("Description:", self.description_field)
 
         self.name_field.setFocus()
+        
+        if self.edit_entry:
+            self.populate_fields()
+    
+    def populate_fields(self):
+        condition = self.edit_entry
+        self.name_field.setText(condition.name)
+        self.description_field.setPlainText(condition.description or "")
 
     def ok_button_slot(self):
         self.add_condition()
@@ -779,8 +868,17 @@ class AddConditionDialog(AddEntryDialogBase):
             "description": condition.description
         }
         
-        # Add new Condition
-        conditions_data.append(condition_dict)
+        if self.edit_entry and self.original_name:
+            updated = False
+            for i, existing_cond in enumerate(conditions_data):
+                if existing_cond.get("name") == self.original_name:
+                    conditions_data[i] = condition_dict
+                    updated = True
+                    break
+            if not updated:
+                conditions_data.append(condition_dict)
+        else:
+            conditions_data.append(condition_dict)
         
         # Save back to file
         with open(conditions_file, 'w', encoding='utf-8') as f:

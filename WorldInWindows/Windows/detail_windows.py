@@ -8,7 +8,7 @@ from ..repo import Repo
 from ..config import Config
 
 from ..Dataclasses import Spell, Item, ClassAction, NPC, Location, PcClass, PcClassName, StatBlock, MonsterManual, Condition
-from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview, EditPcClassDialog
+from ..Dialogs import AddNPCDialog, CampaignNotesDialog, HoverPreview, EditPcClassDialog, AddSpellDialog, AddItemDialog, AddLocationDialog, AddConditionDialog
 from ..AIGen import ImageGenerator, ImageGenerationMode
 
 def _resolve_image_for_entry(config: Config, content_type: Spell | Item | ClassAction) -> Path | None:
@@ -77,11 +77,32 @@ class QFormDetailWindowBase(QtWidgets.QMainWindow):
         self.buttons.rejected.connect(self.close)
         self.buttons.accepted.connect(self.close)
 
+        # Add Edit button
+        edit_btn = QtWidgets.QPushButton("Edit")
+        edit_btn.clicked.connect(self.edit_entry)
+        self.buttons.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
+
         central_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(central_widget)
         layout.addWidget(scroll)
         layout.addWidget(self.buttons)
         self.setCentralWidget(central_widget)
+
+    def edit_entry(self):
+        pass
+
+    def reload_window(self):
+        # Should connect this to the refresh data method in the main window
+        geometry = self.geometry()
+        if isinstance(self.entry, Spell):
+            new_window = SpellDetailWindow(self.entry, self.kb, self.parent())
+        elif isinstance(self.entry, Item):
+            new_window = ItemDetailWindow(self.entry, self.kb, self.parent())
+        elif isinstance(self.entry, Condition):
+            new_window = ConditionDetailWindow(self.entry, self.kb, self.parent())
+        new_window.setGeometry(geometry)
+        new_window.show()
+        self.close()
 
     def label(self, text: str) -> QtWidgets.QLabel:
         lab = QtWidgets.QLabel(text)
@@ -108,7 +129,11 @@ class SpellDetailWindow(QFormDetailWindowBase):
         self.form.addRow("<b>Duration:</b>", self.label(spell.duration))
         self.form.addRow("<b>Upcasting:</b>", self.label(spell.upcast_info))
         self.form.addRow("<b>Description:</b>", self.label(spell.description or ""))
-
+    
+    def edit_entry(self):
+        dialog = AddSpellDialog(self, edit_spell=self.entry)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.reload_window()
 
 class ItemDetailWindow(QFormDetailWindowBase):
     def __init__(self, item, kb: KnowledgeBase, parent=None):
@@ -120,6 +145,11 @@ class ItemDetailWindow(QFormDetailWindowBase):
         self.form.addRow("<b>Tags:</b>", self.label(", ".join(getattr(item, "tags", []))))
         self.form.addRow("<b>Aliases:</b>", self.label(", ".join(getattr(item, "aliases", []))))
         self.form.addRow("<b>Description:</b>", self.label(item.description or ""))
+            
+    def edit_entry(self):
+        dialog = AddItemDialog(self, edit_item=self.entry)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.reload_window()
 
 
 class NPCDetailWindow(QFormDetailWindowBase):
@@ -450,12 +480,22 @@ class LocationDetailWindow(QtWidgets.QMainWindow):
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
         btns.rejected.connect(self.close)
         btns.accepted.connect(self.close)
+        
+        # Add Edit button
+        edit_btn = QtWidgets.QPushButton("Edit")
+        edit_btn.clicked.connect(self.edit_location)
+        btns.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
 
         central_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(central_widget)
         layout.addWidget(scroll)
         layout.addWidget(btns)
         self.setCentralWidget(central_widget)
+    
+    def edit_location(self):
+        dialog = AddLocationDialog(self, edit_location=self.location)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.refresh_window()
 
     def populate_npc_dropdown(self):
         """Populate dropdown with NPCs not already in this location"""
@@ -604,6 +644,11 @@ class ConditionDetailWindow(QFormDetailWindowBase):
         
         self.form.addRow("<b>Name:</b>", self.label(condition.name))
         self.form.addRow("<b>Description:</b>", self.label(condition.description or ""))
+            
+    def edit_entry(self):
+        dialog = AddConditionDialog(self, edit_condition=self.entry)
+        if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.reload_window()
 
 class StatBlockDetailWindow(QtWidgets.QMainWindow):
     def __init__(self, sb: StatBlock, kb: KnowledgeBase, traits: list | None = None, parent=None):
