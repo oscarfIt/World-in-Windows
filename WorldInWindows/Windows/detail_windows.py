@@ -182,11 +182,7 @@ class NPCDetailWindow(QFormDetailWindowBase):
         self.stat_btn.setEnabled(sb is not None)
         self.stat_btn.clicked.connect(self.open_statblock)
         self.form.addRow("<b>Stat Block:</b>", self.stat_btn)
-        
-        edit_btn = QtWidgets.QPushButton("Edit")
-        edit_btn.clicked.connect(self.edit_npc)
-        self.buttons.addButton(edit_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
-        
+                
         campaign_notes_btn = QtWidgets.QPushButton("Campaign Notes")
         campaign_notes_btn.clicked.connect(self.open_campaign_notes)
         self.buttons.addButton(campaign_notes_btn, QtWidgets.QDialogButtonBox.ButtonRole.ActionRole)
@@ -247,8 +243,7 @@ class NPCDetailWindow(QFormDetailWindowBase):
             QtWidgets.QMessageBox.critical(self, "Error", 
                 f"Failed to generate portrait:\n{str(e)}")
 
-    def edit_npc(self):
-        """Edit this NPC using the edit dialog"""
+    def edit_entry(self):
         dialog = AddNPCDialog(self, edit_npc=self.npc)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             # Reload the window to show updated NPC data
