@@ -18,3 +18,4 @@ class Race(Enum):
     Kobold = "Kobold"
     Lizardfolk = "Lizardfolk"
     Magmin = "Magmin"
+    NA = "N/A"
